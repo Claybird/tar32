@@ -474,6 +474,9 @@ extern "C" void WINAPI/*CALLBACK*/ TarCommandLine(HWND hwnd, HINSTANCE hinst, LP
 	int iRet = Tar(hwnd,lpszCmdLine,buf,sizeof(buf));
 }
 
+
+
+#if 0
 /*********************************************************
 	 Susie Plug-In APIs 
 **********************************************************/
@@ -615,3 +618,9 @@ extern "C" int WINAPI _export GetFile(LPSTR src,long len, LPSTR dest,unsigned in
 	}
 	return 0;
 }
+
+#endif /* if 0 */
+
+
+
+
