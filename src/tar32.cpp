@@ -316,16 +316,20 @@ bool CTar32::addbody(const char *file)
 		throw CTar32Exception(msg, ERROR_CANNOT_READ);
 	}
 	if(st.st_size == 0){return true;}
-	FILE *fp_r;
-	fp_r = fopen(file, "rb");
-	if(!fp_r){
+	//FILE *fp_r;
+	//fp_r = fopen(file, "rb");
+	ifstream fs_r;
+	fs_r.open(file,ios::in|ios::binary);
+	//if(!fp_r){
+	if(fs_r.fail()){
 		throw CTar32Exception("can't read file", ERROR_CANNOT_READ);
 	}
 	int size = 0;
 
 	int n;
 	char buf[4096];
-	while((n = fread(buf,1,sizeof(buf),fp_r))>0){
+	//while((n = fread(buf,1,sizeof(buf),fp_r))>0){
+	while(fs_r.read(buf,sizeof(buf)),(n=fs_r.gcount())>0){
 		int m = m_pfile->write(buf, n);
 		if(m>0){size += m;}
 		if(n!=m){
