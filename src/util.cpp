@@ -100,7 +100,8 @@ string make_pathname(const char *dirname_, const char *filename_)
 		return string(filename_);
 	}
 	string pathname = dirname_;
-	if(_mbsrchr((const unsigned char *)dirname_,'\\') == (const unsigned char *)dirname_ + _mbslen((const unsigned char *)dirname_) -1){
+	// if(_mbsrchr((const unsigned char *)dirname_,'\\') == (const unsigned char *)dirname_ + _mbslen((const unsigned char *)dirname_) -1){
+	if(_mbsrchr((const unsigned char *)dirname_,'\\') == (const unsigned char *)dirname_ + strlen(dirname_) -1){	// fixed by tsuneo 2001.05.15
 		;
 	}else{
 		pathname.append(1, '\\');
