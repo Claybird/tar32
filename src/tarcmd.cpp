@@ -198,7 +198,8 @@ static int tar_cmd_itr(const HWND hwnd, LPCSTR szCmdLine,LPSTR szOutput, const D
 				argi++;
 				continue;
 			}
-			while(stri != (*argi).end()){
+			list<string>::iterator cur_argi = argi;
+			while(stri != (*cur_argi).end()){
 				switch(*stri){
 				case 'x':
 					command = 'x';break;
@@ -211,12 +212,18 @@ static int tar_cmd_itr(const HWND hwnd, LPCSTR szCmdLine,LPSTR szOutput, const D
 					command = 'x';
 					cmdinfo.b_print = true;
 					break;
+				case 'f':
+					if(++argi == args.end()){
+						throw CTar32Exception("'f' follow no directory name", ERROR_COMMAND_NAME);
+					}
+					cmdinfo.arcfile = *argi;
+					break;
 				case 'o':
 					if(++argi == args.end()){
 						throw CTar32Exception("'o' follow no directory name", ERROR_COMMAND_NAME);
 					}
 					current_directory = *argi;
-					stri = argi->end()-1;
+					// stri = argi->end()-1;
 					break;
 				case 'z':
 					cmdinfo.archive_type = ARCHIVETYPE_GZ;
@@ -257,7 +264,6 @@ static int tar_cmd_itr(const HWND hwnd, LPCSTR szCmdLine,LPSTR szOutput, const D
 				case 'V':
 				case 'I':
 				case 'i':
-				case 'f':
 				case 'e':
 				case 'g':
 				case 'S':
