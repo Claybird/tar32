@@ -267,6 +267,7 @@ static int tar_cmd_itr(const HWND hwnd, LPCSTR szCmdLine,LPSTR szOutput, const D
 				case 'e':
 				case 'g':
 				case 'S':
+				case 'R':	// added by tsuneo 2001.05.14
 					/*ignore*/
 					break;
 				case 'A':
@@ -390,8 +391,9 @@ static void _cdecl tar_cmd_main_thread(LPVOID param)
 {
 	CTar32CmdInfo *pCmdInfo = (CTar32CmdInfo*)param;
 	CTar32CmdInfo &cmdinfo = *pCmdInfo;
+	CTar32StatusDialog dlg;
+
 	try{
-		CTar32StatusDialog dlg;
 		if(cmdinfo.b_display_dialog){
 			cmdinfo.hTar32StatusDialog = dlg.Create(cmdinfo.hParentWnd);
 		}
@@ -412,6 +414,7 @@ static void _cdecl tar_cmd_main_thread(LPVOID param)
 		dlg.Destroy();
 		if(pCmdInfo->wm_main_thread_end)PostThreadMessage(pCmdInfo->idMessageThread, pCmdInfo->wm_main_thread_end, 0, 0);
 	}catch(CTar32Exception &e){
+		dlg.Destroy();
 		if(pCmdInfo->wm_main_thread_end)PostThreadMessage(pCmdInfo->idMessageThread, pCmdInfo->wm_main_thread_end, 0, 0);
 		cmdinfo.exception = e;
 		// throw e;
@@ -570,6 +573,8 @@ static void cmd_create(CTar32CmdInfo &cmdinfo)
 	CTar32 tarfile;
 	int ret;
 	bool bret;
+	int filenum = 0;
+
 	ret = tarfile.open(cmdinfo.arcfile.c_str(), "wb", cmdinfo.archive_type);
 	if(!ret){
 		throw CTar32Exception("can't open archive file", ERROR_ARC_FILE_OPEN);
@@ -583,9 +588,6 @@ static void cmd_create(CTar32CmdInfo &cmdinfo)
 		string file_external = make_pathname((*filei).current_dir.c_str(), (*filei).file.c_str());
 
 		list<string> files_internal2 = find_files(file_external.c_str());
-		if(files_internal2.empty()){
-			throw CTar32Exception((string() + "can't find file match to[" + file_external + "]").c_str(), ERROR_FILE_OPEN);
-		}
 		list<string>::iterator files2i;
 		for(files2i = files_internal2.begin(); files2i != files_internal2.end(); files2i++){
 			string file_external2 = *files2i;
@@ -611,7 +613,12 @@ static void cmd_create(CTar32CmdInfo &cmdinfo)
 			stat.filename = file_internal2;
 			bret = tarfile.addheader(stat);
 			bret = tarfile.addbody(file_external2.c_str());
+			filenum ++;
 		}
+	}
+	if(filenum == 0){
+		// fixed by tsuneo. 2001.05.14
+		throw CTar32Exception("There is no file to archive. ", ERROR_FILE_OPEN);
 	}
 }
 static void cmd_list(CTar32CmdInfo &cmdinfo)

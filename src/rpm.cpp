@@ -101,7 +101,8 @@ int rpm_getheadersize(const char *arcfile)
 		if(pos == -1){return -1;}
 		if((pos%8) != 0){
 			/* 8 byte padding */
-			int pad = pos - (pos/8)*8;
+			// int pad = pos - (pos/8)*8;
+			int pad = (pos/8 + 1) * 8 - pos ;  // fix by tsuneo 2001.05.14
 			fs.seekg(pad, ios::cur);
 			if(fs.fail()){return -1;}
 		}

@@ -61,14 +61,20 @@ int mkdir_recursive(const char *dirname_)
 	ret = _mkdir(dirname.c_str());
 	return 0;
 }
-string get_dirname(const char *pathname_)
+string get_dirname(const char *pathname)
 {
-	string filename = pathname_;
-	int pos1 = filename.rfind('/');
-	int pos2 = filename.rfind('\\');
-	int pos = max(pos1 ,pos2);
-	if(pos == string::npos){return "";}
-	string dirname = filename.substr(0,pos);
+	string filename = pathname;
+	//int pos1 = filename.rfind('/');
+	//int pos2 = filename.rfind('\\');
+	//int pos = max(pos1 ,pos2);
+	//if(pos == string::npos){return "";}
+	//string dirname = filename.substr(0, pos);
+	// fixed by tsuneo 2001.05.14
+	char *p = (char*)max(_mbsrchr((const unsigned char*)pathname,'/'),_mbsrchr((const unsigned char*)pathname,'\\'));
+	if(! p){
+		return "";
+	}
+	string dirname = filename.substr(0, p - pathname);
 	return dirname;
 }
 string get_filename(const char *pathname)
