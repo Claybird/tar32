@@ -34,6 +34,18 @@
 #include "util.h"
 #include "zlib.h"
 #include <stdlib.h>
+#include <fstream>
+
+/* gzip flag byte */
+const CTarArcFile_GZip::GZIP_FLAG_ASCII_FLAG   =0x01; /* bit 0 set: file probably ascii text */
+const CTarArcFile_GZip::GZIP_FLAG_CONTINUATION =0x02; /* bit 1 set: continuation of multi-part gzip file */
+const CTarArcFile_GZip::GZIP_FLAG_EXTRA_FIELD  =0x04; /* bit 2 set: extra field present */
+const CTarArcFile_GZip::GZIP_FLAG_ORIG_NAME    =0x08; /* bit 3 set: original file name present */
+const CTarArcFile_GZip::GZIP_FLAG_COMMENT      =0x10; /* bit 4 set: file comment present */
+const CTarArcFile_GZip::GZIP_FLAG_ENCRYPTED    =0x20; /* bit 5 set: file is encrypted */
+const CTarArcFile_GZip::GZIP_FLAG_RESERVED     =0xC0; /* bit 6,7:   reserved */
+const CTarArcFile_GZip::GZIP_METHOD_DEFLATED   =8;
+
 
 CTarArcFile_GZip::CTarArcFile_GZip()
 {
@@ -47,7 +59,54 @@ bool CTarArcFile_GZip::open(const char *arcfile, const char *mode)
 	m_arcfile = arcfile;
 	gzFile f = gzopen(arcfile, mode);
 	m_gzFile = f;
-	return (f != NULL);
+	if(f==NULL){return false;}
+
+	if(strchr(mode,'r')){
+		/* GZIPヘッダ情報(ファイル名、日付など)を取得 */
+		ifstream fs_r;
+		fs_r.open(arcfile, ios::in|ios::binary);
+		int c;
+		if(fs_r.fail()){return true;}
+		if(fs_r.get()!=0x1f || fs_r.get()!=0x8b){return true;}
+		if((c=fs_r.get())==EOF){return true;}
+		m_gzip_compress_method = c;
+		if((c=fs_r.get())==EOF){return true;}
+		int flags = m_gzip_flags = c;
+		if((flags & GZIP_FLAG_ENCRYPTED)||(flags & GZIP_FLAG_CONTINUATION)||(flags & GZIP_FLAG_RESERVED)){return true;}
+		time_t stamp;
+		stamp = fs_r.get();
+		stamp |= fs_r.get()<<8;
+		stamp |= fs_r.get()<<16;
+		stamp |= fs_r.get()<<24;
+		m_mtime = m_gzip_time_stamp = stamp;
+		m_gzip_ext_flag = fs_r.get();
+		m_gzip_os_type = fs_r.get();
+		if(flags & GZIP_FLAG_CONTINUATION){
+			m_gzip_part = fs_r.get();
+		}
+		if(flags & GZIP_FLAG_EXTRA_FIELD){
+			int len = fs_r.get();
+			while(len<10000 && (len--)>0){
+				fs_r.get();
+			}
+		}
+		if(flags & GZIP_FLAG_ORIG_NAME){
+			string fname;
+			while((c=fs_r.get())!=EOF && c!='\0'){
+				fname += c;
+			}
+			m_orig_filename = m_gzip_orig_name = fname;
+		}
+		if(flags & GZIP_FLAG_COMMENT){
+			string comment;
+			while((c=fs_r.get())!=EOF && c!='\0'){
+				comment += c;
+			}
+			m_gzip_comment = comment;
+		}
+	}
+	return true;
+	//return (f != NULL);
 }
 int CTarArcFile_GZip::read(void *buf, int size)
 {

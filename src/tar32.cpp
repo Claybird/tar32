@@ -184,9 +184,10 @@ bool CTar32::readdir(CTar32FileStatus *pstat)
 		stat.offset		=   strtol(tar_header.dbuf.offset , NULL, 8);
 	}else{
 		if(m_filecount != 0){return false;}
-		stat.filename   =	m_pfile->get_orig_filename();
-		stat.original_size       =	m_pfile->get_orig_size();
-		stat.blocksize	=	1;
+		stat.filename		= m_pfile->get_orig_filename();
+		stat.original_size	= m_pfile->get_orig_size();
+		stat.mtime			= m_pfile->get_mtime();
+		stat.blocksize		= 1;
 	}
 	m_filecount ++;
 	*pstat = stat;

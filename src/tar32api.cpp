@@ -268,6 +268,8 @@ extern "C" DWORD WINAPI _export TarGetOriginalSize(HARC _harc)
 {
 	CTar32 *pTar32 = HARC2PTAR32(_harc);
 	CTar32FileStatus *pstat = &(pTar32->m_currentfile_status);
+	// サイズが不明の場合は 0を返す
+	if(pstat->original_size == -1){return 0;}
 	return pstat->original_size;
 }
 extern "C" DWORD WINAPI _export TarGetCompressedSize(HARC _harc)

@@ -20,6 +20,9 @@ interface ITarArcFile{
 	virtual int seek(int offset, int origin);
 	virtual void close() = 0;
 	virtual int get_archive_type() = 0;
+	ITarArcFile(){
+		m_mtime = 0;
+	}
 	virtual ~ITarArcFile(){;};
 
 	virtual string get_orig_filename(){
@@ -27,10 +30,12 @@ interface ITarArcFile{
 		return m_arcfile + "_extracted";
 	}
 	virtual size_t get_orig_size(){return -1;}
+	virtual time_t get_mtime(){return m_mtime;}
 	string get_arc_filename(){return m_arcfile;}
 protected:
 	string m_arcfile;
 	string m_orig_filename;
+	time_t m_mtime;
 };
 
 #endif //__ARCFILE_H

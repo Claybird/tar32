@@ -48,4 +48,24 @@ public:
 	virtual string get_orig_filename();
 private:
 	gzFile m_gzFile;
+
+	/* gzip flag byte */
+	static const GZIP_FLAG_ASCII_FLAG;//   =0x01; /* bit 0 set: file probably ascii text */
+	static const GZIP_FLAG_CONTINUATION;// =0x02; /* bit 1 set: continuation of multi-part gzip file */
+	static const GZIP_FLAG_EXTRA_FIELD;//  =0x04; /* bit 2 set: extra field present */
+	static const GZIP_FLAG_ORIG_NAME;//    =0x08; /* bit 3 set: original file name present */
+	static const GZIP_FLAG_COMMENT;//      =0x10; /* bit 4 set: file comment present */
+	static const GZIP_FLAG_ENCRYPTED;//    =0x20; /* bit 5 set: file is encrypted */
+	static const GZIP_FLAG_RESERVED;//     =0xC0; /* bit 6,7:   reserved */
+	static const GZIP_METHOD_DEFLATED;//   =8;
+
+	int		m_gzip_compress_method;
+	unsigned 		m_gzip_flags;
+	time_t	m_gzip_time_stamp;
+	unsigned		m_gzip_ext_flag;
+	int		m_gzip_os_type;
+
+	int		m_gzip_part;
+	string	m_gzip_orig_name;
+	string	m_gzip_comment;
 };

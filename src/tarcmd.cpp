@@ -478,12 +478,13 @@ static bool extract_file(CTar32CmdInfo &cmdinfo, CTar32 *pTarfile, const char *f
 		}
 	}
 	if(!cmdinfo.b_print){
+		fs_w.close();
 		struct _utimbuf ut;
 		ut.actime = (stat.atime ? stat.atime : time(NULL));
-		ut.modtime = stat.mtime;
+		ut.modtime = (stat.mtime ? stat.mtime : time(NULL));
 		int ret;
-		ret = _utime(fname2.c_str(), &ut);
 		ret = _chmod(fname2.c_str(), stat.mode);
+		ret = _utime(fname2.c_str(), &ut);
 	}
 	if(cmdinfo.hTar32StatusDialog){
 		extern UINT wm_arcextract;
@@ -574,6 +575,9 @@ static void cmd_create(CTar32CmdInfo &cmdinfo)
 		for(files2i = files_internal2.begin(); files2i != files_internal2.end(); files2i++){
 			string file_external2 = *files2i;
 			string file_internal2 = file_external2.substr((*filei).current_dir.length());
+			if(!cmdinfo.b_use_directory){
+				file_internal2 = get_filename(file_internal2.c_str());
+			}
 			CTar32FileStatus stat;
 			if(!stat.SetFromFile(file_external2.c_str())){
 				continue;

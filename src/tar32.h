@@ -43,6 +43,7 @@ struct CTar32FileStatus{
 	CTar32FileStatus(){
 
 		compress_size = original_size = blocksize = mode = uid = gid = mtime = chksum = typeflag = devmajor = devminor = atime = ctime = offset = 0;
+		mode = 0666;	// _S_IWRITE|_S_IREAD
 		memcpy(magic_version, TMAGIC "\0" TVERSION/*"ustar\000"*/,8);
 		strcpy(uname, "root");
 	}
