@@ -185,7 +185,13 @@ bool CTar32::readdir(CTar32FileStatus *pstat)
 				throw CTar32Exception("tar header checksum error.",ERROR_HEADER_CRC);
 			}
 		}
-		stat.filename	=	tar_header.dbuf.name;
+
+		// HP-UX's tar command create 100chars filename part. fixed on 2003.12.19
+		char tmp_name[sizeof(tar_header.dbuf.name)+1];
+		strncpy(tmp_name, tar_header.dbuf.name, sizeof(tar_header.dbuf.name));
+		tmp_name[sizeof(tar_header.dbuf.name)] = '\0';
+		stat.filename	=	tmp_name; /* tar_header.dbuf.name; */
+
 		stat.original_size		=	strtol(tar_header.dbuf.size, NULL, 8);
 		if(tar_header.dbuf.typeflag == LNKTYPE){
 			// Fixed on 2003/11/28. For "spencer_pwb.tar.gz". Thanks to rollo-san.
