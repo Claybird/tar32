@@ -123,6 +123,7 @@ static void cmd_usage(CTar32CmdInfo &info)
 		<< "       --display-dialog=[0|1](1)  display dialog box\n"
 		<< "       --message-loop=[0|1](1)  run message loop\n"
 		<< "       --bzip2=[N]     compress by bzip2 with level N\n"
+		<< "    ignore option,command: a,v,V,I,i,f,e,g,S,A,b,N,U,--xxxx=xxx\n"
 		;
 }
 
@@ -255,6 +256,7 @@ static int tar_cmd_itr(const HWND hwnd, LPCSTR szCmdLine,LPSTR szOutput, const D
 				case 'v':
 				case 'V':
 				case 'I':
+				case 'i':
 				case 'f':
 				case 'e':
 				case 'g':

@@ -26,6 +26,8 @@ CTarArcFile_Compress::~CTarArcFile_Compress()
 }
 bool CTarArcFile_Compress::open(const char *arcfile, const char *mode)
 {
+	m_arcfile = arcfile;
+
 	/* only decompress implemented */
 	if(strchr(mode,'w')){return false;}
 	m_pFile = fopen(arcfile, "rb");

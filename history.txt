@@ -161,3 +161,7 @@
 	ar(COFF/a.out/b.out): .lib(.lib.gz, .lib.Z, .lib.bz2), .a(.a.gz, .a.Z, .a.bz2)
 	by tsuneo(tsuneo@rr.iij4u.or.jp)
 
+2000/12/17 Ver2.11
+	・Ver0.xxとの互換性のため-iオプションを無視するオプションに追加。
+	・.Zの展開速度があまりに遅いので高速化。
+	  原因はVC++6のSTLが遅かったため。簡易版クラスを作成して対応。

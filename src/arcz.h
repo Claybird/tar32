@@ -33,7 +33,8 @@
 
 #include "arcfile.h"
 #include "tar32api.h" // ARCHIVETYPE_
-#include <strstream>
+#include "fast_stl.h"
+// #include <sstream>
 using namespace std;
 
 class CTarArcFile_Compress : public ITarArcFile{
@@ -60,7 +61,7 @@ private:
 	unsigned char   m_htab[HSIZE];
 	unsigned char m_inbuf[BUFSIZ + 64];
 	bool m_eof;
-	strstream m_strstream;
+	fast_strstream m_strstream;
 	int				m_finchar;
 	int				m_oldcode;
 	int				m_posbits;
