@@ -28,8 +28,8 @@ LANGUAGE LANG_JAPANESE, SUBLANG_DEFAULT
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 2,26,0,1
- PRODUCTVERSION 2,26,0,1
+ FILEVERSION 2,27,0,1
+ PRODUCTVERSION 2,27,0,1
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -47,14 +47,14 @@ BEGIN
             VALUE "Comments", "\0"
             VALUE "CompanyName", " \0"
             VALUE "FileDescription", "tar32\0"
-            VALUE "FileVersion", "2, 26, 0, 1\0"
+            VALUE "FileVersion", "2, 27, 0, 1\0"
             VALUE "InternalName", "tar32\0"
             VALUE "LegalCopyright", "Copyright (C) 1999 Yoshioka Tsuneo URL: http://openlab.ring.gr.jp/tsuneo/tar32/\0"
             VALUE "LegalTrademarks", "\0"
             VALUE "OriginalFilename", "tar32.dll\0"
             VALUE "PrivateBuild", "\0"
             VALUE "ProductName", "  tar32\0"
-            VALUE "ProductVersion", "2, 26, 0, 1\0"
+            VALUE "ProductVersion", "2, 27, 0, 1\0"
             VALUE "SpecialBuild", "\0"
         END
     END

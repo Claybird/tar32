@@ -96,9 +96,10 @@ bool CTarArcFile_GZip::open(const char *arcfile, const char *mode)
 		if((flags & GZIP_FLAG_ENCRYPTED)||(flags & GZIP_FLAG_CONTINUATION)||(flags & GZIP_FLAG_RESERVED)){return true;}
 		time_t stamp;
 		stamp = fs_r.get();
-		stamp |= fs_r.get()<<8;
-		stamp |= fs_r.get()<<16;
-		stamp |= fs_r.get()<<24;
+		stamp |= (fs_r.get()<<8);
+		stamp |= (fs_r.get()<<16);
+		stamp |= (fs_r.get()<<24);
+		if(stamp<0){stamp=0;}
 		m_mtime = m_gzip_time_stamp = stamp;
 		m_gzip_ext_flag = fs_r.get();
 		m_gzip_os_type = fs_r.get();

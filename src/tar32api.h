@@ -150,7 +150,9 @@ int WINAPI _export TarGetFileName(HARC _harc, LPSTR _lpBuffer,
 							const int _nSize);
 int WINAPI _export TarGetMethod(HARC _harc, LPSTR _lpBuffer,
 							const int _nSize);
+BOOL WINAPI _export TarGetOriginalSizeEx(HARC _harc, __int64 *_lpllSize);
 DWORD WINAPI _export TarGetOriginalSize(HARC _harc);
+BOOL WINAPI _export TarGetCompressedSizeEx(HARC _harc, __int64 *_lpllSize);
 DWORD WINAPI _export TarGetCompressedSize(HARC _harc);
 WORD WINAPI _export TarGetRatio(HARC _harc);
 WORD WINAPI _export TarGetDate(HARC _harc);
@@ -265,7 +267,11 @@ int WINAPI _export TarGetArchiveType(LPCSTR _szFileName);
 #define ISARC_GET_CREATE_TIME			68
 #define ISARC_GET_ACCESS_TIME			69
 
-#define ISARC_FUNCTION_END				69
+#define ISARC_GET_ORIGINAL_SIZE_EX		85	/* UnlhaGetOriginalSizeEx */
+#define ISARC_GET_COMPRESSED_SIZE_EX	86	/* UnlhaGetCompressedSizeEx */
+
+
+#define ISARC_FUNCTION_END				100
 #endif	/* ISARC_FUNCTION_START */
 
 #ifndef FA_RDONLY

@@ -260,5 +260,13 @@
 	  このようなTAR書庫はHP-UX等で作成されるようです。
 	by tsuneo
 
+2005/04/01 Ver2.27
+	・2GB以上のtar.gzファイルの展開に対応したつもり。
+	  (他の形式(bz2等)や圧縮には対応していません)
+	・TARヘッダの時刻が2^31より大きいファイルを展開した時に落ちる
+	  問題に対応。(TwinTailが作成する??)
+	  (Special thanks to 伊藤さん)
+	・TarGetOriginalSizeEx/TarGetCompressedSizeEx関数を追加。
+	by tsuneo
 
 

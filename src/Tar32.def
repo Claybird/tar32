@@ -32,7 +32,9 @@ EXPORTS
 	TarGetArcOSType
 	TarGetFileName
 	TarGetMethod
+	TarGetOriginalSizeEx
 	TarGetOriginalSize
+	TarGetCompressedSizeEx
 	TarGetCompressedSize
 	TarGetRatio
 	TarGetDate

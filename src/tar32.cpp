@@ -192,7 +192,14 @@ bool CTar32::readdir(CTar32FileStatus *pstat)
 		tmp_name[sizeof(tar_header.dbuf.name)] = '\0';
 		stat.filename	=	tmp_name; /* tar_header.dbuf.name; */
 
-		stat.original_size		=	strtol(tar_header.dbuf.size, NULL, 8);
+		stat.original_size = 0;
+		for(int i=0;i<sizeof(tar_header.dbuf.size);i++){
+			int c = tar_header.dbuf.size[i];
+			if('0'<=c && c<='9'){
+				stat.original_size = stat.original_size * 8 + (c - '0');
+			}
+		}
+		// stat.original_size =	strtoll(tar_header.dbuf.size, NULL, 8);
 		if(tar_header.dbuf.typeflag == LNKTYPE){
 			// Fixed on 2003/11/28. For "spencer_pwb.tar.gz". Thanks to rollo-san.
 			stat.original_size = 0;
@@ -393,7 +400,7 @@ bool CTar32::extract(const char *fname_extract_to)
 	}else{
 		fname = m_currentfile_status.filename;
 	}
-	int filesize = m_currentfile_status.original_size;
+	__int64 filesize = m_currentfile_status.original_size;
 	const int buf_size = 4096;
 	char buf[buf_size];
 
@@ -495,7 +502,7 @@ bool CTar32::addbody(const char *file)
 	if(fs_r.fail()){
 		throw CTar32Exception("can't read file", ERROR_CANNOT_READ);
 	}
-	int size = 0;
+	__int64 size = 0;
 
 	int n;
 	char buf[4096];
@@ -561,7 +568,7 @@ int  CTar32InternalFile::read(void *buf, int size){
 	return n;
 }
 bool CTar32InternalFile::close(){
-	int size;
+	__int64 size;
 	if(m_write){
 		size = m_readsize;
 	}else{
@@ -583,8 +590,13 @@ bool CTar32InternalFile::close(){
 				if(ret != s){bret=false;break;}
 			}
 		}else{
-			int ret = m_pfile->seek(size, SEEK_CUR);
-			bret = (ret != -1);
+			while(size>0){
+				int tmpsize = min(size,1000000000);
+				__int64 ret = m_pfile->seek(tmpsize, SEEK_CUR);
+				bret = (ret != -1);
+				if(bret==0){break;}
+				size -= tmpsize;
+			}
 		}
 	}
 	m_pfile = NULL;

@@ -304,19 +304,33 @@ extern "C" int WINAPI _export TarGetMethod(HARC _harc, LPSTR _lpBuffer,const int
 	*/
 	return 0;
 }
-extern "C" DWORD WINAPI _export TarGetOriginalSize(HARC _harc)
+extern "C" BOOL WINAPI _export TarGetOriginalSizeEx(HARC _harc, __int64 *_lpllSize)
 {
 	CTar32 *pTar32 = HARC2PTAR32(_harc);
 	CTar32FileStatus *pstat = &(pTar32->m_currentfile_status);
 	// サイズが不明の場合は 0を返す
 	if(pstat->original_size == -1){return 0;}
-	return pstat->original_size;
+	*_lpllSize = pstat->original_size;
+	return TRUE;
 }
-extern "C" DWORD WINAPI _export TarGetCompressedSize(HARC _harc)
+extern "C" DWORD WINAPI _export TarGetOriginalSize(HARC _harc)
+{
+	__int64 size = 0;
+	TarGetOriginalSizeEx(_harc, &size);
+	return (DWORD)size;
+}
+extern "C" BOOL WINAPI _export TarGetCompressedSizeEx(HARC _harc, __int64 *_lpllSize)
 {
 	CTar32 *pTar32 = HARC2PTAR32(_harc);
 	CTar32FileStatus *pstat = &(pTar32->m_currentfile_status);
-	return pstat->compress_size;
+	*_lpllSize = pstat->compress_size;
+	return TRUE;
+}
+extern "C" DWORD WINAPI _export TarGetCompressedSize(HARC _harc)
+{
+	__int64 size = 0;
+	TarGetCompressedSizeEx(_harc, &size);
+	return (DWORD)size;
 }
 
 extern "C" WORD WINAPI _export TarGetRatio(HARC _harc)
@@ -475,6 +489,10 @@ extern "C" BOOL WINAPI _export TarQueryFunctionList(const int _iFunction)
 	case ISARC_GET_WRITE_TIME:
 	case ISARC_GET_CREATE_TIME:
 	case ISARC_GET_ACCESS_TIME:
+
+	case ISARC_GET_ORIGINAL_SIZE_EX:
+	case ISARC_GET_COMPRESSED_SIZE_EX:
+
 		return TRUE;
 	default:
 		return FALSE;

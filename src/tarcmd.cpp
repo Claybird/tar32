@@ -480,7 +480,7 @@ static bool extract_file(CTar32CmdInfo &cmdinfo, CTar32 *pTarfile, const char *f
 		fname2 = extractinfo.exinfo.szDestFileName;
 	}
 
-	int filesize = pTarfile->m_currentfile_status.original_size;
+	__int64 filesize = pTarfile->m_currentfile_status.original_size;
 
 	CTar32InternalFile file; file.open(pTarfile);
 
@@ -493,15 +493,24 @@ static bool extract_file(CTar32CmdInfo &cmdinfo, CTar32 *pTarfile, const char *f
 		if(fs_w.fail()){return false;}
 	}
 
-	int readsize = 0;
+	__int64 readsize = 0;
 	while(filesize ==-1 || readsize<filesize){
 		char buf[65536];
 		int nextreadsize;
 		if(filesize == -1){ // case ".gz",".Z",".bz2"
 			nextreadsize = sizeof(buf);
 		}else{
-			nextreadsize = min((int)filesize-readsize,(int)sizeof(buf));
+			__int64 nextreadsize64 = filesize-readsize;
+			if(nextreadsize64 > sizeof(buf)){nextreadsize64 = sizeof(buf);}
+			nextreadsize = (int)nextreadsize64;
+			if(nextreadsize==0){
+				Sleep(0);
+			}
+			// nextreadsize = (int)min(filesize-readsize, sizeof(buf));
 		}
+			if(nextreadsize==0){
+				Sleep(0);
+			}
 		int n = file.read(buf,nextreadsize);
 		readsize += n;
 		if(cmdinfo.b_print){
@@ -617,7 +626,7 @@ static bool add_file(CTar32CmdInfo &cmdinfo, CTar32 *pTarfile, const char *fname
 		// fname2 = extractinfo.exinfo.szDestFileName;
 	}
 
-	int filesize = pTarfile->m_currentfile_status.original_size;
+	__int64 filesize = pTarfile->m_currentfile_status.original_size;
 	if(filesize == 0){return true;}
 	CTar32InternalFile file; file.open(pTarfile, /*write*/true);
 
@@ -744,6 +753,6 @@ static void cmd_list(CTar32CmdInfo &cmdinfo)
 		if(!bret){break;}
 		bret = tarfile.readskip();
 		if(!bret){break;}
-		cmdinfo.output << stat.filename << "\t" << stat.original_size << "\n";
+		cmdinfo.output << stat.filename << "\t" << (long)stat.original_size << "\n";
 	}
 }

@@ -48,8 +48,8 @@ struct CTar32FileStatus{
 		strcpy(uname, "root");
 	}
 	string filename;
-	size_t original_size;
-	size_t compress_size;
+	__int64 original_size;
+	__int64 compress_size;
 	int blocksize;
 
 	int mode;
@@ -128,8 +128,8 @@ public:
 	bool close();
 private:
 	ITarArcFile *m_pfile;
-	int m_readsize;
-	int m_size;
+	__int64 m_readsize;
+	__int64 m_size;
 	int m_blocksize;
 	bool m_write;
 };
