@@ -1,0 +1,65 @@
+LIBRARY tar32
+EXPORTS
+	TarGetVersion
+
+	TarGetRunning
+
+	TarGetBackGroundMode
+	TarSetBackGroundMode
+	TarGetCursorMode
+	TarSetCursorMode
+	TarGetCursorInterval
+	TarSetCursorInterval
+
+	Tar
+	TarExtractMem
+	TarCompressMem
+	TarCheckArchive
+	TarConfigDialog
+	TarGetFileCount
+
+	TarOpenArchive
+	TarCloseArchive
+	TarFindFirst
+	TarFindNext
+	TarGetArcFileName
+	TarGetArcFileSize
+	TarGetArcOriginalSize
+	TarGetArcCompressedSize
+	TarGetArcRatio
+	TarGetArcDate
+	TarGetArcTime
+	TarGetArcOSType
+	TarGetFileName
+	TarGetMethod
+	TarGetOriginalSize
+	TarGetCompressedSize
+	TarGetRatio
+	TarGetDate
+	TarGetTime
+	TarGetWriteTime
+	TarGetAccessTime
+	TarGetCreateTime
+	TarGetCRC
+	TarGetAttribute
+	TarGetOSType
+
+	TarQueryFunctionList
+	
+	TarSetOwnerWindow
+	TarClearOwnerWindow	
+	TarSetOwnerWindowEx
+	TarKillOwnerWindowEx
+	
+	TarGetArchiveType
+
+;susie plugIn
+	GetPluginInfo
+	IsSupported
+	GetArchiveInfo
+	GetFileInfo
+	GetFile
+;
+;	GetPictureInfo
+;	GetPicture
+;	GetPreview
