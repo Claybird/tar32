@@ -131,3 +131,11 @@
 	  問題の修正
 	・バージョンを2.05にする
 	by tsuneo(tsuneo@rr.iij4u.or.jp)
+
+2000/11/11 Ver2.06
+	・zlib,bz2libをダイナミックリンクからスタティックリンクに変更。
+	  (zlib1.13,bzip2-1.0.1を利用)
+	・書庫でないファイルに対してもTarGetFileCount()が1を返していた
+	  バグを修正.(CTar32::openで
+	by tsuneo(tsuneo@rr.iij4u.or.jp)
+

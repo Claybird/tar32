@@ -90,6 +90,9 @@ bool CTar32::open(const char *arcfile,const char *mode,int archive_type /*= ARCH
 	m_write_mode = (strchr(mode,'w') != NULL);
 	if((!strchr(mode,'w')) && archive_type == ARCHIVETYPE_AUTO){ // if read mode
 		m_archive_type = s_get_archive_type(arcfile);
+		if(m_archive_type == -1 || m_archive_type == ARCHIVETYPE_NORMAL){
+			return false;
+		}
 	}
 	m_pfile = ITarArcFile::s_open(arcfile,mode,m_archive_type);
 	if(!m_pfile){return false;}

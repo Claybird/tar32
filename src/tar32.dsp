@@ -226,6 +226,10 @@ SOURCE=..\history.txt
 # End Source File
 # Begin Source File
 
+SOURCE=..\html\index.html
+# End Source File
+# Begin Source File
+
 SOURCE=..\tar32_2.txt
 # End Source File
 # Begin Source File
