@@ -423,7 +423,7 @@ bool CTar32::addheader(const CTar32FileStatus &stat)
 			const CTar32FileStatus *p = &stat;
 			string fname = p->filename;
 
-			if(fname.length() > sizeof(pblock->dbuf.name)/*100*/){
+			if(fname.length() >= sizeof(pblock->dbuf.name)/*100*/){
 				CTar32FileStatus tmpstat = stat;
 				tmpstat.filename = "././@LongLink";
 				tmpstat.typeflag = LONGLINK;
