@@ -52,6 +52,8 @@
 #include <fstream>
 using namespace std;
 
+#include "fast_stl.h"
+
 class CTar32CmdInfo
 {
 public:
@@ -406,6 +408,8 @@ static void _cdecl tar_cmd_main_thread(LPVOID param)
 	}
 	//return 0;
 }
+
+
 static bool extract_file(CTar32CmdInfo &cmdinfo, CTar32 *pTarfile, const char *fname)
 {
 	CTar32FileStatus &stat = pTarfile->m_currentfile_status;
@@ -439,7 +443,8 @@ static bool extract_file(CTar32CmdInfo &cmdinfo, CTar32 *pTarfile, const char *f
 	CTar32InternalFile file; file.open(pTarfile);
 
 
-	ofstream fs_w;
+	// ofstream fs_w;
+	fast_ofstream fs_w;
 	if(!cmdinfo.b_print){
 		mkdir_recursive(get_dirname(fname2.c_str()).c_str());
 		fs_w.open(fname2.c_str(), ios::out|ios::binary);
