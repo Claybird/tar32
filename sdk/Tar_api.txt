@@ -1,103 +1,11 @@
 ============================================================
-	TAR32.DLL API 説明ファイル
-                   		by どんぞ（ｎｏｄａ）
-                   		email:HZG02104@nifty.ne.jp
-                   		date: 2000/01/06
-
-                   		2000/02/15 変更
-                   		OwnerWindow系を○に追加
-                   		by 吉岡恒夫(tsuneo@rr.iij4u.or.jp)
+	TAR32.DLL Ver2.xx API 説明ファイル
 ============================================================
-(注)ソースコードなどを元に調べたものです。ひょっとしたら間違い
-があるかもしれません。
 
-目次：
-1)API一覧
-2)独自のAPI
-3)注意点
+●はじめに
 
-------------------------------------------------------------
-1)API一覧
-　基本的な使い方はUNLHA32.DLLやUNZIP32.DLLと同じです。
+　この文書ではTAR32.DLL Ver2.xx APIの簡単な説明を行います。
+　基本的には、TAR32.DLL Ver0.xxと同じです。
+　TAR32.DLL Ver0.xx API 説明ファイルを参照してください。
 
-○ int WINAPI Tar(const HWND _hwnd, LPCSTR _szCmdLine,LPSTR _szOutput, const DWORD _dwSize);
-○ WORD WINAPI TarGetVersion(VOID);
-× WORD WINAPI TarGetCursorInterval(VOID);
-× BOOL WINAPI TarSetCursorInterval(const WORD _Interval);
-× BOOL WINAPI TarGetBackGroundMode(VOID);
-× BOOL WINAPI TarSetBackGroundMode(const BOOL _BackGroundMode);
-× BOOL WINAPI TarGetCursorMode(VOID);
-× BOOL WINAPI TarSetCursorMode(const BOOL _CursorMode);
-○ BOOL WINAPI TarGetRunning(VOID);
-
-○ BOOL WINAPI TarCheckArchive(LPCSTR _szFileName, const int _iMode);
-○ BOOL WINAPI TarConfigDialog(const HWND _hwnd, LPSTR _lpszComBuffer,const int _iMode);
-○ int WINAPI TarGetFileCount(LPCSTR _szArcFile);
-○ BOOL WINAPI TarQueryFunctionList(const int _iFunction);
-
-○ HARC WINAPI TarOpenArchive(const HWND _hwnd, LPCSTR _szFileName,const DWORD _dwMode);
-○ int WINAPI TarCloseArchive(HARC _harc);
-○ int WINAPI TarFindFirst(HARC _harc, LPCSTR _szWildName,INDIVIDUALINFO *_lpSubInfo);
-○ int WINAPI TarFindNext(HARC _harc, INDIVIDUALINFO *_lpSubInfo);
-
-× int WINAPI TarGetArcFileName(HARC _harc, LPSTR _lpBuffer,const int _nSize);
-× DWORD WINAPI TarGetArcFileSize(HARC _harc);
-× DWORD WINAPI TarGetArcOriginalSize(HARC _harc);
-× DWORD WINAPI TarGetArcCompressedSize(HARC _harc);
-× WORD WINAPI TarGetArcRatio(HARC _harc);
-× WORD WINAPI TarGetArcDate(HARC _harc);
-× WORD WINAPI TarGetArcTime(HARC _harc);
-× UINT WINAPI TarGetArcOSType(HARC _harc);
-○ int WINAPI TarGetFileName(HARC _harc, LPSTR _lpBuffer,const int _nSize);
-○ DWORD WINAPI TarGetOriginalSize(HARC _harc);
-○ DWORD WINAPI TarGetCompressedSize(HARC _harc);
-○ WORD WINAPI TarGetRatio(HARC _harc);
-○ WORD WINAPI TarGetDate(HARC _harc);
-○ WORD WINAPI TarGetTime(HARC _harc);
-○ DWORD WINAPI TarGetCRC(HARC _harc);
-○ int WINAPI TarGetAttribute(HARC _harc);
-○ UINT WINAPI TarGetOSType(HARC _harc);
-○ int WINAPI TarGetMethod(HARC _harc, LPSTR _lpBuffer,const int _nSize);
-○ DWORD WINAPI TarGetWriteTime(HARC _harc);
-○ DWORD WINAPI TarGetCreateTime(HARC _harc);
-○ DWORD WINAPI TarGetAccessTime(HARC _harc);
-
-○ int WINAPI TarCompressMem(const HWND _hwndParent,LPCSTR _szCmdLine, const LPBYTE _lpBuffer, const DWORD _dwSize,const time_t *_lpTime, const LPWORD _lpwAttr,LPDWORD _lpdwWriteSize);
-○ int WINAPI TarExtractMem(const HWND _hwndParent,LPCSTR _szCmdLine, LPBYTE _lpBuffer, const DWORD _dwSize,time_t *_lpTime, LPWORD _lpwAttr, LPDWORD _lpdwWriteSize);
-○ BOOL WINAPI TarSetOwnerWindow(const HWND _hwnd);
-○ BOOL WINAPI TarClearOwnerWindow(void);
-○ BOOL WINAPI TarSetOwnerWindowEx(HWND _hwnd,ARCHIVERPROC *_lpArcProc);
-○ BOOL WINAPI TarKillOwnerWindowEx(HWND _hwnd);
-○ int WINAPI TarGetArchiveType(LPCSTR _szFileName);
-
-------------------------------------------------------------
-2)独自のAPI
-
-int WINAPI TarGetArchiveType(LPCSTR szFileName);
-	機能：
-		指定したアーカイブファイルの形式を得ます。
-	戻り値：
-		ARCHIVETYPE_TAR (1)		TAR形式
-		ARCHIVETYPE_TARGZ (2)	TAR.GZ(TGZ)形式
-		ARCHIVETYPE_TARZ (3)	TAR.Z(TAZ)形式
-		ARCHIVETYPE_GZ (4)		GZ形式
-		ARCHIVETYPE_Z (5)		Z形式
-		ARCHIVETYPE_TARBZ2 (6)	TAR.BZ2形式
-		ARCHIVETYPE_BZ2 (7)		BZ2形式
-		
-		0			TAR32.DLLで利用できない形式
-		-1			エラー
-	引数：
-		szFileName	チェックすべきアーカイブファイルのファイル名。
-
-------------------------------------------------------------
-3)注意点
-　この他にもたくさんあると思います。気が付いた点がある人はどんどん書き足してください。
-
-TarGetRunning()は常にFALSEを返します。
-TarConfigDialog()はメッセージボックスを表示するだけです。
-TarOpenArchive()の_hwndと_dwModeは無視されます。
-TarFindFirst()の_szWildNameは無視されます。
-TarGetOSType()は常に0を返します。
-
-------------------------------------------------------------
+以下準備中です。m(_ _)m

@@ -1,33 +1,58 @@
 ============================================================
-	TAR32.DLL コマンド説明ファイル
-                   		by どんぞ（ｎｏｄａ）
-                   		email:HZG02104@nifty.ne.jp
-                   		date: 2000/01/10
+	TAR32.DLL Ver2.xx Tar() APIのコマンド説明ファイル
 ============================================================
-(注)ソースコードなどを元に調べたものです。ひょっとしたら間違い
-があるかもしれません。
 
-基本的には、Ver1.xxと同じです。
+●はじめに
 
-usage: TAR32.DLL <command> <option> archive.{tar,tar.gz,tar.bz2} filenames...
+　この文書ではTAR32.DLL Ver2.xxのTar() APIで用いるコマンドの簡単な説明を行います。
+　基本的には、TAR32.DLL Ver0.xxと同じです。
 
-command:
-	EXTRACT:	-x <files.tgz> [files...]
-	CREATE:		-c <files.tgz> [files...]
-	LIST:		-l <files.tgz> [files...]
-				-t <files.tgz> [files...]
-	PRINT:		-p <files.tgz> [files...]
+●コマンドラインの形式
 
-option: (default value)\n"
-	-z[N]		compress by gzip(.tar.gz) with level N(default:6)
-	-B[N]		compress by bzip2(.tar.bz2) with level N(default:9)
-	-G			not make tar archive.(.tar/.tar.gz/.tar.bz2)
-				make compress only archive.(.gz/.bz2)
-	-Z[N]		compress by compress(LZW) (NOT IMPLEMENTED)
-	--use-directory=[0|1](1)	effective directory name
-	--display-dialog=[0|1](1)	display dialog box
-	--message-loop=[0|1](1)		run message loop
-	--bzip2=[N]					compress by bzip2 with level N
+　 -<command> [-<option>...] <archive_file_name.{tar,tar.gz,tar.bz2}> [<directory_name>\] [<filenames>...]
 
-これ以外のコマンドであれば、簡単な説明が出力されます。
-なお、これ以外のオプションは無視されます。
+●コマンド
+
+　-x
+　　　　　アーカイブ中のファイルを展開します。
+
+　-c
+　　　　　指定されたファイルをアーカイブに圧縮します。
+
+　-l
+　-t
+　　　　　アーカイブ中のファイルの一覧を表示します。
+
+　-p
+　　　　　アーカイブ中のファイルを標準出力(バッファ)に展開します。
+
+●オプション
+
+　-z[N]
+　　　　　gzip相当の圧縮を行います。圧縮レベルはNに1～9を入れることで指定することができます。デフォルトの圧縮レベルは、'6'です。
+
+　-B[N]
+　　　　　bzip2相当の圧縮を行います。圧縮レベルはNに1～9を入れることで指定することができます。デフォルトの圧縮レベルは、'9'です。
+
+　-G
+　　　　　gzipまたはbzip2相当の圧縮のみを行います。
+
+　-Z[N]
+　　　　　compress相当の圧縮を行います。(未実装)
+
+　--use-directory=[0|1](1)
+　　　　　effective directory name
+
+　--display-dialog=[0|1](1)
+　　　　　圧縮/展開中に状況表示ダイアログを表示する。
+
+　--message-loop=[0|1](1)
+　　　　　メッセージループをまわす。
+
+　--bzip2=[N]
+　　　　　bzip2相当の圧縮を行います。-Bと同じです。
+
+●ひとこと
+
+　未知のコマンドに遭遇すると、簡単な説明を出力します。
+　未知のオプションは無視されます。

@@ -11,7 +11,7 @@
 	存在しないファイルを指定されたときの対策をした。
 	テストプログラム(ARcToy)を追加した。
 	簡単なドキュメントを付けた。
-	by どんぞ（ｎｏｄａ）
+	by S.Noda(HZG02104@nifty.ne.jp)
 
 2000/01/07
 	TAR形式ヘッダにマジック("ustar\000")が書き込まれていなかったのを修正
@@ -25,7 +25,7 @@
 	TarCheckArchive()を修正した。
 	コマンドとして-tを受け付けるようにした。
 	これでLHMeltingでの不具合はなくなったと思う。
-	by どんぞ（ｎｏｄａ）
+	by S.Noda(HZG02104@nifty.ne.jp)
 
 2000/01/13
 	rundll32インターフェースの関数TarCommandLine()を追加。
@@ -35,7 +35,7 @@
 
 2000/01/14
 	TarCheckArchive()を修正した。
-	by どんぞ（ｎｏｄａ）
+	by S.Noda(HZG02104@nifty.ne.jp)
 
 2000/02/15
 	・100byteより長いファイル名を含んだ書庫の作成、展開に対応した。
@@ -46,15 +46,15 @@
 		TarClearOwnerWindow
 		TarSetOwnerWindowEx
 		TarKillOwnerWindowEx
-	...by 吉岡 恒夫(tsuneo@rr.iij4u.or.jp)
+	by 吉岡 恒夫(tsuneo@rr.iij4u.or.jp)
 
 2000/02/22
 	・インポートライブラリ(.lib)、エクスポートライブラリ(.exp)を追加
-	...by 吉岡 恒夫(tsuneo@rr.iij4u.or.jp)
+	by 吉岡 恒夫(tsuneo@rr.iij4u.or.jp)
 
 2000/02/24
 	・.gz/.Z/.bz2の展開に失敗していたバグ修正
-	...by 吉岡 恒夫(tsuneo@rr.iij4u.or.jp)
+	by 吉岡 恒夫(tsuneo@rr.iij4u.or.jp)
 
 2000/03/04
 	・Tar()関数呼び出しで第一引数のウインドウハンドルがNULL以外の場合に、
@@ -102,6 +102,7 @@
 	・Susie32で正常に動作しないことに対するJy.さんのパッチを当てる。
 	(ありがとうございます>Jy.さん)
 	by 吉岡 恒夫(tsuneo@rr.iij4u.or.jp)
+
 2000/08/21
 	・htmlディレクトリを作成した。CVSサーバ上のhtmlディレクトリ以下
           を更新するとWebページ(http://openlab.ring.gr.jp/tsuneo/tar32/)
@@ -115,3 +116,7 @@
 	・そろそろβ版にしてもいい気がするので、説明から「α版」を削除.
 	・バージョンを2.04にする。
 	by tsuneo(tsuneo@rr.iij4u.or.jp)
+
+2000/09/27
+	・libbz2.dllとzlib.dllを使用するようにした。
+	by S.Noda(HZG02104@nifty.ne.jp)
