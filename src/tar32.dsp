@@ -185,6 +185,10 @@ SOURCE=.\dlg.h
 # End Source File
 # Begin Source File
 
+SOURCE=.\fast_stl.h
+# End Source File
+# Begin Source File
+
 SOURCE=.\normal.h
 # End Source File
 # Begin Source File

@@ -1,6 +1,8 @@
 /*
-   VC++6付属のSTLは遅いので単純な高速化バージョンを使う。
-   SGIのSTLportも速いらしい... by tsuneo 2000/09/14
+   VC++6付属のSTLは余りに遅いので簡単な高速化バージョンを作る。
+   # SGIのSTLportも速いらしい...
+   展開速度が約3倍になった。
+   by tsuneo. 2000/09/14
 */
 
 #ifndef __FAST_OFSTREAM_H
