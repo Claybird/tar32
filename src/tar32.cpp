@@ -41,6 +41,7 @@
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/stat.h> 
+#include <mbstring.h>
 
 #include <algorithm>
 #include <string>
@@ -234,7 +235,10 @@ bool CTar32::readdir(CTar32FileStatus *pstat)
 			stat.mode |= _S_IFDIR;
 		}
 		if((stat.mode & _S_IFMT) == _S_IFDIR){
-			stat.filename = stat.filename + "/";
+			const char * f = stat.filename.c_str();
+			if((char*)max(_mbsrchr((unsigned char*)f, '/'), _mbsrchr((unsigned char*)f,'\\')) != f+strlen(f)-1){
+				stat.filename = stat.filename + "/";
+			}
 		}
 	}else if(m_archive_type == ARCHIVETYPE_CPIO
 		|| m_archive_type == ARCHIVETYPE_CPIOGZ
