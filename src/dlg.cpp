@@ -57,11 +57,11 @@ HWND CTar32StatusDialog::Create(HWND hParent)
 		SetWindowLong(hWnd,GWL_USERDATA,lParam);
 		return 1;
 	case WM_DESTROY:
-		return 0;
+//		return 0;
 //		EndDialog(hWnd,0);
 //		return 0;
-//		PostQuitMessage(0);
-//		return 1;
+		PostQuitMessage(0);
+		return 1;
 	case WM_CLOSE:
 		DestroyWindow(hWnd);
 		return 1;
@@ -117,7 +117,7 @@ void CTar32StatusDialog::Destroy()
 	DWORD code;
 	// WaitForSingleObject() must call when m_hThread is alive.
 	//ret = WaitForSingleObject(m_hThread,INFINITE);
-	while(GetExitCodeThread(m_hThread,&code) == STILL_ACTIVE){
+	while(GetExitCodeThread(m_hThread,&code) && (code == STILL_ACTIVE)){
 		Sleep(1);
 	}
 	//ret = WaitForSingleObject(m_hThread,INFINITE);

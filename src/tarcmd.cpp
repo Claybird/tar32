@@ -369,7 +369,7 @@ static int tar_cmd_itr(const HWND hwnd, LPCSTR szCmdLine,LPSTR szOutput, const D
 		while(GetMessage(&msg,NULL,0,0)){
 			if(msg.message == cmdinfo.wm_main_thread_end){
 				unsigned long exitcode;
-				while(GetExitCodeThread(hThread,&exitcode)==STILL_ACTIVE){
+				while(GetExitCodeThread(hThread,&exitcode) && (exitcode==STILL_ACTIVE)){
 					Sleep(1);
 				}
 				break;
