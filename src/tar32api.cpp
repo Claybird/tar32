@@ -412,6 +412,21 @@ extern "C" BOOL WINAPI _export TarQueryFunctionList(const int _iFunction)
 	}
 }
 
+/********************************************************
+	rundll32 interface for execute Tar() function from command line
+	  command line:
+	     rundll32.exe tar32.dll,TarCommandLine <command>
+		 ex) rundll32.exe tar32.dll,TarCommandLine  -xvf foo.tar.gz
+      reference:
+		[SDK32] Rundll と Rundll32 インタフェース
+		http://www.microsoft.com/mscorp/worldwide/japan/support/kb/articles/j042/9/53.htm
+********************************************************/
+extern "C" void WINAPI/*CALLBACK*/ TarCommandLine(HWND hwnd, HINSTANCE hinst, LPSTR lpszCmdLine, int nCmdShow)
+{
+	char buf[64000];
+	int iRet = Tar(hwnd,lpszCmdLine,buf,sizeof(buf));
+}
+
 /*********************************************************
 	 Susie Plug-In APIs 
 **********************************************************/
