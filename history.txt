@@ -143,3 +143,8 @@
 	・Tar()コマンドで展開先フォルダに日本語ファイル名を指定すると
 	  展開に失敗するバグ修正(例："x -f D:\\あ\\xxx.tar D:\\あ\\");
 	by tsuneo(tsuneo@rr.iij4u.or.jp)
+
+2000/11/22 Ver2.08
+	・CTar32::close()でのm_pfileの削除忘れによるメモリリーク修正
+	・メモリリークチェック用関数の追加(_CrtMemDumpAllObjectsSince()などを利用)
+	by tsuneo(tsuneo@rr.iij4u.or.jp)

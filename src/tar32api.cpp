@@ -38,7 +38,7 @@
 #include <time.h>
 #include <windows.h>
 #include <sys/stat.h>	// S_IWRITE
-
+#include <crtdbg.h>		// _CrtMemCheckpoint, _CrtMemDumpAllObjectsSince
 
 
 HINSTANCE dll_instance=NULL;	/* TAR32.DLL module handle */
@@ -110,7 +110,14 @@ static void tar32_cursor_unset() // Ç«ÇÒÇºÅFvoidÇí«â¡
 	Tar32LeaveCriticalSection();
 }
 extern "C" int WINAPI _export Tar(const HWND _hwnd, LPCSTR _szCmdLine,LPSTR _szOutput, const DWORD _dwSize){
-	return tar_cmd(_hwnd,_szCmdLine,_szOutput,_dwSize);
+	int ret;
+	_CrtMemState memstate;
+	_CrtMemCheckpoint(&memstate);
+
+	ret = tar_cmd(_hwnd,_szCmdLine,_szOutput,_dwSize);
+	
+	_CrtMemDumpAllObjectsSince(&memstate);	// check memoryleaks. (the first time call happen memory-leak becaus of C/C++ runtime.)
+	return ret;
 }
 extern "C" int WINAPI _export TarExtractMem(const HWND _hwndParent,LPCSTR _szCmdLine, LPBYTE _lpBuffer, const DWORD _dwSize,time_t *_lpTime, LPWORD _lpwAttr, LPDWORD _lpdwWriteSize){
 	string cmd;
@@ -398,7 +405,14 @@ extern "C" BOOL WINAPI _export TarKillOwnerWindowEx(HWND _hwnd)
 
 extern "C" int WINAPI _export TarGetArchiveType(LPCSTR _szFileName)
 {
-	return CTar32::s_get_archive_type(_szFileName);
+	int ret;
+	_CrtMemState memstate;
+	_CrtMemCheckpoint(&memstate);
+
+	ret =  CTar32::s_get_archive_type(_szFileName);
+	
+	_CrtMemDumpAllObjectsSince(&memstate);	// check memoryleaks. (the first time call happen memory-leak becaus of C/C++ runtime.)
+	return ret;
 }
 
 extern "C" BOOL WINAPI _export TarQueryFunctionList(const int _iFunction)

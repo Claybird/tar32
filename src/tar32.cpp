@@ -110,8 +110,11 @@ bool CTar32::close()
 			m_pfile->write(buf,sizeof(buf));
 		}
 	}
-	if(m_pfile)m_pfile->close();
-	m_pfile = NULL;
+	if(m_pfile){
+		m_pfile->close();
+		delete m_pfile;
+		m_pfile = NULL;
+	}
 	return true;
 }
 bool CTar32::readdir(CTar32FileStatus *pstat)
