@@ -229,6 +229,10 @@ bool CTar32::readdir(CTar32FileStatus *pstat)
 		stat.atime		=   strtol(tar_header.dbuf.atime , NULL, 8);
 		stat.ctime		=   strtol(tar_header.dbuf.ctime , NULL, 8);
 		stat.offset		=   strtol(tar_header.dbuf.offset , NULL, 8);
+		if(stat.typeflag == DIRTYPE){
+			stat.mode &= ~_S_IFMT;
+			stat.mode |= _S_IFDIR;
+		}
 		if((stat.mode & _S_IFMT) == _S_IFDIR){
 			stat.filename = stat.filename + "/";
 		}

@@ -77,6 +77,9 @@ struct CTar32FileStatus{
 		atime = st.st_atime;
 		ctime = st.st_ctime;
 		original_size = st.st_size;
+		if((st.st_mode & _S_IFMT) == _S_IFDIR){
+			typeflag = DIRTYPE;
+		}
 		return true;
 	}
 };
