@@ -31,6 +31,7 @@ int	(WINAPI *TarCloseArchive)(HANDLE harc);
 int (WINAPI *TarFindFirst)(HANDLE hwnd,char *fname,INDIVIDUALINFO *pinfo);
 int (WINAPI *TarFindNext)(HANDLE hwnd,INDIVIDUALINFO *pinfo);
 int (WINAPI *TarGetFileCount)(LPCSTR _szArcFile);
+BOOL (WINAPI *TarConfigDialog)(const HWND _hwnd, LPSTR _lpszComBuffer,const int _iMode);
 
 void SelfTest()
 {
@@ -56,6 +57,7 @@ int main(int argc,char *argv[])
 	hLib = LoadLibrary("tar32.dll");
 	TarGetVersion = GetProcAddress(hLib, "TarGetVersion");
 	TarCheckArchive = GetProcAddress(hLib,"TarCheckArchive");
+	TarConfigDialog = GetProcAddress(hLib,"TarConfigDialog");
 	Tar = GetProcAddress(hLib,"Tar");
 	
 	ver = TarGetVersion();
@@ -68,6 +70,9 @@ int main(int argc,char *argv[])
 
 	if(argc>=2 && strcmp(argv[1],"selftest") == 0){
 		SelfTest();
+	}
+	if(argc>=2 && strcmp(argv[1],"config") == 0){
+		TarConfigDialog(NULL,NULL,0);
 	}
 	if(argc==3 && (strcmp(argv[1],"check")==0 || strcmp(argv[1],"find")==0)){
 		TarCheckArchive = GetProcAddress(hLib,"TarCheckArchive");

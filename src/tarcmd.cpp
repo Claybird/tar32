@@ -207,7 +207,7 @@ static int tar_cmd_itr(const HWND hwnd, LPCSTR szCmdLine,LPSTR szOutput, const D
 					cmdinfo.b_print = true;
 					break;
 				case 'o':
-					if(argi++ == args.end()){
+					if(++argi == args.end()){
 						throw CTar32Exception("'o' follow no directory name", ERROR_COMMAND_NAME);
 					}
 					current_directory = *argi;

@@ -77,5 +77,10 @@
 	by 吉岡 恒夫(tsuneo@rr.iij4u.or.jp)
 ----Ver2.02-----
 
+2000/03/20
+	・TarConfigDialog()でメッセージボックスにDLLのタイムスタンプなどを表示するようにした。
+	by 吉岡 恒夫(tsuneo@rr.iij4u.or.jp)
+	
+
 メモ:V2で作成した書庫がV1やTAR32.EXEで不具合を起こす。
      =>00/01/07修正(by 吉岡 恒夫)

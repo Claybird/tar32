@@ -135,7 +135,32 @@ extern "C" BOOL WINAPI _export TarCheckArchive(LPCSTR _szFileName, const int _iM
 }
 extern "C" BOOL WINAPI _export TarConfigDialog(const HWND _hwnd, LPSTR _lpszComBuffer,const int _iMode)
 {
-	MessageBox(_hwnd, "There is no configuration item now.", "TAR32.DLL Configuration",0);
+	char msg[10000]="";
+	int ver = TarGetVersion();
+	time_t ti;
+	char fname[1000]="";
+	GetModuleFileName(dll_instance,fname,sizeof(fname));
+	{
+		FILE *fp;
+		fp=fopen(fname,"rb");
+		IMAGE_DOS_HEADER idh;
+		fread(&idh,1,sizeof(idh),fp);
+		fseek(fp, idh.e_lfanew, SEEK_SET);
+		fseek(fp,4,SEEK_CUR);// skip IMAGE_NT_SIGNATURE
+		IMAGE_FILE_HEADER ifh;
+		fread(&ifh,1,sizeof(ifh),fp);
+		ti = ifh.TimeDateStamp;
+		fclose(fp);
+	}
+	char tistr[1000]; strftime(tistr,1000,"%Y/%m/%d %H:%M:%S",localtime(&ti));
+
+	sprintf(msg, "TAR32.DLL Configuration.\n"
+			"ModuleFileName: %s\n"
+			"TarGetVersion(): %d.%02d\n"
+			"IMAGE_FILE_HEADER/TimeStamp: %d(%s)\n"
+			, fname, ver/100,ver%100, ti, tistr);
+	MessageBox(_hwnd, msg, "TAR32.DLL Configuration",0);
+	// MessageBox(_hwnd, "There is no configuration item now.", "TAR32.DLL Configuration",0);
 	return FALSE;
 }
 extern "C" int WINAPI _export TarGetFileCount(LPCSTR _szArcFile)
