@@ -285,8 +285,8 @@ static int tar_cmd_itr(const HWND hwnd, LPCSTR szCmdLine,LPSTR szOutput, const D
 			}
 			argi++;
 		}else{
-			const unsigned char *file = (const unsigned char *) (*argi).c_str();
-			if(*file && (_mbsrchr(file, '\\') == file + _mbslen(file) - 1)){
+			const char *file = (*argi).c_str();
+			if(*file && ((char*)_mbsrchr((const unsigned char*)file, '\\') == file + strlen(file) - 1)){
 				current_directory = (char*)file;
 			}else if(cmdinfo.arcfile.length() == 0){
 				cmdinfo.arcfile = *argi;
