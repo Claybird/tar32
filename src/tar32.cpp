@@ -187,6 +187,10 @@ bool CTar32::readdir(CTar32FileStatus *pstat)
 		}
 		stat.filename	=	tar_header.dbuf.name;
 		stat.original_size		=	strtol(tar_header.dbuf.size, NULL, 8);
+		if(tar_header.dbuf.typeflag == LNKTYPE){
+			// Fixed on 2003/11/28. For "spencer_pwb.tar.gz". Thanks to rollo-san.
+			stat.original_size = 0;
+		}
 		stat.blocksize  =   512;
 		if(tar_header.dbuf.typeflag == LONGLINK){	// tar_header.dbuf.name == "././@LongLink"
 			char longfilename[2000] = "";

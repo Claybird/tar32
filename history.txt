@@ -247,3 +247,11 @@
 	  できるように変更。
 	・-z[N]のほかに、--gzip(=[N])でもgzipの圧縮をできるように変更。
 	by tsuneo
+
+2003/12/01 Ver2.25
+	・TARヘッダ中にtypeがLNKTYPE('1')のファイルを含む場合、残りの
+	  ファイルが展開できない問題の修正。("spencer_pwb.tar.gz"等)
+	  (Special Thank to rolloさん)
+	by tsuneo
+
+
