@@ -108,6 +108,46 @@ string make_pathname(const char *dirname_, const char *filename_)
 	return pathname;
 }
 
+static void escape_filename(char *filename)
+{
+	while(*filename){
+		if(*filename == ':'){
+			*filename = '_';
+		}
+		filename += _mbclen((unsigned char*)filename);
+	}
+}
+
+string escape_absolute_paths(const char *pathname_)
+{
+	while(*pathname_ == '/' || *pathname_== '\\' ){pathname_ ++;}
+
+	string esc_path;
+	string pathname = pathname_;
+	int oldpos=0, pos = 0;
+	
+	while(pos < pathname.length()){
+		string fname;
+
+		const char *ptr = (char*)_mbspbrk((const unsigned char*)pathname.c_str()+pos,(const unsigned char*)"/\\");
+		if(ptr==NULL){
+			ptr = pathname.c_str() + pathname.length();
+		}
+		pos = ptr - pathname.c_str();
+		fname = pathname.substr(oldpos,pos-oldpos);
+		escape_filename((char*)fname.c_str());
+		if(fname == ".."){
+			fname = "__";
+		}
+		esc_path.append(fname);
+		if(*ptr=='/' || *ptr=='\\'){
+			esc_path.append(1,'/');
+		}
+		pos++;
+		oldpos = pos;
+	}
+	return esc_path;
+}
 
 class dbcschar{
 public:

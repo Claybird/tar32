@@ -34,6 +34,7 @@ int mkdir_recursive(const char *dirname_);
 string get_dirname(const char *pathname_);
 string get_filename(const char *pathname);
 string make_pathname(const char *dirname_, const char *filename_);
+string escape_absolute_paths(const char *pathname_);
 void convert_yen_to_slash(char *pathname);
 bool is_regexp_match_dbcs(const char *regexp, const char *str);
 list<string> find_files(const char *regexp);

@@ -65,6 +65,7 @@ public:
 	CTar32CmdInfo(char *s, int len) : output(s,len), exception("",0){
 		hTar32StatusDialog = NULL;
 		b_use_directory = true;
+		b_absolute_paths = false;
 		b_display_dialog = true;
 		b_message_loop = true;
 		b_print = false;
@@ -86,6 +87,7 @@ public:
 	CTar32Exception exception;
 
 	bool b_use_directory;
+	bool b_absolute_paths;
 	bool b_display_dialog;
 	bool b_message_loop;
 	bool b_print;
@@ -93,6 +95,7 @@ public:
 	bool b_archive_tar;
 	int archive_type;
 	int compress_level;
+
 
 	UINT wm_main_thread_end;
 	HWND hParentWnd;
@@ -120,6 +123,7 @@ static void cmd_usage(CTar32CmdInfo &info)
 		<< "                 make compress only archive.(.gz/.bz2)\n"
 		// << "       -Z[N]     compress by compress(LZW) (NOT IMPLEMENTED)\n"
 		<< "       --use-directory=[0|1](1)  effective directory name\n"
+		<< "       --absolute-paths=[0|1](0)  extract absolute paths(/, .., xx:)\n"
 		<< "       --display-dialog=[0|1](1)  display dialog box\n"
 		<< "       --message-loop=[0|1](1)  run message loop\n"
 		<< "       --bzip2=[N]     compress by bzip2 with level N\n"
@@ -176,22 +180,27 @@ static int tar_cmd_itr(const HWND hwnd, LPCSTR szCmdLine,LPSTR szOutput, const D
 			if(*stri == '-' && *(stri+1) != '\0'){
 				stri++;
 				const string &long_option = (*argi).substr(stri - argi->begin());
-				string key;
-				string val = long_option;
+				string key = long_option;
+				string val;
 				int len;
 				if((len = long_option.find('=')) != string::npos){
 					key = long_option.substr(0, len);
 					val = long_option.substr(len + 1);
 				}
 				if(key == "use-directory"){
-					cmdinfo.b_use_directory = (bool)atoi(val.c_str());
+					cmdinfo.b_use_directory = ((val=="") ? true : (bool)atoi(val.c_str()));
+				}else if(key == "absolute-paths"){
+					cmdinfo.b_absolute_paths = ((val=="") ? true : (bool)atoi(val.c_str()));
 				}else if(key == "display-dialog"){
-					cmdinfo.b_display_dialog = (bool)atoi(val.c_str());
+					cmdinfo.b_display_dialog = ((val=="") ? true : (bool)atoi(val.c_str()));
 				}else if(key == "message-loop"){
-					cmdinfo.b_message_loop = (bool)atoi(val.c_str());
-				}else if(key == "bzip2"){
+					cmdinfo.b_message_loop = ((val=="") ? true : (bool)atoi(val.c_str()));
+				}else if(key == "bzip2" || key == "bzip"){
 					cmdinfo.archive_type = ARCHIVETYPE_BZ2;
-					cmdinfo.compress_level = (bool)atoi(val.c_str());
+					cmdinfo.compress_level = ((val=="") ? 9 : (bool)atoi(val.c_str()));
+				}else if(key == "gzip"){
+					cmdinfo.archive_type = ARCHIVETYPE_GZ;
+					cmdinfo.compress_level = ((val=="") ? 5 : (bool)atoi(val.c_str()));
 				}else{
 					/* igonore */;
 				}
@@ -235,6 +244,7 @@ static int tar_cmd_itr(const HWND hwnd, LPCSTR szCmdLine,LPSTR szOutput, const D
 					}
 					break;
 				case 'B':
+				case 'j':
 					cmdinfo.archive_type = ARCHIVETYPE_BZ2;
 					if(isdigit(*(stri+1))){
 						stri++;
@@ -258,6 +268,9 @@ static int tar_cmd_itr(const HWND hwnd, LPCSTR szCmdLine,LPSTR szOutput, const D
 						cmdinfo.archive_type = ARCHIVETYPE_GZ;
 						cmdinfo.compress_level = 6;
 					}
+					break;
+				case 'P':
+					cmdinfo.b_absolute_paths = true;
 					break;
 				case 'a':
 				case 'v':
@@ -555,8 +568,11 @@ static void cmd_extract(CTar32CmdInfo &cmdinfo)
 			for(filei = args.begin();filei!=args.end();filei++){
 				if(::is_regexp_match_dbcs(filei->file.c_str(), file_internal.c_str())){
 					string file_internal2 = file_internal;
+					if(! cmdinfo.b_absolute_paths){
+						file_internal2 = escape_absolute_paths(file_internal2.c_str());
+					}
 					if(!cmdinfo.b_use_directory){
-						file_internal2 = get_filename(file_internal.c_str());
+						file_internal2 = get_filename(file_internal2.c_str());
 					}
 					file_external = make_pathname(filei->current_dir.c_str(), file_internal2.c_str());
 					break;
@@ -650,8 +666,10 @@ static void cmd_create(CTar32CmdInfo &cmdinfo)
 	int ret;
 	bool bret;
 	int filenum = 0;
+	char mode[10];
 
-	ret = tarfile.open(cmdinfo.arcfile.c_str(), "wb", cmdinfo.archive_type);
+	sprintf(mode, "wb%d", cmdinfo.compress_level);
+	ret = tarfile.open(cmdinfo.arcfile.c_str(), mode, cmdinfo.archive_type);
 	if(!ret){
 		throw CTar32Exception("can't open archive file", ERROR_ARC_FILE_OPEN);
 	}
