@@ -445,9 +445,14 @@ static bool extract_file(CTar32CmdInfo &cmdinfo, CTar32 *pTarfile, const char *f
 	}
 
 	int readsize = 0;
-	while(readsize<filesize){
+	while(filesize ==-1 || readsize<filesize){
 		char buf[65536];
-		int nextreadsize = min((int)filesize-readsize,(int)sizeof(buf));
+		int nextreadsize;
+		if(filesize == -1){ // case ".gz",".Z",".bz2"
+			nextreadsize = sizeof(buf);
+		}else{
+			nextreadsize = min((int)filesize-readsize,(int)sizeof(buf));
+		}
 		int n = file.read(buf,nextreadsize);
 		readsize += n;
 		if(cmdinfo.b_print){
@@ -456,7 +461,13 @@ static bool extract_file(CTar32CmdInfo &cmdinfo, CTar32 *pTarfile, const char *f
 			fs_w.write(buf,n);
 			if(fs_w.fail()){return false;}
 		}
-		if(n != nextreadsize){return false;}
+		if(n != nextreadsize){
+			if(filesize == -1){ // case .gz/.Z/.bz2"
+				break;
+			}else{
+				return false;
+			}
+		}
 		if(cmdinfo.hTar32StatusDialog){
 			extern UINT wm_arcextract;
 			extractinfo.exinfo.dwWriteSize = readsize;

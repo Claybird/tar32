@@ -67,7 +67,7 @@ void CTarArcFile_GZip::close()
 
 string CTarArcFile_GZip::get_orig_filename(){
 	if(! m_orig_filename.empty()){return m_orig_filename;}
-	if(stricmp(m_arcfile.substr(m_arcfile.length()-2).c_str(),".gz") == 0){
+	if(m_arcfile.length()>3 && stricmp(m_arcfile.substr(m_arcfile.length()-2).c_str(),"gz") == 0){
 		return m_arcfile.substr(0, m_arcfile.length()-3);
 	}
 	return m_arcfile + "_extracted";
