@@ -79,7 +79,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /dll /debug /machine:I386 /pdbtype:sept
-# ADD LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib zlib_d.lib libbzip2.lib /nologo /dll /debug /machine:I386 /out:"c:\windows\system\tar32.dll" /pdbtype:sept
+# ADD LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib zlib_d.lib libbzip2.lib /nologo /dll /debug /machine:I386 /out:"c:\winnt\system32\tar32.dll" /pdbtype:sept
 
 !ENDIF 
 
@@ -223,6 +223,18 @@ SOURCE=.\Zutil.h
 
 # PROP Default_Filter "ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe"
 # End Group
+# Begin Source File
+
+SOURCE=..\history.txt
+# End Source File
+# Begin Source File
+
+SOURCE=..\sdk\Tar_api.txt
+# End Source File
+# Begin Source File
+
+SOURCE=..\sdk\Tar_cmd.txt
+# End Source File
 # Begin Source File
 
 SOURCE=..\sdk\Tar_fmt.txt

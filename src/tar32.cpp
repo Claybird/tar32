@@ -50,6 +50,8 @@ CTar32::CTar32()
 	m_pfile = NULL;
 	m_archive_type = 0;
 	m_filecount = 0;
+	m_write_mode = false;
+	m_error_code = 0;
 }
 CTar32::~CTar32()
 {
@@ -85,6 +87,7 @@ int CTar32::s_get_archive_type(const char *arcfile)
 bool CTar32::open(const char *arcfile,const char *mode,int archive_type /*= ARCHIVETYPE_AUTO*/)
 {
 	m_archive_type = archive_type;
+	m_write_mode = (strchr(mode,'w') != NULL);
 	if((!strchr(mode,'w')) && archive_type == ARCHIVETYPE_AUTO){ // if read mode
 		m_archive_type = s_get_archive_type(arcfile);
 	}
@@ -94,6 +97,11 @@ bool CTar32::open(const char *arcfile,const char *mode,int archive_type /*= ARCH
 }
 bool CTar32::close()
 {
+	if(m_write_mode && m_pfile && m_error_code==0){
+		// If success to create tar file, append 1024(512*2) byte null block to the end of file.
+		char buf[1024/*512 * 2*/]; memset(buf,0,sizeof(buf));
+		m_pfile->write(buf,sizeof(buf));
+	}
 	if(m_pfile)m_pfile->close();
 	m_pfile = NULL;
 	return true;
@@ -235,6 +243,7 @@ bool CTar32::addheader(const CTar32FileStatus &stat)
 			sprintf(pblock->dbuf.gid, "%06o ",p->gid);
 			sprintf(pblock->dbuf.size, "%11lo ", p->original_size);
 			sprintf(pblock->dbuf.mtime, "%11lo ", p->mtime);
+			memcpy(pblock->dbuf.magic, p->magic_version, sizeof(p->magic_version));
 			strncpy(pblock->dbuf.uname, p->uname, sizeof pblock->dbuf.uname);
 
 			sprintf(pblock->dbuf.chksum, "%6o ", pblock->compsum());

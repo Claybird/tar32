@@ -43,7 +43,7 @@ struct CTar32FileStatus{
 	CTar32FileStatus(){
 
 		compress_size = original_size = blocksize = mode = uid = gid = mtime = chksum = typeflag = devmajor = devminor = atime = ctime = offset = 0;
-		strncpy(magic_version, TMAGIC "\0" TVERSION/*"ustar\000"*/,8);
+		memcpy(magic_version, TMAGIC "\0" TVERSION/*"ustar\000"*/,8);
 		strcpy(uname, "root");
 	}
 	string filename;
@@ -102,6 +102,9 @@ public:
 private:
 	ITarArcFile *m_pfile;
 	int m_filecount;	
+	bool m_write_mode;
+	int m_error_code;
+
 	friend CTar32InternalFile; // use m_currentfile_status.size
 };
 

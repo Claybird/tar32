@@ -66,7 +66,7 @@ int main(int argc,char *argv[])
 		strcat(cmd," ");
 	}
 
-	if(strcmp(argv[1],"selftest") == 0){
+	if(argc>=2 && strcmp(argv[1],"selftest") == 0){
 		SelfTest();
 	}
 	if(argc==3 && (strcmp(argv[1],"check")==0 || strcmp(argv[1],"find")==0)){
