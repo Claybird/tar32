@@ -1,4 +1,8 @@
-If you want to know about tar32.dll, please look under URL.
-	http://openlab.ring.gr.jp/tsuneo/tar32/
+If you want to know about tar32.dll, please look one of following 
+documents.
+	http://openlab.ring.gr.jp/tsuneo/tar32/index-e.html (English)
+	http://openlab.ring.gr.jp/tsuneo/tar32/ (Japanese)
+	./html/index-e.html (English)
+	./html/index.html (Japanese)
 
 Yoshioka Tsuneo(tsuneo@rr.iij4u.or.jp)
