@@ -2,7 +2,7 @@
 	TAR32.DLL コマンド説明ファイル
                    		by どんぞ（ｎｏｄａ）
                    		email:HZG02104@nifty.ne.jp
-                   		date: 2000/01/06
+                   		date: 2000/01/10
 ============================================================
 (注)ソースコードなどを元に調べたものです。ひょっとしたら間違い
 があるかもしれません。
@@ -15,6 +15,7 @@ command:
 	EXTRACT:	-x <files.tgz> [files...]
 	CREATE:		-c <files.tgz> [files...]
 	LIST:		-l <files.tgz> [files...]
+				-t <files.tgz> [files...]
 	PRINT:		-p <files.tgz> [files...]
 
 option: (default value)\n"
