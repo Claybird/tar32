@@ -224,6 +224,9 @@ static void find_files(const char *regexp, list<string> &files)
 		ret = (_findnext(handle, &finddata) == 0);
 		// ret = ::FindNextFile(hFindFile, finddata);
 	}
+	if(handle != -1){
+		_findclose(handle);
+	}
 }
 
 list<string> find_files(const char *regexp)
