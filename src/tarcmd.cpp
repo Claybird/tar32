@@ -169,7 +169,9 @@ static int tar_cmd_itr(const HWND hwnd, LPCSTR szCmdLine,LPSTR szOutput, const D
 	while(argi != args.end()){
 		string::iterator stri = (*argi).begin();
 		if(argi==args.begin() || (*stri == '-' && *(stri+1) != '\0')){
-			stri++;
+			if(*stri == '-'){
+				stri++;
+			}
 			if(*stri == '-' && *(stri+1) != '\0'){
 				stri++;
 				const string &long_option = (*argi).substr(stri - argi->begin());

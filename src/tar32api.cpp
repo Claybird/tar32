@@ -166,6 +166,7 @@ extern "C" BOOL WINAPI _export TarConfigDialog(const HWND _hwnd, LPSTR _lpszComB
 extern "C" int WINAPI _export TarGetFileCount(LPCSTR _szArcFile)
 {
 	HARC harc = TarOpenArchive(NULL,_szArcFile,0);
+	if(harc == NULL){return -1;}
 	int ret;
 	int count=0;
 	ret = TarFindFirst(harc,"",NULL);
@@ -173,6 +174,7 @@ extern "C" int WINAPI _export TarGetFileCount(LPCSTR _szArcFile)
 		ret = TarFindNext(harc,NULL);
 		count++;
 	}
+	TarCloseArchive(harc);
 	return count;
 }
 
@@ -196,6 +198,7 @@ extern "C" HARC WINAPI _export TarOpenArchive(const HWND _hwnd, LPCSTR _szFileNa
 extern "C" int WINAPI _export TarCloseArchive(HARC _harc)
 {
 	CTar32 *pTar32 = HARC2PTAR32(_harc);
+	if(!pTar32){return -1;}
 	bool bret = pTar32->close();
 	delete pTar32;
 	if(!bret)return -1;
@@ -209,6 +212,7 @@ extern "C" int WINAPI _export TarFindFirst(HARC _harc, LPCSTR _szWildName,INDIVI
 extern "C" int WINAPI _export TarFindNext(HARC _harc, INDIVIDUALINFO *_lpSubInfo)
 {
 	CTar32 *pTar32 = HARC2PTAR32(_harc);
+	if(!pTar32){return -1; /*ERROR_HANDLE;*/}
 	CTar32FileStatus stat;
 	bool bret;
 	try{

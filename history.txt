@@ -120,3 +120,14 @@
 2000/09/27
 	・libbz2.dllとzlib.dllを使用するようにした。
 	by S.Noda(HZG02104@nifty.ne.jp)
+
+2000/11/08 Ver2.05
+	・zlib/zlib.h,zlib/zconf.h,bzip2/bzlib.hを追加
+	・TarFindFirst/TarFindNext/TarCloseArchiveのHARC引数にNULLが渡された場合
+	  落ちるバグを修正
+	・Tar()のコマンドで最初の引数は"-"がなくても正しくコマンドとして受け付ける
+	  ように修正
+	・TarGetFileCount()でのハンドルの閉じ忘れと、ファイルが存在しない場合落ちる
+	  問題の修正
+	・バージョンを2.05にする
+	by tsuneo(tsuneo@rr.iij4u.or.jp)
