@@ -53,6 +53,10 @@ EXPORTS
 	
 	TarGetArchiveType
 
+;rundll32 interface
+;  command line: rundll32.exe tar32.dll,TarCommandLine -xvf foo.tar.gz
+	TarCommandLine
+
 ;susie plugIn
 	GetPluginInfo
 	IsSupported
