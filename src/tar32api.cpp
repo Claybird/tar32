@@ -340,14 +340,30 @@ UINT WINAPI _export TarGetOSType(HARC _harc){return 0;}
 
 // BOOL WINAPI _export TarQueryFunctionList(const int _iFunction);
 
-extern "C" BOOL WINAPI _export TarSetOwnerWindow(const HWND _hwnd){
-	return 0;}
-extern "C" BOOL WINAPI _export TarClearOwnerWindow(void){
-	return 0;}
-extern "C" BOOL WINAPI _export TarSetOwnerWindowEx(HWND _hwnd,ARCHIVERPROC *_lpArcProc){
-	return 0;}
-extern "C" BOOL WINAPI _export TarKillOwnerWindowEx(HWND _hwnd){
-	return 0;}
+HWND g_hwndOwnerWindow = NULL;
+ARCHIVERPROC *g_pArcProc = NULL;
+extern "C" BOOL WINAPI _export TarSetOwnerWindow(const HWND _hwnd)
+{
+	g_hwndOwnerWindow = _hwnd;
+	return TRUE;
+}
+extern "C" BOOL WINAPI _export TarClearOwnerWindow(void)
+{
+	g_hwndOwnerWindow = NULL;
+	return TRUE;
+}
+extern "C" BOOL WINAPI _export TarSetOwnerWindowEx(HWND _hwnd,ARCHIVERPROC *_lpArcProc)
+{
+	g_hwndOwnerWindow = _hwnd;
+	g_pArcProc = _lpArcProc;
+	return TRUE;
+}
+extern "C" BOOL WINAPI _export TarKillOwnerWindowEx(HWND _hwnd)
+{
+	g_hwndOwnerWindow = NULL;
+	g_pArcProc = NULL;
+	return TRUE;
+}
 
 extern "C" int WINAPI _export TarGetArchiveType(LPCSTR _szFileName)
 {
@@ -383,6 +399,10 @@ extern "C" BOOL WINAPI _export TarQueryFunctionList(const int _iFunction)
 	//case ISARC_ADD:
 	//case ISARC_MOVE:
 	//case ISARC_DELETE:
+	case ISARC_SETOWNERWINDOW:			/* UnlhaSetOwnerWindow */
+	case ISARC_CLEAROWNERWINDOW:		/* UnlhaClearOwnerWindow */
+	case ISARC_SETOWNERWINDOWEX:			/* UnlhaSetOwnerWindowEx */
+	case ISARC_KILLOWNERWINDOWEX:		/* UnlhaKillOwnerWindowEx */
 
 	//case ISARC_GET_ARC_FILE_NAME:
 	//case ISARC_GET_ARC_FILE_SIZE:

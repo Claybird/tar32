@@ -237,6 +237,10 @@ int WINAPI _export TarGetArchiveType(LPCSTR _szFileName);
 #define ISARC_ADD						28
 #define ISARC_MOVE						29
 #define ISARC_DELETE					30
+#define ISARC_SETOWNERWINDOW			31	/* UnlhaSetOwnerWindow */
+#define ISARC_CLEAROWNERWINDOW			32	/* UnlhaClearOwnerWindow */
+#define ISARC_SETOWNERWINDOWEX			33	/* UnlhaSetOwnerWindowEx */
+#define ISARC_KILLOWNERWINDOWEX			34	/* UnlhaKillOwnerWindowEx */
 
 #define ISARC_GET_ARC_FILE_NAME			40
 #define ISARC_GET_ARC_FILE_SIZE			41

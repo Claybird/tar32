@@ -76,6 +76,21 @@ HWND CTar32StatusDialog::Create(HWND hParent)
 			EXTRACTINGINFOEX *pExtractingInfoEx = (EXTRACTINGINFOEX*)lParam;
 			::SetDlgItemText(hWnd, IDC_FILENAME, pExtractingInfoEx->exinfo.szDestFileName);
 			::SetDlgItemInt(hWnd, IDC_FILESIZE, pExtractingInfoEx->exinfo.dwWriteSize ,FALSE);
+
+			extern HWND g_hwndOwnerWindow;
+			extern ARCHIVERPROC *g_pArcProc;
+			if(g_hwndOwnerWindow){
+				LRESULT wndret = ::SendMessage(g_hwndOwnerWindow,mes,wParam,lParam);
+				if(wndret != 0){
+					pDlg->m_cancel = true;
+				}
+			}
+			if(g_pArcProc){
+				BOOL ProcRet = (*g_pArcProc)(g_hwndOwnerWindow, mes, wParam, pExtractingInfoEx);
+				if(!ProcRet){
+					pDlg->m_cancel = true;
+				}
+			}
 			if(pDlg->m_cancel){
 				ReplyMessage(1);
 				return 1;

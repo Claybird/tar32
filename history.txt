@@ -35,10 +35,15 @@
 	by どんぞ（ｎｏｄａ）
 
 00/02/15
-	100byteより長いファイル名を含んだ書庫の作成、展開に対応した。
+	・100byteより長いファイル名を含んだ書庫の作成、展開に対応した。
 	(ヘッダータイプ'L', 仮ファイル名"././@LongLink" に対応)
-	書庫作成時に、指定したファイルが存在しないと落ちるバグ対応
-	by 吉岡 恒夫(tsuneo@rr.iij4u.or.jp)
+	・書庫作成時に、指定したファイルが存在しないと落ちるバグ対応
+	・OwnerWindow系の以下のAPIをサポートした(つもり)
+		TarSetOwnerWindow
+		TarClearOwnerWindow
+		TarSetOwnerWindowEx
+		TarKillOwnerWindowEx
+	...by 吉岡 恒夫(tsuneo@rr.iij4u.or.jp)
 
 メモ:V2で作成した書庫がV1やTAR32.EXEで不具合を起こす。
      =>00/01/07修正(by 吉岡 恒夫)

@@ -3,6 +3,10 @@
                    		by どんぞ（ｎｏｄａ）
                    		email:HZG02104@nifty.ne.jp
                    		date: 2000/01/06
+
+						2000/02/15 変更
+								OwnerWindow系を○に追加
+								by 吉岡恒夫(tsuneo@rr.iij4u.or.jp)
 ============================================================
 (注)ソースコードなどを元に調べたものです。ひょっとしたら間違い
 があるかもしれません。
@@ -60,10 +64,10 @@
 
 ○ int WINAPI TarCompressMem(const HWND _hwndParent,LPCSTR _szCmdLine, const LPBYTE _lpBuffer, const DWORD _dwSize,const time_t *_lpTime, const LPWORD _lpwAttr,LPDWORD _lpdwWriteSize);
 ○ int WINAPI TarExtractMem(const HWND _hwndParent,LPCSTR _szCmdLine, LPBYTE _lpBuffer, const DWORD _dwSize,time_t *_lpTime, LPWORD _lpwAttr, LPDWORD _lpdwWriteSize);
-× BOOL WINAPI TarSetOwnerWindow(const HWND _hwnd);
-× BOOL WINAPI TarClearOwnerWindow(void);
-× BOOL WINAPI TarSetOwnerWindowEx(HWND _hwnd,ARCHIVERPROC *_lpArcProc);
-× BOOL WINAPI TarKillOwnerWindowEx(HWND _hwnd);
+○ BOOL WINAPI TarSetOwnerWindow(const HWND _hwnd);
+○ BOOL WINAPI TarClearOwnerWindow(void);
+○ BOOL WINAPI TarSetOwnerWindowEx(HWND _hwnd,ARCHIVERPROC *_lpArcProc);
+○ BOOL WINAPI TarKillOwnerWindowEx(HWND _hwnd);
 ○ int WINAPI TarGetArchiveType(LPCSTR _szFileName);
 
 ------------------------------------------------------------
