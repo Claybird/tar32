@@ -44,8 +44,19 @@ int mkdir_recursive(const char *dirname_)
 	int ret;
 	
 	while(pos != string::npos){
-		string make_dirname = dirname.substr(0,pos);
-		ret = _mkdir(make_dirname.c_str());
+		string make_dirname;
+		if(pos != 0){
+			make_dirname = dirname.substr(0,pos);
+			ret = _mkdir(make_dirname.c_str());
+			pos++;
+		}
+		char *ptr = (char*)_mbspbrk((const unsigned char*)dirname.c_str()+pos,(const unsigned char*)"/\\");
+		if(ptr==NULL){
+			pos = string::npos;
+		}else{
+			pos = ptr - dirname.c_str();
+		}
+#if 0
 		int pos1 = dirname.find('/',pos+1);
 		int pos2 = dirname.find('\\',pos+1);
 		if(pos1 == string::npos && pos2 == string::npos){
@@ -57,6 +68,7 @@ int mkdir_recursive(const char *dirname_)
 		}else if(pos1 != string::npos && pos2 != string::npos){
 			pos = min(pos1, pos2);
 		}
+#endif
 	}
 	ret = _mkdir(dirname.c_str());
 	return 0;
