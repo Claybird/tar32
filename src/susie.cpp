@@ -1,16 +1,13 @@
-/* Special Thanks for patch to Jy.(jyz@cds.ne.jp) (2000/07/10)  */
+/* Special Thanks for patch to Jy. (jyz@cds.ne.jp) (2000/07/10)  */
 /*
-  for version.2.xx
+  TAR32.DLL version.2.xx
+  Susie 32bit Plug-in Spec Rev4 Interface.
 */
 
 #include "tar32api.h"
-#include "tarcmd.h"
 #include "tar32dll.h"
-#include "tar32.h"		// CTar32
-#include "tar32res.h"
 #include <time.h>
 #include <windows.h>
-#include <sys/stat.h>	// S_IWRITE
 
 /*********************************************************
 	 Susie Plug-In APIs 
@@ -19,14 +16,14 @@
 #pragma pack(push,1)
 typedef struct
 {
-    unsigned char method[8];    /*圧縮法の種類*/
-    unsigned long position;     /*ファイル上での位置*/
-    unsigned long compsize;     /*圧縮されたサイズ*/
-    unsigned long filesize;     /*元のファイルサイズ*/
-    time_t timestamp;           /*ファイルの更新日時*/
-    char path[200];             /*相対パス*/
-    char filename[200];         /*ファイルネーム*/
-    unsigned long crc;          /*CRC*/
+	unsigned char method[8];	/*圧縮法の種類*/
+	unsigned long position;		/*ファイル上での位置*/
+	unsigned long compsize;		/*圧縮されたサイズ*/
+	unsigned long filesize;		/*元のファイルサイズ*/
+	time_t timestamp;		/*ファイルの更新日時*/
+	char path[200];			/*相対パス*/
+	char filename[200];		/*ファイルネーム*/
+	unsigned long crc;		/*CRC*/
 } fileInfo;
 #pragma pack(pop)
 
@@ -35,13 +32,13 @@ extern "C" int WINAPI _export GetPluginInfo(int infono, LPSTR buf,int buflen)
 	int nRet=0;
 
 	if(0==infono) {
-		memcpy(buf,"00AM",nRet=min(buflen,4));
+		memcpy(buf,"00AM",nRet=min(buflen,5));
 	} else if(1==infono) {
 		const char *pPluginName="Tar32.DLL by Yoshioka Tsuneo(QWF00133@nifty.ne.jp)";
 		memcpy(buf,pPluginName,nRet=min(buflen,strlen(pPluginName)+1));
 	} else {
-		const char *ppExtNames[]={"*.tar;*.tgz;*.tbz;*.gz:*.bz2"};
-		const char *ppFmtNames[]={"tar/gz/bz2 format"};
+		const char *ppExtNames[]={"*.tar;*.tgz;*.tbz;*.gz;*.bz2;*.Z;"};
+		const char *ppFmtNames[]={"tar/gz/bz2/Z format"};
 		int nExtNum=sizeof(ppExtNames)/sizeof(ppExtNames[0]);
 		infono-=2;
 		if(infono>=nExtNum*2) {
@@ -73,17 +70,18 @@ extern "C" int WINAPI _export IsSupported(LPSTR filename,DWORD dw)
 	}
 
 	if(1==nRet) {
+		HANDLE hFile;
 		char szTmpDir[MAX_PATH],szTmpFile[MAX_PATH];
-		FILE *fp;
 		GetTempPath(MAX_PATH,szTmpDir);
-		GetTempFileName(szTmpDir,"TAR32_",0,szTmpFile);
-		if(NULL==(fp=fopen(szTmpFile,"wb"))) {
+		GetTempFileName(szTmpDir,"TAR",0,szTmpFile);
+		if(INVALID_HANDLE_VALUE==(hFile=CreateFile(szTmpFile,GENERIC_WRITE,0,NULL,CREATE_ALWAYS,FILE_ATTRIBUTE_NORMAL,NULL))) {
 			nRet=0;
 		} else {
-			fwrite(szBuf,1,sizeof(szBuf),fp);
-			fclose(fp);
+			DWORD nWrite;
+			WriteFile(hFile,szBuf,sizeof(szBuf),&nWrite,NULL);
+			CloseHandle(hFile);
 			nRet=TarCheckArchive(szTmpFile,0);
-			remove(szTmpFile);
+			DeleteFile(szTmpFile);
 		}
 	}
 
@@ -98,7 +96,7 @@ extern "C" int WINAPI _export GetArchiveInfo(LPSTR buf,long len, unsigned int fl
 	HLOCAL hInf;
 	INDIVIDUALINFO iInfo;
 
-	if(0!=(flag&7)) {
+	if(0!=(flag&0x0007)) {
 		// FileImage Pointer not supported.
 		return -1;
 	}
@@ -122,13 +120,12 @@ extern "C" int WINAPI _export GetArchiveInfo(LPSTR buf,long len, unsigned int fl
 	while(-1!=nStatus) {
 		memset(pInf,0,sizeof(fileInfo));
 		memcpy(pInf->method,iInfo.szMode,8);
-		pInf->position=nPos;
+		pInf->position=nPos++;
 		pInf->compsize=iInfo.dwCompressedSize;
 		pInf->filesize=iInfo.dwOriginalSize;
 		pInf->timestamp=0; //iinfo.wData + iinfo.wTime;
 		memcpy(pInf->filename,iInfo.szFileName,200);
 		pInf->crc=iInfo.dwCRC;
-		nPos+=(pInf->compsize);
 		pInf++;
 		nStatus=TarFindNext(hArc,&iInfo);
 	}
@@ -145,11 +142,7 @@ extern "C" int WINAPI _export GetFileInfo(LPSTR buf,long len, LPSTR filename, un
 	fileInfo *pInf;
 	int (*CompareFunction)(const char*,const char*);
 
-	if(0x0080==(flag&0x0080)) {
-		CompareFunction=stricmp;
-	} else {
-		CompareFunction=strcmp;
-	}
+	CompareFunction=((0x0080==(flag&0x0080))?stricmp:strcmp);
 
 	nRet=8;
 	GetArchiveInfo(buf,0,flag,&hInf);
@@ -173,15 +166,11 @@ extern "C" int WINAPI _export GetFile(LPSTR src,long len, LPSTR dest,unsigned in
 	int nRet;
 	HANDLE hInf;
 	fileInfo *pInf;
-	void *pBuf;
 	char szCmd[1000],szName[MAX_PATH];
 	unsigned long nSize;
 
 	if(0!=(flag&0x0007)) {
 		return -1;						// input must be file
-	}
-	if(0!=len) {
-		return -1;						// offset
 	}
 
 	GetArchiveInfo(src,0,flag,&hInf);
