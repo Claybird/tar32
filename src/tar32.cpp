@@ -229,6 +229,9 @@ bool CTar32::readdir(CTar32FileStatus *pstat)
 		stat.atime		=   strtol(tar_header.dbuf.atime , NULL, 8);
 		stat.ctime		=   strtol(tar_header.dbuf.ctime , NULL, 8);
 		stat.offset		=   strtol(tar_header.dbuf.offset , NULL, 8);
+		if((stat.mode & _S_IFMT) == _S_IFDIR){
+			stat.filename = stat.filename + "/";
+		}
 	}else if(m_archive_type == ARCHIVETYPE_CPIO
 		|| m_archive_type == ARCHIVETYPE_CPIOGZ
 		|| m_archive_type == ARCHIVETYPE_CPIOZ
