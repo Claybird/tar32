@@ -121,6 +121,10 @@ SOURCE=.\normal.cpp
 # End Source File
 # Begin Source File
 
+SOURCE=.\rpm.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=.\susie.cpp
 # End Source File
 # Begin Source File
@@ -157,6 +161,10 @@ SOURCE=.\util.cpp
 # PROP Default_Filter "h;hpp;hxx;hm;inl"
 # Begin Source File
 
+SOURCE=.\ar.h
+# End Source File
+# Begin Source File
+
 SOURCE=.\arcbz2.h
 # End Source File
 # Begin Source File
@@ -177,6 +185,10 @@ SOURCE=.\Cmdline.h
 # End Source File
 # Begin Source File
 
+SOURCE=.\cpio.h
+# End Source File
+# Begin Source File
+
 SOURCE=.\dlg.h
 # End Source File
 # Begin Source File
@@ -186,6 +198,10 @@ SOURCE=.\fast_stl.h
 # Begin Source File
 
 SOURCE=.\normal.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\rpm.h
 # End Source File
 # Begin Source File
 

@@ -278,6 +278,9 @@ extern "C" int WINAPI _export TarGetFileName(HARC _harc, LPSTR _lpBuffer,const i
 extern "C" int WINAPI _export TarGetMethod(HARC _harc, LPSTR _lpBuffer,const int _nSize){
 	CTar32 *pTar32 = HARC2PTAR32(_harc);
 	int type = pTar32->m_archive_type;
+	bool bRet = GetARCMethod(type, _lpBuffer, _nSize);
+	if(!bRet){return -1;}
+	/*
 	switch(type){
 	case ARCHIVETYPE_NORMAL:
 		strncpy(_lpBuffer, "-----",6);break;
@@ -298,6 +301,7 @@ extern "C" int WINAPI _export TarGetMethod(HARC _harc, LPSTR _lpBuffer,const int
 	default:
 		strncpy(_lpBuffer, "-err-",6);break;
 	}
+	*/
 	return 0;
 }
 extern "C" DWORD WINAPI _export TarGetOriginalSize(HARC _harc)

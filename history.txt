@@ -152,3 +152,12 @@
 2000/11/28
 	・英語HTML,SDK文書を少し追加
 	by tsuneo(tsuneo@rr.iij4u.or.jp)
+
+2000/12/01 Ver2.10
+	・以下の形式に対応(展開のみ)
+	RPM(redhat package): .rpm (leading + signature + header + .cpio.gz)
+	deb(debian package): .deb (ar of (debian-binary + control.tar.gz + data.tar.gz))
+	cpio(new portable format, CRC format): .cpio(.cpio.gz .cpio.Z .cpio.bz2)
+	ar(COFF/a.out/b.out): .lib(.lib.gz, .lib.Z, .lib.bz2), .a(.a.gz, .a.Z, .a.bz2)
+	by tsuneo(tsuneo@rr.iij4u.or.jp)
+

@@ -12,8 +12,24 @@
 
 <h2>$B$O$8$a$K(B</h2>
 <ul>
-TAR32.DLL$B$O(BWindows$BMQ$N(BTAR/GZ/BZ2/Z$B$N05=L(B/$BE83+MQ%i%$%V%i%j%W%m%0%i%`$G$9!#(B<br>
-$BE}9g%"!<%+%$%P%W%m%8%'%/%H$N(BAPI$B;EMM$K=`5r$7$F$$$^$9!#(B
+TAR32.DLL$B$O(BWindows$BMQ$N(BTAR/GZ/BZ2/Z$BEy$N05=L(B/$BE83+MQ%i%$%V%i%j%W%m%0%i%`$G$9!#(B<br>
+$BE}9g%"!<%+%$%P%W%m%8%'%/%H$N(BAPI$B;EMM$K=`5r$7$F$$$^$9!#(B<br>
+$BBP1~7A<0$O0J2<$NDL$j$G$9!#(B<br>
+	<ul>
+	<li>.gz (gzip format)
+	<li>.Z (compress utility format) / extrace only
+	<li>.bz2 (bzip2 format)
+	<li>.tar (Tape ARchiver format)
+	<li>.cpio (cpio archive format)
+	<li>.a, .lib (ar tool format, COFF/a.out/b.out) / extract only
+	<li>.rpm (RPM package) (=leading + signature + header + .cpio.gz) /extract only
+	<li>.deb (Debian Package) (=ar of ("debian-binary" + "control.tar.gz" + "data.tar.gz")) /extract only
+	<li>.tar.gz(.tgz), .tar.bz2
+	<li>.tar.Z(.taz) / extract only
+	<li>.cpio.gz, .cpio.Z, .cpio.bz2 /extract only
+	<li>.a.gz, .a.Z, .a.bz2, lib.gz, lib.Z, lib.bz2, lib.gz / extract only
+	</ul>
+
 </ul>
 
 <h2>$B%@%&%s%m!<%I(B</h2>
@@ -241,6 +257,11 @@ TAR32.DLL Version 2.x$B$O4pK\E*$K(BPublic Domain Software$B$H$7$FG[I[!"2~B$!"
 	<a href="http://www.goice.co.jp/member/mo/formats/tar.html">File Formts</a>
 <li>
 	<a href="http://www.wotsit.org/">The Programmer's File Format Collection</a>
+<li><a href="http://www.rpmdp.org/rpmbook/node117.html">Format of the RPM File</a>
+<li><a href="ftp://ftp.redhat.com/pub/redhat/code/rpm/">RPM the Red Hat Package Manager.</a>
+<li><a href="http://www.gnu.org/gnulist/production/binutils.html">binutils - Collection of binary utilities(contains ar)</a>
+<li><a href="http://www.gnu.org/gnulist/production/cpio.html">cpio - Copies file archives.</a>
+<li><a href="http://packages.debian.org/stable/base/dpkg.html">dpkg: Package maintenance system for Debian</a>
 </ul>
 
 <h2>$BLd$$9g$o$;@h(B</h2>

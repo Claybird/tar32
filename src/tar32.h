@@ -106,6 +106,9 @@ private:
 	bool m_write_mode;
 	int m_error_code;
 
+	/* for ar(a.out) format */
+	char *longfilenames_buf;
+
 	friend CTar32InternalFile; // use m_currentfile_status.size
 };
 

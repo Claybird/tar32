@@ -31,6 +31,9 @@
 		If you use this file, please report me.
 */
 #include "tar.h"
+#include "cpio.h"
+#include "ar.h"
+
 #include "tar32.h"
 #include "util.h"
 #include "tar32dll.h" // CTar32Exception
@@ -52,6 +55,7 @@ CTar32::CTar32()
 	m_filecount = 0;
 	m_write_mode = false;
 	m_error_code = 0;
+	longfilenames_buf = NULL;
 }
 CTar32::~CTar32()
 {
@@ -65,12 +69,20 @@ int CTar32::s_get_archive_type(const char *arcfile)
 	//int archive_type = ITarArcFile::s_get_archive_type();
 	//if(archive_type == -1){return -1;}
 	
-	HEADER tar_header;
+	// HEADER tar_header;
 	int ret;
 
 	int archive_type = pfile->get_archive_type();
-	ret = pfile->read(&tar_header,sizeof(tar_header));
-	if(tar_header.compsum() == strtol(tar_header.dbuf.chksum, NULL, 8)){
+
+	union archive_header{
+		HEADER tar;
+		new_cpio_header cpio;
+		ar_first_hdr ar;
+	};
+	archive_header arc_header;
+	ret = pfile->read(&arc_header,sizeof(arc_header));
+	if(ret >= sizeof(arc_header.tar)
+		&& arc_header.tar.compsum() == strtol(arc_header.tar.dbuf.chksum, NULL, 8)){
 		switch(archive_type){
 		case ARCHIVETYPE_NORMAL:
 			archive_type = ARCHIVETYPE_TAR;break;
@@ -80,6 +92,31 @@ int CTar32::s_get_archive_type(const char *arcfile)
 			archive_type = ARCHIVETYPE_TARZ;break;
 		case ARCHIVETYPE_BZ2:
 			archive_type = ARCHIVETYPE_TARBZ2;break;
+		}
+	}else if(ret >= sizeof(arc_header.cpio)
+		&& arc_header.cpio.magic_check()){
+		switch(archive_type){
+		case ARCHIVETYPE_NORMAL:
+			archive_type = ARCHIVETYPE_CPIO;break;
+		case ARCHIVETYPE_GZ:
+			archive_type = ARCHIVETYPE_CPIOGZ;break;
+		case ARCHIVETYPE_Z:
+			archive_type = ARCHIVETYPE_CPIOZ;break;
+		case ARCHIVETYPE_BZ2:
+			archive_type = ARCHIVETYPE_CPIOBZ2;break;
+		}
+	}else if(ret >= sizeof(arc_header.ar)
+		&& (memcmp(arc_header.ar.magic,"!<arch>\012",8) == 0  || memcmp(arc_header.ar.magic,"!<bout>\012",8) == 0)
+		&& arc_header.ar.hdr.magic_check()){
+		switch(archive_type){
+		case ARCHIVETYPE_NORMAL:
+			archive_type = ARCHIVETYPE_AR;break;
+		case ARCHIVETYPE_GZ:
+			archive_type = ARCHIVETYPE_ARGZ;break;
+		case ARCHIVETYPE_Z:
+			archive_type = ARCHIVETYPE_ARZ;break;
+		case ARCHIVETYPE_BZ2:
+			archive_type = ARCHIVETYPE_ARBZ2;break;
 		}
 	}
 	return archive_type;
@@ -114,6 +151,10 @@ bool CTar32::close()
 		m_pfile->close();
 		delete m_pfile;
 		m_pfile = NULL;
+	}
+	if(longfilenames_buf){
+		delete [] longfilenames_buf;
+		longfilenames_buf = NULL;
 	}
 	return true;
 }
@@ -188,6 +229,108 @@ bool CTar32::readdir(CTar32FileStatus *pstat)
 		stat.atime		=   strtol(tar_header.dbuf.atime , NULL, 8);
 		stat.ctime		=   strtol(tar_header.dbuf.ctime , NULL, 8);
 		stat.offset		=   strtol(tar_header.dbuf.offset , NULL, 8);
+	}else if(m_archive_type == ARCHIVETYPE_CPIO
+		|| m_archive_type == ARCHIVETYPE_CPIOGZ
+		|| m_archive_type == ARCHIVETYPE_CPIOZ
+		|| m_archive_type == ARCHIVETYPE_CPIOBZ2){
+		new_cpio_header cpio_header;
+		{
+			ret = m_pfile->read(&cpio_header,sizeof(cpio_header));
+			if(ret == 0){return false;}
+			if(ret != sizeof(cpio_header)){
+				throw CTar32Exception("can't read tar header",ERROR_HEADER_BROKEN);
+			}
+			new_cpio_header zero_header;
+			memset(&zero_header,0,sizeof(zero_header));
+			if(! cpio_header.magic_check()){
+				throw CTar32Exception("tar header checksum error.",ERROR_HEADER_CRC);
+			}
+		}
+		int fnamelen;
+		int dum;
+		int nret = sscanf(((char*)&cpio_header)+6, "%8lx%8lx%8lx%8lx%8lx%8lx%8lx%8lx%8lx%8lx%8lx%8lx%8lx"
+			,&dum, &stat.mode, &stat.uid, &stat.gid, &dum, &stat.mtime
+			,&stat.original_size,&stat.devmajor, &stat.devminor, &dum, &dum
+			,&fnamelen, &stat.chksum);
+		if(nret != 13){
+				throw CTar32Exception("can't read tar header",ERROR_HEADER_BROKEN);
+		}
+
+		if(fnamelen<=0 || fnamelen>=1000){return false;}
+		char fname[1000];
+		int fnamelen2 = (((fnamelen+sizeof(new_cpio_header) -1)/4)+1)*4 - sizeof(new_cpio_header);	/* 4 byte padding for ("new cpio header" + "filename") */
+		m_pfile->read(fname,fnamelen2);
+		stat.filename	=	fname;
+		stat.blocksize		= 4;
+		if(stat.filename == "TRAILER!!!"){
+			return false;
+		}
+		if((stat.mode & _S_IFMT) == _S_IFDIR){
+			stat.filename = stat.filename + "/";
+		}
+	}else if(m_archive_type == ARCHIVETYPE_AR
+		|| m_archive_type == ARCHIVETYPE_ARGZ
+		|| m_archive_type == ARCHIVETYPE_ARZ
+		|| m_archive_type == ARCHIVETYPE_ARBZ2){
+		if(m_filecount == 0){
+			char magic[8];
+			ret = m_pfile->read(magic,8);	/* skip "!<arch>\012" */
+		}
+		ar_hdr header;
+		{
+			ret = m_pfile->read(&header,sizeof(header));
+			if(ret == 0){return false;}
+			if(ret != sizeof(header)){
+				throw CTar32Exception("can't read tar header",ERROR_HEADER_BROKEN);
+			}
+			ar_hdr zero_header;
+			memset(&zero_header,0,sizeof(zero_header));
+			if(! header.magic_check()){
+				throw CTar32Exception("tar header checksum error.",ERROR_HEADER_CRC);
+			}
+		}
+		char *p = strchr(header.name,' '); *p = '\0';			// cut from ' '
+		if(strcmp(header.name,"//")!=0 && p-1 > header.name && strrchr(header.name,'/') == p-1){ *(p-1) = '\0';}	// cut last '/'
+		stat.filename = header.name;
+		stat.mtime = strtol(header.date,NULL,10);
+		stat.uid = strtol(header.uid,NULL,10);
+		stat.gid = strtol(header.gid,NULL,10);
+		stat.mode = strtol(header.mode,NULL,8);
+		stat.original_size = strtol(header.size,NULL,10);
+		stat.blocksize		= 2;
+
+		if(stat.filename == "/"){
+			char buf[1000];
+			sprintf(buf,"root%d",m_filecount);
+			stat.filename = buf;
+		}
+		if(stat.filename == "//"){
+			/* long file name support */
+			CTar32InternalFile file;
+			m_currentfile_status = stat;
+			if(!file.open(this)){throw CTar32Exception("can't read tar header",ERROR_HEADER_BROKEN);}
+			longfilenames_buf = new char[stat.original_size]; // (char*)malloc(stat.original_size);
+			int n = file.read(longfilenames_buf,stat.original_size);
+			if(n!=stat.original_size){throw CTar32Exception("can't read tar header",ERROR_HEADER_BROKEN);}
+			file.close();
+			CTar32FileStatus nextstat;
+			bool bRet = readdir(&nextstat); m_filecount --;
+			stat = nextstat;
+			//if(!bRet || stat.filename != "/0"){
+			//	throw CTar32Exception("can't read tar header",ERROR_HEADER_BROKEN);
+			//}
+			//stat.filename = longfilename;
+		}
+		{
+			/* if use longfilename, substitute "/\d+" to filename */
+			int bytes; int num;
+			int n = sscanf(stat.filename.c_str(), "/%d%n", &bytes, &num);
+			int len = stat.filename.length();
+			if(n == 1 && num == len && longfilenames_buf){
+				stat.filename = longfilenames_buf+bytes;
+			}
+		}
+
 	}else{
 		if(m_filecount != 0){return false;}
 		stat.filename		= m_pfile->get_orig_filename();

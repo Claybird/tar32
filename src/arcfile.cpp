@@ -73,18 +73,26 @@ ITarArcFile *ITarArcFile::s_open(const char *arcfile, const char *mode, int type
 	case ARCHIVETYPE_AUTO:
 	case ARCHIVETYPE_NORMAL:
 	case ARCHIVETYPE_TAR:
+	case ARCHIVETYPE_CPIO:
+	case ARCHIVETYPE_AR:
 		pfile = new CTarArcFile_Normal;
 		break;
 	case ARCHIVETYPE_GZ:
 	case ARCHIVETYPE_TARGZ:
+	case ARCHIVETYPE_CPIOGZ:
+	case ARCHIVETYPE_ARGZ:
 		pfile = new CTarArcFile_GZip;
 		break;
 	case ARCHIVETYPE_Z:
 	case ARCHIVETYPE_TARZ:
+	case ARCHIVETYPE_CPIOZ:
+	case ARCHIVETYPE_ARZ:
 		pfile = new CTarArcFile_Compress;
 		break;
 	case ARCHIVETYPE_BZ2:
 	case ARCHIVETYPE_TARBZ2:
+	case ARCHIVETYPE_CPIOBZ2:
+	case ARCHIVETYPE_ARBZ2:
 		pfile = new CTarArcFile_BZip2;
 		break;
 	default:
@@ -104,6 +112,8 @@ int ITarArcFile::s_get_archive_type(const char *arcfile)
 
 	if(buf[0] == 0x1f && buf[1] == 0x8b){
 		return ARCHIVETYPE_GZ;
+	}else if(buf[0] == 0xed && buf[1] == 0xab && buf[2] == 0xee && buf[3] == 0xdb){
+		return ARCHIVETYPE_GZ; /* RPM */
 	}else if(buf[0] == 'B' && buf[1] == 'Z' && buf[2] == 'h'
 		&& buf[4]==0x31 && buf[5]==0x41 && buf[6]==0x59 && buf[7]==0x26 && buf[8]==0x53 && buf[9]==0x59){
 		return ARCHIVETYPE_BZ2;

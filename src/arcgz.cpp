@@ -36,6 +36,11 @@
 #include <stdlib.h>
 #include <fstream>
 
+#include <io.h>	// open
+#include <fcntl.h>
+#include <sys/stat.h>	// _S_IREAD
+#include "rpm.h"
+
 /* gzip flag byte */
 const CTarArcFile_GZip::GZIP_FLAG_ASCII_FLAG   =0x01; /* bit 0 set: file probably ascii text */
 const CTarArcFile_GZip::GZIP_FLAG_CONTINUATION =0x02; /* bit 1 set: continuation of multi-part gzip file */
@@ -55,23 +60,38 @@ CTarArcFile_GZip::~CTarArcFile_GZip()
 {
 	close();
 }
+
 bool CTarArcFile_GZip::open(const char *arcfile, const char *mode)
 {
 	m_arcfile = arcfile;
-	gzFile f = gzopen(arcfile, mode);
+	gzFile f = NULL;
+	int fd = -1;
+	int rpmlen = 0;
+	if(strchr(mode,'r')){
+		rpmlen = rpm_getheadersize(arcfile);
+		if(rpmlen == -1){rpmlen = 0;}
+		fd = _open(arcfile, _O_BINARY|_O_RDONLY, 0);
+		if(fd == -1){return false;}
+		lseek(fd, rpmlen, SEEK_CUR);
+	}else{
+		fd = _open(arcfile, _O_BINARY|_O_CREAT|_O_RDWR|_O_TRUNC, _S_IREAD | _S_IWRITE);
+	}
+
+	f = gzdopen(fd, mode);
+	if(f==NULL){ return false;}
 	m_gzFile = f;
-	if(f==NULL){return false;}
 
 	if(strchr(mode,'r')){
-		/* GZIPヘッダ情報(ファイル名、日付など)を取得 */
+		/* retrieve GZIP header information(filename, time,...) */
 		ifstream fs_r;
 		fs_r.open(arcfile, ios::in|ios::binary);
 		int c;
-		if(fs_r.fail()){return true;}
-		if(fs_r.get()!=0x1f || fs_r.get()!=0x8b){return true;}
-		if((c=fs_r.get())==EOF){return true;}
+		if(fs_r.fail()){return false;}
+		fs_r.seekg(rpmlen, ios_base::cur);		/* skip rpm header */
+		if(fs_r.get()!=0x1f || fs_r.get()!=0x8b){return false;}
+		if((c=fs_r.get())==EOF){return false;}
 		m_gzip_compress_method = c;
-		if((c=fs_r.get())==EOF){return true;}
+		if((c=fs_r.get())==EOF){return false;}
 		int flags = m_gzip_flags = c;
 		if((flags & GZIP_FLAG_ENCRYPTED)||(flags & GZIP_FLAG_CONTINUATION)||(flags & GZIP_FLAG_RESERVED)){return true;}
 		time_t stamp;

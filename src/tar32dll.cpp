@@ -92,23 +92,44 @@ bool GetARCMethod(int archive_type, char *buf, int buf_len)
 	if(buf_len<6){return false;}
 	switch(archive_type){
 	case ARCHIVETYPE_NORMAL:
-		strncpy(buf, "-----",6);break;
+		strncpy(buf, "-----",buf_len);break;
 	case ARCHIVETYPE_TAR:
-		strncpy(buf, "-tar-",6);break;
+		strncpy(buf, "-tar-",buf_len);break;
 	case ARCHIVETYPE_TARGZ:
-		strncpy(buf, "-tgz-",6);break;
+		strncpy(buf, "-tgz-",buf_len);break;
 	case ARCHIVETYPE_TARZ:
-		strncpy(buf, "-taz-",6);break;
+		strncpy(buf, "-taz-",buf_len);break;
 	case ARCHIVETYPE_GZ:
-		strncpy(buf, "- gz-",6);break;
+		strncpy(buf, "- gz-",buf_len);break;
 	case ARCHIVETYPE_Z:
-		strncpy(buf, "-  z-",6);break;
+		strncpy(buf, "-  z-",buf_len);break;
 	case ARCHIVETYPE_TARBZ2:
-		strncpy(buf, "-tbz-",6);break;
+		strncpy(buf, "-tbz-",buf_len);break;
 	case ARCHIVETYPE_BZ2:
-		strncpy(buf, "-bz2-",6);break;
+		strncpy(buf, "-bz2-",buf_len);break;
+
+
+	case ARCHIVETYPE_CPIO:
+		strncpy(buf, "cpio",buf_len);break;
+	case ARCHIVETYPE_CPIOGZ:
+		strncpy(buf, "cpio.gz",buf_len);break;
+	case ARCHIVETYPE_CPIOZ:
+		strncpy(buf, "cpio.z",buf_len);break;
+	case ARCHIVETYPE_CPIOBZ2:
+		strncpy(buf, "cpiobz2",buf_len);break;
+
+	case ARCHIVETYPE_AR:
+		strncpy(buf, "ar",buf_len);break;
+	case ARCHIVETYPE_ARGZ:
+		strncpy(buf, "ar.gz",buf_len);break;
+	case ARCHIVETYPE_ARZ:
+		strncpy(buf, "ar.z",buf_len);break;
+	case ARCHIVETYPE_ARBZ2:
+		strncpy(buf, "ar.bz2",buf_len);break;
+
+		
 	default:
-		strncpy(buf, "-err-",6);break;
+		strncpy(buf, "-err-",buf_len);break;
 	}
 	return true;
 }
