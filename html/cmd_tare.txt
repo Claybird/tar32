@@ -1,0 +1,108 @@
+=============================================================================
+	TAR32.DLL Ver2.xx command DESCRIPTION. (for Tar() API)
+
+=============================================================================
+TAR(1)                    WIN-32 user's manual                    TAR(1)
+
+NAME
+
+        TAR32.DLL Tar() API command.
+
+
+COMMAND LINE
+
+        tar [-]{c|x|t}[v][a][i][I][e][n][z[N]][P{9|F|A}]
+              [[-f] ARCH] [-o PATH|PATH\] file...  @indirect-command-file
+
+DESCRIPTION
+	please use like tar command.
+	you can pack tar/tar.gz/gz/bz2 and unpack tar/tar.gz/tar.Z/tar.bz2/gz/Z/bz2.
+	unpacking tar/tar.gz/tar.Z is auto-detect.
+
+COMMAND
+	-c create
+	-x extract
+	-t list
+
+OPTION:
+        A[A|H] pack file attribute.(A:Archive/H:Hidden)(currently ignore)
+
+        [f] ARCH  (File) Specify Archive File Name
+        
+        g       (GNUtar) GNUtar header.(currently ignore)
+        I       (ignore file attribute)(currently ignore)
+        n       (no message) 
+        o PATH | PATH\  (extract to) ÅB
+
+                    tar xvaf GCC242.TGZ -o c:\gnu
+                  or
+                    tar xvaf GCC242.TGZ c:\gnu\
+                    
+	p	Output to output Buffer.(not File)
+		    tar -pxvf foo.tgz file.txt
+
+        v       (Verbose)
+      
+	G	Gzip or Compless only Pack/Unpack.(not tar)
+
+        z[N]	gzip compression level.(1:fast-9:slow/small)
+	
+        B[N] | --bzip2=N
+		bzip2 compression level.(1:fast-9:slow/small)
+
+	--check-all-path=[0|1] (currently ignore)
+		check match to path.
+		if 1 *.* isn't match aa/ii.
+		default 0
+
+	--display-dialog=[0|1]
+		display dialog dualing pack/unpack.
+		default 1.
+	--use-directory=[0|1]
+		use directory structure.
+		default is 1.
+
+	--message-loop=[0|1]
+		run message loop in library.
+		default is 1.
+        
+[Examples]
+
+        tar -cvf foo.tar *.c *.h makefile
+        	archive *.c *.h makefile to foo.tar.
+
+        tar -cvfz foo.tgz *.c *.h makefile
+        	with gzip.
+
+        tar -cvfB foo.tar.bz2 *.c *.h makefile
+        	with bzip2.
+
+        tar -cvfz9 foo.tgz *.c *.h makefile
+        	gzip level 9.(most)
+
+        tar -cvfZ foo.tgz *.c *.h makefile
+
+        tar -cvfz foo.000 *.c *.h makefile
+
+	tar -cvfGz foo.gz foo
+		GZIP Compression.
+
+        tar -xvf bar.taz
+        	unpack all file stored in bar.taz
+
+	tar -pxvf foo.tgz file.txt
+		Output file.txt in foo.tgz to buffer specified in TAR API.
+
+        tar -xvf bar.taz -o a:/foo
+        tar -xvf bar.taz a:/foo/
+        	unpack to a:/foo
+
+
+        tar -xvf bar.tgz @bar.lst
+
+        tar tnf b:/gnu/*.tgz
+
+
+[Environment Variable]
+
+        TZ      Differ from UTC to TimeZone(JST-9 at Japan)

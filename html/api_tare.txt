@@ -1,0 +1,404 @@
+=======================================================================
+               Tar32.DLL Ver 2.xxÅ@API Reference
+=======================================================================
+-----------------------------------------------------------------------
+int WINAPI Tar(const HWND hWnd,LPCSTR szCmdLine,LPSTR szOutput,
+		 const DWORD dwSize);
+-----------------------------------------------------------------------
+
+Description
+	Do Pack & Unpack using command.
+	Please check a file "cmd_tare.txt" for more details.
+
+Arguments
+	hWnd		Window Handle
+	szCmdLine	Command Line String. Please see cmd_tare.txt.
+	
+	szOutput	Buffer that command result.
+	dwSize		szOutPut buffer size.
+
+Example
+	ret = Tar(hWnd,"-zxvf filename.tgz",NULL,0);
+
+-----------------------------------------------------------------------
+BOOL WINAPI TarCheckArchive(LPCSTR szFileName,const int iMode);
+-----------------------------------------------------------------------
+Description
+	Check whether archiveFile is supported format.
+
+Arguments
+	szFileName	Filename
+	iMode		mode(Current Ignore)
+
+Return Value
+	1			supported format.
+	0			non supported format.(or broken file)
+
+-----------------------------------------------------------------------
+int WINAPI TarGetArchiveType(LPCSTR szFileName);
+-----------------------------------------------------------------------
+Description
+	Get ArchiveFile Type.
+
+Arguments
+	szFileName	Filename
+	
+Return Value
+	ARCHIVETYPE_TAR (1)	TAR
+	ARCHIVETYPE_TARGZ (2)	TAR.GZ(TGZ)
+	ARCHIVETYPE_TARZ (3)	TAR.Z(TAZ)
+	ARCHIVETYPE_GZ (4)	GZ
+	ARCHIVETYPE_Z (5)	Z
+	
+	0			other format.
+	-1			Error
+
+-----------------------------------------------------------------------
+BOOL WINAPI TarConfigDialog(const HWND hWnd,LPSTR szOptionBuffer,
+			const int iMode);
+-----------------------------------------------------------------------
+
+Description
+	Display Dialog
+
+	hwnd		Window Handle
+	szOptionBuffer  Buffer(Current Ignore)
+	iMode		mode(Current Ignore)
+
+Return Value
+	ERROR_ALREADY_RUNNING	Error
+	TRUE			Success
+	FALSE			Cancel
+
+Other
+	Configration is saved at Registory HKEY_CURRENT_USER 
+	Software\ArchiverDLL
+
+-----------------------------------------------------------------------
+WORD WINAPI TarGetVersion(VOID);
+-----------------------------------------------------------------------
+Description
+	Ger Version Number.(*100)
+
+Return
+	Current Version   Return Value
+	0.12		->12
+	0.3		->30
+	
+
+-----------------------------------------------------------------------
+BOOL WINAPI TarGetRunning(VOID);
+-----------------------------------------------------------------------
+-----------------------------------------------------------------------
+BOOL WINAPI TarGetBackGroundMode(VOID);
+-----------------------------------------------------------------------
+-----------------------------------------------------------------------
+BOOL WINAPI TarSetBackGroundMode(const BOOL bBackGroundMode);
+-----------------------------------------------------------------------
+-----------------------------------------------------------------------
+BOOL WINAPI TarGetCursorMode(VOID);
+-----------------------------------------------------------------------
+-----------------------------------------------------------------------
+BOOL WINAPI TarSetCursorMode(const BOOL bCursorMode);
+-----------------------------------------------------------------------
+-----------------------------------------------------------------------
+WORD WINAPI TarGetCursorInterval(VOID);
+-----------------------------------------------------------------------
+-----------------------------------------------------------------------
+BOOL WINAPI TarSetCursorInterval(const WORD wInterval);
+-----------------------------------------------------------------------
+-----------------------------------------------------------------------
+int WINAPI TarGetArcFileInfo(LPSTR szFileName, MAININFO *lpMainInfo);
+-----------------------------------------------------------------------
+-----------------------------------------------------------------------
+int WINAPI TarGetFileCount(LPCSTR szArcFile);
+-----------------------------------------------------------------------
+-----------------------------------------------------------------------
+BOOL WINAPI TarQueryFunctionList(const int iFunction);
+-----------------------------------------------------------------------
+Description
+	You get information whether you can use specified API or not.
+	
+Arguments
+	iFunction	Numeric Value that identify API.
+			Please refer TAR32.H for concreate value.
+			(ex: ISARC_GET_VERSION)
+
+Return Value
+	TRUE(1)		You can use that API.
+	FALSE(0)	cannot.
+	
+-----------------------------------------------------------------------
+HARC WINAPI TarOpenArchive(const HWND hWnd,LPCSTR szFileName,
+				const DWORD dwMode);
+-----------------------------------------------------------------------
+Description
+	Open Archiver-file.and return ARCHIVER-HANDLE.
+	You can access archiver using this handle.
+	(TarFindFirst/TarFindNext/TarCloseArchive)
+	This API only support TAR/TGZ(tar.gz)/TAZ(tar.Z),and not support GZ/Z.
+	TarOpenArchive and TarFinfFist API is similar to WIN32 FindFirst() API.
+
+			
+Arguments.
+	hwnd		Window Handle
+	szFileName	filename
+	dwMode		mode(current ignore)
+
+Return Value:
+	Archiver Handle.
+	If error,return NULL.
+
+Example:
+		INDIVIDUALINFO info;
+		harc = TarOpenArchive(hwnd,"filename.tgz",0);
+		if(harc == NULL){ ERROR }
+		ret = TarFindFirst(harc,"*.*",info);
+		while(ret){
+			/* filename is info.szFileName */
+			/* ... */
+			ret = TarFindNext(harc,&info);
+		}
+		TarCloseArchive(harc);
+
+
+-----------------------------------------------------------------------
+int WINAPI TarCloseArchive(HARC hArc);
+-----------------------------------------------------------------------
+Description
+	Release handle that allocated at TarOpenArchive().
+	This API is similar to WIN32 FindClose() API.
+
+Arguments
+	hArc		Handle that allocated at TarOpenArchive()
+
+Return Value
+	0	OK
+	Other	Error
+
+-----------------------------------------------------------------------
+int WINAPI TarFindFirst(HARC hArc,
+			LPCSTR szWildName,LPINDIVIDUALINFO lpSubInfo);
+-----------------------------------------------------------------------
+Description
+	Get Information about the first filename stored in archiver.
+	This API is similar to WIN32 FindFirstFile() API.
+	TarOpenArchive and TarFinfFist API is similar to WIN32 FindFirst() API.
+
+Arguments
+	hAac		handle that TarOpenArchive() retun.
+	szWildName	Search filename. You can use wildcard(*,?).
+			If specified "",Search all filename.( = "*.*")
+	lpSubInfo	A Pointer to INDIVIDUALINFO structure that recieve information about each stored file.
+
+Return
+	0	Success
+	-1	End of Search.
+
+-----------------------------------------------------------------------
+int WINAPI TarFindNext(HARC hArc,LPINDIVIDUALINFO lpSubInfo);
+-----------------------------------------------------------------------
+Description
+	Get stored file information of the next of TarFindFirst() or TarFindNext() API.
+	This API is similar to WIN32 FindNextFile() API.
+
+Arguments
+	hAac		handle that TarOpenArchive() retun.
+	szWildName	Search filename. You can use wildcard(*,?).
+			If specified "",Search all filename.( = "*.*")
+	lpSubInfo	A Pointer to INDIVIDUALINFO structure that recieve information about each stored file.
+
+Return
+	0	Success
+	-1	End of Search.
+
+-----------------------------------------------------------------------
+int WINAPI TarExtract(HARC hArc,LPCSTR szFileName,
+				LPCSTR szDirName, DWORD dwMode);
+-----------------------------------------------------------------------
+-----------------------------------------------------------------------
+int WINAPI TarAdd(HARC hArc,LPCSTR szFileName,DWORD dwMode);
+-----------------------------------------------------------------------
+-----------------------------------------------------------------------
+int WINAPI TarMove(HARC hArc,LPCSTR szFileName,DWORD dwMode);
+-----------------------------------------------------------------------
+-----------------------------------------------------------------------
+int WINAPI TarDelete(HARC hArc,LPCSTR szFileName,DWORD dwMode);
+-----------------------------------------------------------------------
+-----------------------------------------------------------------------
+int WINAPI TarGetArcFileName(HARC hArc,LPCSTR lpBuffer,int nSize);
+-----------------------------------------------------------------------
+-----------------------------------------------------------------------
+DWORD WINAPI TarGetArcFileSize(HARC hArc);
+-----------------------------------------------------------------------
+-----------------------------------------------------------------------
+DWORD WINAPI TarGetArcOriginalSize(HARC hArc);
+-----------------------------------------------------------------------
+-----------------------------------------------------------------------
+DWORD WINAPI TarGetArcCompressedSize(HARC hArc);
+-----------------------------------------------------------------------
+-----------------------------------------------------------------------
+WORD WINAPI TarGetArcRatio(HARC hArc);
+-----------------------------------------------------------------------
+-----------------------------------------------------------------------
+WORD WINAPI TarGetArcDate(HARC hArc);
+-----------------------------------------------------------------------
+-----------------------------------------------------------------------
+WORD WINAPI TarGetArcTime(HARC hArc);
+-----------------------------------------------------------------------
+-----------------------------------------------------------------------
+UINT WINAPI TarGetArcOSType(HARC hArc);
+-----------------------------------------------------------------------
+-----------------------------------------------------------------------
+int WINAPI TarIsSFXFile(HARC hArc);
+-----------------------------------------------------------------------
+-----------------------------------------------------------------------
+int WINAPI TarGetFileName(HARC hArc,LPCSTR lpBuffer,int nSize);
+-----------------------------------------------------------------------
+-----------------------------------------------------------------------
+DWORD WINAPI TarGetOriginalSize(HARC hArc);
+-----------------------------------------------------------------------
+-----------------------------------------------------------------------
+DWORD WINAPI TarGetCompressedSize(HARC harc);
+-----------------------------------------------------------------------
+-----------------------------------------------------------------------
+WORD WINAPI TarGetRatio(HARC hArc);
+-----------------------------------------------------------------------
+-----------------------------------------------------------------------
+WORD WINAPI TarGetDate(HARC hArc);
+-----------------------------------------------------------------------
+-----------------------------------------------------------------------
+WORD WINAPI TarGetTime(HARC hArc);
+-----------------------------------------------------------------------
+-----------------------------------------------------------------------
+DWORD WINAPI TarGetCRC(HARC hArc);
+-----------------------------------------------------------------------
+-----------------------------------------------------------------------
+int WINAPI TarGetAttribute(HARC hArc);
+-----------------------------------------------------------------------
+-----------------------------------------------------------------------
+UINT WINAPI TarGetOSType(HARC hArc);
+-----------------------------------------------------------------------
+-----------------------------------------------------------------------
+int WINAPI TarExtractMem(const HWND hWnd,LPCSTR szCmdLine,
+		LPBYTE szBuffer,const DWORD dwSize,time_t *lpTime,
+		LPWORD lpwAttr,LPDWORD lpdwWriteSize);
+-----------------------------------------------------------------------
+-----------------------------------------------------------------------
+int WINAPI TarCompressMem(const HWND hWnd,LPCSTR szCmdLine,
+		const LPBYTE szBuffer,const DWORD dwSize,
+		const time_t *lpTime,const LPWORD lpwAttr,
+		LPDWORD lpdwWriteSize);
+-----------------------------------------------------------------------
+-----------------------------------------------------------------------
+BOOL WINAPI TarSetOwnerWindow(HWND hWnd);
+-----------------------------------------------------------------------
+-----------------------------------------------------------------------
+BOOL WINAPI TarClearOwnerWindow(VOID);
+-----------------------------------------------------------------------
+-----------------------------------------------------------------------
+BOOL WINAPI TarSetOwnerWindowEx(HWND hWnd,LPARCHIVERPROC lpArcProc)
+-----------------------------------------------------------------------
+-----------------------------------------------------------------------
+BOOL WINAPI TarKillOwnerWindowEx(HWND hWnd)
+-----------------------------------------------------------------------
+
+-----------------------------------------------------------------------
+INDIVIDUALINFO Structure
+-----------------------------------------------------------------------
+Structure Definition
+		typedef struct {
+			char		szFileName[FNAME_MAX + 1];
+			UINT		uFlag;
+			DWORD 		dwOriginalSize;
+			DWORD 		dwCompressedSize;
+			WORD		wRatio;
+			WORD		wDate;
+			WORD 		wTime;
+			DWORD		dwCRC;
+			char		szAttribute[5];
+			char		szMode[8];
+			UINT		uOSType;
+		}Å@INDIVIDUALINFO;
+
+Member variables
+	szFileName		Archive FileName
+	uFlag			Not Supported.
+	
+	dwOriginalSize		Original File Size
+	dwCompressedSize	Compressed File Size.(always 0 at TAR32.DLL)
+	wRatio			Pack Ratio(always 0 at TAR32.DLL)
+	wDate			Stored File's Data
+				Format:
+				 0 1 2 3 4 5 6 7 0 1 2 3 4 5 6 7
+				+---------------+---------------+
+				+ Year - 1980 | Month |  Date   |
+				+---------------+---------------+
+	wTime			Store's File's Time.
+				Format:
+				 0 1 2 3 4 5 6 7 0 1 2 3 4 5 6 7
+				+---------------+---------------+
+				+ Hour    | Minutes   |Second/2 |
+				+---------------+---------------+
+	
+	dwCRC			CRC
+	szAttribute		Attribute of stored file.
+	szMode			mode(not supported)
+	uOSType			OS(always 0)
+
+
+-----------------------------------------------------------------------
+Windows Message
+-----------------------------------------------------------------------
++wm_arcextract
+
+wm_arcextract
+
+nMode = (int)wParam			/* Notify Mode */
+lpEis = (LPEXTRACTINGINFO)lParam	/* Pointer to Structure */
+
+  TAR32.DLL can send wm_arcextract message to the window specified by TarSetOwnerWindow().
+  
+nMode		wParam value. The state of processing.
+
+	0 : Begin
+	1 : Processing.
+	2 : End.
+
+lpEis		lParam value. A pointer to EXTRACTINGINFO that store filename,etc.
+
+-----------------------------------------------------------------------
+EXTRACTINGINFO Structure
+-----------------------------------------------------------------------
+		typedef struct {
+			char	szSourceFileName[FNAME_MAX + 1];
+			char	szDestFileName[FNAME_MAX + 1];
+			DWORD	dwFileSize;
+			DWORD	dwWriteSize;
+		}  EXTRACTINGINFO
+
+Member variables.
+	szSourceFileName	
+	szDestFileName		
+	dwFileSize		
+	dwWriteSize		
+
+------------------------------------------------------------------------
+TAR32.DLL Message Processing
+------------------------------------------------------------------------
+foreach file in archiver{
+	Send Message by nMode:0
+	while unpacking file{
+		Send Message by nMode:1
+	}
+}
+Send Message by nMode:2
+
+-----------------------------------------------------------------------
+Attention
+-----------------------------------------------------------------------
+
+API Specification may be changed.
+
+=======================================================================
+</XMP></BODY></HTML>
