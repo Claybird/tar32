@@ -46,22 +46,22 @@ CTarArcFile_BZip2::~CTarArcFile_BZip2()
 bool CTarArcFile_BZip2::open(const char *arcfile, const char *mode)
 {
 	m_arcfile = arcfile;
-	BZFILE * f = bzopen(arcfile, mode);
+	BZFILE * f = BZ2_bzopen(arcfile, mode);
 	m_pbzFile = f;
 	return (f != NULL);
 }
 int CTarArcFile_BZip2::read(void *buf, int size)
 {
-	return bzread(m_pbzFile, buf, size);
+	return BZ2_bzread(m_pbzFile, buf, size);
 }
 int CTarArcFile_BZip2::write(void *buf, int size)
 {
-	return bzwrite(m_pbzFile, buf, size);
+	return BZ2_bzwrite(m_pbzFile, buf, size);
 }
 void CTarArcFile_BZip2::close()
 {
 	if(m_pbzFile){
-		bzclose(m_pbzFile);
+		BZ2_bzclose(m_pbzFile);
 		m_pbzFile = NULL;
 	}
 }

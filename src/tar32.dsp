@@ -42,7 +42,7 @@ RSC=rc.exe
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /MT /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "TAR32_EXPORTS" /YX /FD /c
-# ADD CPP /nologo /MT /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "TAR32_EXPORTS" /YX /FD /c
+# ADD CPP /nologo /MT /W3 /GX /O2 /I "zlib" /I "bzip2" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "TAR32_EXPORTS" /YX /FD /c
 # ADD BASE MTL /nologo /D "NDEBUG" /mktyplib203 /win32
 # ADD MTL /nologo /D "NDEBUG" /mktyplib203 /win32
 # ADD BASE RSC /l 0x411 /d "NDEBUG"
@@ -133,6 +133,13 @@ SOURCE=.\Tar32.def
 # Begin Source File
 
 SOURCE=.\tar32.rc
+
+!IF  "$(CFG)" == "tar32 - Win32 Release"
+
+!ELSEIF  "$(CFG)" == "tar32 - Win32 Debug"
+
+!ENDIF 
+
 # End Source File
 # Begin Source File
 
@@ -225,7 +232,7 @@ SOURCE=..\history.txt
 # End Source File
 # Begin Source File
 
-SOURCE=.\Libbzip2.lib
+SOURCE=.\bzip2\Release\libbz2.lib
 # End Source File
 # Begin Source File
 
@@ -245,7 +252,7 @@ SOURCE=..\sdk\Tar_fmt.txt
 # End Source File
 # Begin Source File
 
-SOURCE=.\Zlib.lib
+SOURCE=.\zlib\zlibdll.lib
 # End Source File
 # End Target
 # End Project
