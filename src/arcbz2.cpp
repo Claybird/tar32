@@ -31,6 +31,7 @@
 		If you use this file, please report me.
 */
 #include "arcbz2.h"
+#include "util.h"
 #include "bzlib.h"
 #include <stdlib.h>
 
@@ -60,3 +61,12 @@ void CTarArcFile_BZip2::close()
 {
 	bzclose(m_pbzFile);
 }
+string CTarArcFile_BZip2::get_orig_filename(){
+	if(! m_orig_filename.empty()){return m_orig_filename;}
+	string fname = get_filename(m_arcfile.c_str());
+	if(fname.length()>4 && stricmp(fname.substr(fname.length()-4).c_str(),".bz2") == 0){
+		return fname.substr(0, fname.length()-4);
+	}
+	return fname + "_extracted";
+}
+

@@ -44,6 +44,7 @@ public:
 	int write(void *buf, int size);
 	void close();
 	int get_archive_type(){return ARCHIVETYPE_BZ2;}
+	virtual string get_orig_filename();
 private:
 	BZFILE *m_pbzFile;
 };

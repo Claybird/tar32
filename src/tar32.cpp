@@ -98,9 +98,14 @@ bool CTar32::open(const char *arcfile,const char *mode,int archive_type /*= ARCH
 bool CTar32::close()
 {
 	if(m_write_mode && m_pfile && m_error_code==0){
-		// If success to create tar file, append 1024(512*2) byte null block to the end of file.
-		char buf[1024/*512 * 2*/]; memset(buf,0,sizeof(buf));
-		m_pfile->write(buf,sizeof(buf));
+		if(m_archive_type == ARCHIVETYPE_TAR 
+			|| m_archive_type == ARCHIVETYPE_TARGZ 
+			|| m_archive_type == ARCHIVETYPE_TARZ 
+			|| m_archive_type == ARCHIVETYPE_TARBZ2){
+			// If success to create tar file, append 1024(512*2) byte null block to the end of file.
+			char buf[1024/*512 * 2*/]; memset(buf,0,sizeof(buf));
+			m_pfile->write(buf,sizeof(buf));
+		}
 	}
 	if(m_pfile)m_pfile->close();
 	m_pfile = NULL;
@@ -132,7 +137,6 @@ bool CTar32::readdir(CTar32FileStatus *pstat)
 				throw CTar32Exception("tar header checksum error.",ERROR_HEADER_CRC);
 			}
 		}
-
 		stat.filename	=	tar_header.dbuf.name;
 		stat.original_size		=	strtol(tar_header.dbuf.size, NULL, 8);
 		stat.blocksize  =   512;
@@ -328,15 +332,20 @@ bool CTar32::addbody(const char *file)
 		}
 	}
 
-	/* padding 512-byte block */
-	int writesize;
-	if(size%512 == 0){
-		writesize = 0;
-	}else{
-		writesize = 512 - size%512;
+	if(m_archive_type == ARCHIVETYPE_TAR 
+		|| m_archive_type == ARCHIVETYPE_TARGZ 
+		|| m_archive_type == ARCHIVETYPE_TARZ 
+		|| m_archive_type == ARCHIVETYPE_TARBZ2){
+		/* padding 512-byte block */
+		int writesize;
+		if(size%512 == 0){
+			writesize = 0;
+		}else{
+			writesize = 512 - size%512;
+		}
+		memset(buf,0,writesize);
+		m_pfile->write(buf, writesize);
 	}
-	memset(buf,0,writesize);
-	m_pfile->write(buf, writesize);
 	return true;
 }
 

@@ -31,6 +31,7 @@
 		If you use this file, please report me.
 */
 #include "arcgz.h"
+#include "util.h"
 #include "zlib.h"
 #include <stdlib.h>
 
@@ -67,8 +68,9 @@ void CTarArcFile_GZip::close()
 
 string CTarArcFile_GZip::get_orig_filename(){
 	if(! m_orig_filename.empty()){return m_orig_filename;}
-	if(m_arcfile.length()>3 && stricmp(m_arcfile.substr(m_arcfile.length()-2).c_str(),"gz") == 0){
-		return m_arcfile.substr(0, m_arcfile.length()-3);
+	string fname = get_filename(m_arcfile.c_str());
+	if(fname.length()>3 && stricmp(fname.substr(fname.length()-3).c_str(),".gz") == 0){
+		return fname.substr(0, fname.length()-3);
 	}
-	return m_arcfile + "_extracted";
+	return fname + "_extracted";
 }

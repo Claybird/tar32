@@ -396,6 +396,8 @@ static void _cdecl tar_cmd_main_thread(LPVOID param)
 		default:
 			throw CTar32Exception("Command not specified.", ERROR_COMMAND_NAME);
 		}
+		// メッセージループの終了前にダイアログを閉じる!  2000/03/03 by tsuneo
+		dlg.Destroy();
 		if(pCmdInfo->wm_main_thread_end)PostThreadMessage(pCmdInfo->idMessageThread, pCmdInfo->wm_main_thread_end, 0, 0);
 	}catch(CTar32Exception &e){
 		if(pCmdInfo->wm_main_thread_end)PostThreadMessage(pCmdInfo->idMessageThread, pCmdInfo->wm_main_thread_end, 0, 0);

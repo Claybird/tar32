@@ -1,10 +1,10 @@
 #include "arcz.h"
+#include "util.h"
 #include <stdlib.h>
 
-#define C CTarArcFile_Compress
 
-const unsigned char	C::MAGIC_1 = '\037';	/* First byte of compressed file	*/
-const unsigned char	C::MAGIC_2 = '\235';	/* Second byte of compressed file	*/
+const unsigned char	CTarArcFile_Compress::MAGIC_1 = '\037';	/* First byte of compressed file	*/
+const unsigned char	CTarArcFile_Compress::MAGIC_2 = '\235';	/* Second byte of compressed file	*/
 
 // static const int			C::HSIZE	= 1 << 17;	/* 131072 */
 static const int			BITS	= 16;
@@ -180,15 +180,16 @@ resetbuf:
 	// m_strstream.write(outbuf, outpos); outpos = 0;
 	return true;
 }
-void C::close()
+void CTarArcFile_Compress::close()
 {
 	if(m_pFile){fclose(m_pFile);m_pFile=NULL;}
 }
-string C::get_orig_filename(){
+string CTarArcFile_Compress::get_orig_filename(){
 	if(! m_orig_filename.empty()){return m_orig_filename;}
-	if(stricmp(m_arcfile.substr(m_arcfile.length()-2).c_str(),".Z") == 0){
-		return m_arcfile.substr(0, m_arcfile.length()-3);
+	string fname = get_filename(m_arcfile.c_str());
+	if(fname.length()>2 && stricmp(fname.substr(fname.length()-2).c_str(),".z") == 0){
+		return fname.substr(0, fname.length()-2);
 	}
-	return m_arcfile + "_extracted";
+	return fname + "_extracted";
 }
 
