@@ -127,10 +127,7 @@ extern "C" int WINAPI _export TarCompressMem(const HWND _hwndParent,LPCSTR _szCm
 	return Tar(_hwndParent, cmd.c_str(), (char*)_lpBuffer, _dwSize);
 }
 extern "C" BOOL WINAPI _export TarCheckArchive(LPCSTR _szFileName, const int _iMode){
-	CTar32 tar32;
-	bool bret = tar32.open(_szFileName, "rb");
-	if(!bret){return FALSE;}
-	return TRUE;
+	return TarGetArchiveType(_szFileName); // Ç«ÇÒÇºÅFïœçX
 }
 extern "C" BOOL WINAPI _export TarConfigDialog(const HWND _hwnd, LPSTR _lpszComBuffer,const int _iMode)
 {

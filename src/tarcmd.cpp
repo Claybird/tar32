@@ -200,7 +200,7 @@ static int tar_cmd_itr(const HWND hwnd, LPCSTR szCmdLine,LPSTR szOutput, const D
 				case 'c':
 					command = 'c';break;
 				case 'l':
-				case 't':
+				case 't': // Ç«ÇÒÇºÅFí«â¡
 					command = 'l';break;
 				case 'p':
 					command = 'x';

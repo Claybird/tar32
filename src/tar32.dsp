@@ -1,5 +1,5 @@
 # Microsoft Developer Studio Project File - Name="tar32" - Package Owner=<4>
-# Microsoft Developer Studio Generated Build File, Format Version 6.00
+# Microsoft Developer Studio Generated Build File, Format Version 5.00
 # ** ï“èWÇµÇ»Ç¢Ç≈Ç≠ÇæÇ≥Ç¢ **
 
 # TARGTYPE "Win32 (x86) Dynamic-Link Library" 0x0102
@@ -22,7 +22,6 @@ CFG=tar32 - Win32 Debug
 !MESSAGE 
 
 # Begin Project
-# PROP AllowPerConfigDependencies 0
 # PROP Scc_ProjName ""
 # PROP Scc_LocalPath ""
 CPP=cl.exe
@@ -53,7 +52,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /dll /machine:I386
-# ADD LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib zlib.lib libbzip2.lib /nologo /dll /machine:I386 /out:"../tar32.dll"
+# ADD LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /dll /machine:I386 /out:"../tar32.dll"
 
 !ELSEIF  "$(CFG)" == "tar32 - Win32 Debug"
 
@@ -68,8 +67,8 @@ LINK32=link.exe
 # PROP Intermediate_Dir "Debug"
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
-# ADD BASE CPP /nologo /MTd /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "TAR32_EXPORTS" /YX /FD /GZ /c
-# ADD CPP /nologo /MTd /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "TAR32_EXPORTS" /YX /FD /GZ /c
+# ADD BASE CPP /nologo /MTd /W3 /GX /Od /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "TAR32_EXPORTS" /YX /FD /ZI /GZ /c
+# ADD CPP /nologo /MTd /W3 /GX /Od /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "TAR32_EXPORTS" /YX /FD /ZI /GZ /c
 # ADD BASE MTL /nologo /D "_DEBUG" /mktyplib203 /win32
 # ADD MTL /nologo /D "_DEBUG" /mktyplib203 /win32
 # ADD BASE RSC /l 0x411 /d "_DEBUG"
@@ -79,7 +78,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /dll /debug /machine:I386 /pdbtype:sept
-# ADD LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib zlib_d.lib libbzip2.lib /nologo /dll /debug /machine:I386 /out:"d:\winnt\system32\tar32.dll" /pdbtype:sept
+# ADD LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /dll /debug /machine:I386 /pdbtype:sept
 
 !ENDIF 
 
@@ -229,6 +228,10 @@ SOURCE=..\history.txt
 # End Source File
 # Begin Source File
 
+SOURCE=.\Libbzip2.lib
+# End Source File
+# Begin Source File
+
 SOURCE=..\sdk\Tar_api.txt
 # End Source File
 # Begin Source File
@@ -238,10 +241,6 @@ SOURCE=..\sdk\Tar_cmd.txt
 # Begin Source File
 
 SOURCE=..\sdk\Tar_fmt.txt
-# End Source File
-# Begin Source File
-
-SOURCE=.\Libbzip2.lib
 # End Source File
 # Begin Source File
 

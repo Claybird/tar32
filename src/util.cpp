@@ -208,7 +208,7 @@ static void find_files(const char *regexp, list<string> &files)
 	handle = _findfirst(regexp, &finddata);
 	int ret;
 	// hFindFile = ::FindFirstFile(regexp, &finddata);
-	ret = (handle != -1);
+	ret = (handle != NULL);
 	while(ret){
 		string fname = finddata.name;
 		if(fname == "." || fname == ".."){
