@@ -91,7 +91,7 @@ BOOL WINAPI _export TarSetCursorInterval(const WORD _Interval){s_CursorInterval;
 } // extern "C"
 
 static HCURSOR s_orig_cursor = NULL;
-static tar32_cursor_set()
+static void tar32_cursor_set() // どんぞ：voidを追加
 {
 	Tar32EnterCriticalSection();
 	if(s_orig_cursor == NULL){
@@ -100,7 +100,7 @@ static tar32_cursor_set()
 	}
 	Tar32LeaveCriticalSection();
 }
-static tar32_cursor_unset()
+static void tar32_cursor_unset() // どんぞ：voidを追加
 {
 	Tar32EnterCriticalSection();
 	if(s_orig_cursor){
@@ -371,8 +371,8 @@ extern "C" BOOL WINAPI _export TarQueryFunctionList(const int _iFunction)
 	case ISARC_GET_FILE_COUNT:
 	case ISARC_QUERY_FUNCTION_LIST:
 	//case ISARC_HOUT:
-	case ISARC_STRUCTOUT:
-	case ISARC_GET_ARC_FILE_INFO:
+	//case ISARC_STRUCTOUT:         //
+	//case ISARC_GET_ARC_FILE_INFO: // どんぞ：コメントにした。
 
 	case ISARC_OPEN_ARCHIVE:
 	case ISARC_CLOSE_ARCHIVE:

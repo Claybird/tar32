@@ -1,0 +1,32 @@
+============================================================
+	TAR32.DLL コマンド説明ファイル
+                   		by どんぞ（ｎｏｄａ）
+                   		email:HZG02104@nifty.ne.jp
+                   		date: 2000/01/06
+============================================================
+(注)ソースコードなどを元に調べたものです。ひょっとしたら間違い
+があるかもしれません。
+
+基本的には、Ver1.xxと同じです。
+
+usage: TAR32.DLL <command> <option> archive.{tar,tar.gz,tar.bz2} filenames...
+
+command:
+	EXTRACT:	-x <files.tgz> [files...]
+	CREATE:		-c <files.tgz> [files...]
+	LIST:		-l <files.tgz> [files...]
+	PRINT:		-p <files.tgz> [files...]
+
+option: (default value)\n"
+	-z[N]		compress by gzip(.tar.gz) with level N(default:6)
+	-B[N]		compress by bzip2(.tar.bz2) with level N(default:9)
+	-G			not make tar archive.(.tar/.tar.gz/.tar.bz2)
+				make compress only archive.(.gz/.bz2)
+	-Z[N]		compress by compress(LZW) (NOT IMPLEMENTED)
+	--use-directory=[0|1](1)	effective directory name
+	--display-dialog=[0|1](1)	display dialog box
+	--message-loop=[0|1](1)		run message loop
+	--bzip2=[N]					compress by bzip2 with level N
+
+これ以外のコマンドであれば、簡単な説明が出力されます。
+なお、これ以外のオプションは無視されます。

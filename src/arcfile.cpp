@@ -97,6 +97,7 @@ ITarArcFile *ITarArcFile::s_open(const char *arcfile, const char *mode, int type
 int ITarArcFile::s_get_archive_type(const char *arcfile)
 {
 	FILE *fp = fopen(arcfile, "rb");
+	if(fp==NULL){return -1;} // Ç«ÇÒÇºÅFí«â¡
 	unsigned char buf[100]; memset(buf, 0, sizeof(buf));
 	int n = fread(buf, 1, sizeof(buf), fp);
 	fclose(fp);

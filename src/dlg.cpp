@@ -29,7 +29,7 @@ HWND CTar32StatusDialog::Create(HWND hParent)
 {
 	CTar32StatusDialog *pDlg = (CTar32StatusDialog *)param;
 	extern HINSTANCE dll_instance;
-	HWND hWnd = CreateDialogParam(dll_instance, MAKEINTRESOURCE(IDD_DIALOG_STATUS),pDlg->m_hParentWnd, WindowFunc, (long)pDlg);
+	HWND hWnd = CreateDialogParam(dll_instance, MAKEINTRESOURCE(IDD_DIALOG_STATUS),pDlg->m_hParentWnd, (DLGPROC)WindowFunc, (long)pDlg); // Ç«ÇÒÇºÅF(DLGPROC)Çí«â¡
 	//HWND hWnd = CreateDialogParam(dll_instance, MAKEINTRESOURCE(IDD_DIALOG_STATUS),NULL, WindowFunc, (long)pDlg);
 	int ret;
 	ret = ShowWindow(hWnd, SW_SHOW);
