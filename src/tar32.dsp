@@ -69,7 +69,7 @@ LINK32=link.exe
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /MTd /W3 /GX /Od /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "TAR32_EXPORTS" /YX /FD /ZI /GZ /c
-# ADD CPP /nologo /MTd /W3 /GX /Od /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "TAR32_EXPORTS" /YX /FD /ZI /GZ /c
+# ADD CPP /nologo /MTd /W3 /GX /Od /I "zlib" /I "bzip2" /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "TAR32_EXPORTS" /YX /FD /ZI /GZ /c
 # ADD BASE MTL /nologo /D "_DEBUG" /mktyplib203 /win32
 # ADD MTL /nologo /D "_DEBUG" /mktyplib203 /win32
 # ADD BASE RSC /l 0x411 /d "_DEBUG"
@@ -133,13 +133,6 @@ SOURCE=.\Tar32.def
 # Begin Source File
 
 SOURCE=.\tar32.rc
-
-!IF  "$(CFG)" == "tar32 - Win32 Release"
-
-!ELSEIF  "$(CFG)" == "tar32 - Win32 Debug"
-
-!ENDIF 
-
 # End Source File
 # Begin Source File
 
