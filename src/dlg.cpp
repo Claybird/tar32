@@ -79,6 +79,8 @@ HWND CTar32StatusDialog::Create(HWND hParent)
 			::SetDlgItemText(hWnd, IDC_FILENAME, pExtractingInfoEx->exinfo.szDestFileName);
 			::SetDlgItemInt(hWnd, IDC_FILESIZE, pExtractingInfoEx->exinfo.dwWriteSize ,FALSE);
 
+#if 0
+			// move to SendArcMessage() by tsuneo at 2001.11.20
 			extern HWND g_hwndOwnerWindow;
 			extern ARCHIVERPROC *g_pArcProc;
 			if(g_hwndOwnerWindow){
@@ -93,6 +95,7 @@ HWND CTar32StatusDialog::Create(HWND hParent)
 					pDlg->m_cancel = true;
 				}
 			}
+#endif
 			if(pDlg->m_cancel){
 				ReplyMessage(1);
 				return 1;

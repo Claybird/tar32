@@ -422,6 +422,25 @@ static void _cdecl tar_cmd_main_thread(LPVOID param)
 	//return 0;
 }
 
+static int SendArcMessage(CTar32CmdInfo &cmdinfo, int arcmode, EXTRACTINGINFOEX *pExtractingInfoEx)
+{
+		extern UINT wm_arcextract;
+		int ret1,ret2,ret3;
+		extern HWND g_hwndOwnerWindow;
+		extern ARCHIVERPROC *g_pArcProc;
+		ret1 = ret2 = ret3 = 0;
+
+		if(cmdinfo.hTar32StatusDialog){
+			ret1 = ::SendMessage(cmdinfo.hTar32StatusDialog, wm_arcextract, arcmode, (long)pExtractingInfoEx);
+		}
+		if(g_hwndOwnerWindow){
+			ret2 = ::SendMessage(g_hwndOwnerWindow,wm_arcextract, arcmode,(long)pExtractingInfoEx);
+		}
+		if(g_pArcProc){
+			ret3 = (*g_pArcProc)(g_hwndOwnerWindow, wm_arcextract, arcmode, pExtractingInfoEx);
+		}
+		return (ret1 || ret2 || ret3);
+}
 
 static bool extract_file(CTar32CmdInfo &cmdinfo, CTar32 *pTarfile, const char *fname)
 {
@@ -443,11 +462,8 @@ static bool extract_file(CTar32CmdInfo &cmdinfo, CTar32 *pTarfile, const char *f
 		extractinfo.wTime = GetARCTime(stat.mtime);
 		GetARCAttribute(stat.mode, extractinfo.szAttribute,sizeof(extractinfo.szAttribute));
 		GetARCMethod(pTarfile->m_archive_type, extractinfo.szMode, sizeof(extractinfo.szMode));
-		if(cmdinfo.hTar32StatusDialog){
-			extern UINT wm_arcextract;
-			int ret = SendMessage(cmdinfo.hTar32StatusDialog, wm_arcextract, ARCEXTRACT_BEGIN, (long)&extractinfo);
-			if(ret){throw CTar32Exception("Cancel button was pushed.",ERROR_USER_CANCEL);}
-		}
+		int ret = SendArcMessage(cmdinfo, ARCEXTRACT_BEGIN, &extractinfo);
+		if(ret){throw CTar32Exception("Cancel button was pushed.",ERROR_USER_CANCEL);}
 		fname2 = extractinfo.exinfo.szDestFileName;
 	}
 
@@ -489,9 +505,8 @@ static bool extract_file(CTar32CmdInfo &cmdinfo, CTar32 *pTarfile, const char *f
 			}
 		}
 		if(cmdinfo.hTar32StatusDialog){
-			extern UINT wm_arcextract;
 			extractinfo.exinfo.dwWriteSize = readsize;
-			int ret = SendMessage(cmdinfo.hTar32StatusDialog, wm_arcextract, ARCEXTRACT_INPROCESS, (LPARAM)&extractinfo);
+			int ret = SendArcMessage(cmdinfo, ARCEXTRACT_INPROCESS, &extractinfo);
 			if(ret){throw CTar32Exception("Cancel button was pushed.",ERROR_USER_CANCEL);}
 		}
 	}
@@ -501,13 +516,12 @@ static bool extract_file(CTar32CmdInfo &cmdinfo, CTar32 *pTarfile, const char *f
 		ut.actime = (stat.atime ? stat.atime : time(NULL));
 		ut.modtime = (stat.mtime ? stat.mtime : time(NULL));
 		int ret;
-		ret = _chmod(fname2.c_str(), stat.mode);
 		ret = _utime(fname2.c_str(), &ut);
+		ret = _chmod(fname2.c_str(), stat.mode);
 	}
 	if(cmdinfo.hTar32StatusDialog){
-		extern UINT wm_arcextract;
 		extractinfo.exinfo.dwWriteSize = readsize;
-		int ret = SendMessage(cmdinfo.hTar32StatusDialog, wm_arcextract, ARCEXTRACT_END,(LPARAM) &extractinfo);
+		int ret = SendArcMessage(cmdinfo, ARCEXTRACT_END, &extractinfo);
 		if(ret){throw CTar32Exception("Cancel button was pushed.",ERROR_USER_CANCEL);}
 	}
 	return true;
@@ -518,10 +532,7 @@ static void cmd_extract(CTar32CmdInfo &cmdinfo)
 		EXTRACTINGINFOEX extractinfo;
 		memset(&extractinfo,0,sizeof(extractinfo));
 		strncpy(extractinfo.exinfo.szSourceFileName, cmdinfo.arcfile.c_str() ,FNAME_MAX32);
-		if(cmdinfo.hTar32StatusDialog){
-		extern UINT wm_arcextract;
-			SendMessage(cmdinfo.hTar32StatusDialog, wm_arcextract, ARCEXTRACT_BEGIN, (LPARAM)&extractinfo);
-		}
+		int ret = SendArcMessage(cmdinfo, ARCEXTRACT_BEGIN, &extractinfo);
 	}
 	
 	CTar32 tarfile;
@@ -562,10 +573,7 @@ static void cmd_extract(CTar32CmdInfo &cmdinfo)
 	{
 		EXTRACTINGINFOEX extractinfo;
 		memset(&extractinfo,0,sizeof(extractinfo));
-		if(cmdinfo.hTar32StatusDialog){
-		extern UINT wm_arcextract;
-			SendMessage(cmdinfo.hTar32StatusDialog, wm_arcextract, ARCEXTRACT_END, (LPARAM)&extractinfo);
-		}
+		int ret = SendArcMessage(cmdinfo, ARCEXTRACT_END, &extractinfo);
 	}
 }
 static void cmd_create(CTar32CmdInfo &cmdinfo)
