@@ -554,6 +554,9 @@ static void cmd_create(CTar32CmdInfo &cmdinfo)
 		string file_external = make_pathname((*filei).current_dir.c_str(), (*filei).file.c_str());
 
 		list<string> files_internal2 = find_files(file_external.c_str());
+		if(files_internal2.empty()){
+			throw CTar32Exception((string() + "can't find file match to[" + file_external + "]").c_str(), ERROR_FILE_OPEN);
+		}
 		list<string>::iterator files2i;
 		for(files2i = files_internal2.begin(); files2i != files_internal2.end(); files2i++){
 			string file_external2 = *files2i;

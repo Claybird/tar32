@@ -117,22 +117,51 @@ bool CTar32::readdir(CTar32FileStatus *pstat)
 		|| m_archive_type == ARCHIVETYPE_TARGZ 
 		|| m_archive_type == ARCHIVETYPE_TARZ 
 		|| m_archive_type == ARCHIVETYPE_TARBZ2){
-		ret = m_pfile->read(&tar_header,sizeof(tar_header));
-		if(ret == 0){return false;}
-		if(ret != sizeof(tar_header)){
-			throw CTar32Exception("can't read tar header",ERROR_HEADER_BROKEN);
+		{
+			ret = m_pfile->read(&tar_header,sizeof(tar_header));
+			if(ret == 0){return false;}
+			if(ret != sizeof(tar_header)){
+				throw CTar32Exception("can't read tar header",ERROR_HEADER_BROKEN);
+			}
+			HEADER zero_header;
+			memset(&zero_header,0,sizeof(zero_header));
+			if(memcmp(&tar_header,&zero_header,sizeof(tar_header)) == 0){
+				return false;
+			}
+			if((unsigned long)tar_header.compsum() != (unsigned long)strtol(tar_header.dbuf.chksum , NULL, 8)){
+				throw CTar32Exception("tar header checksum error.",ERROR_HEADER_CRC);
+			}
 		}
-		HEADER zero_header;
-		memset(&zero_header,0,sizeof(zero_header));
-		if(memcmp(&tar_header,&zero_header,sizeof(tar_header)) == 0){
-			return false;
-		}
-		if((unsigned long)tar_header.compsum() != (unsigned long)strtol(tar_header.dbuf.chksum , NULL, 8)){
-			throw CTar32Exception("tar header checksum error.",ERROR_HEADER_CRC);
-		}
+
 		stat.filename	=	tar_header.dbuf.name;
 		stat.original_size		=	strtol(tar_header.dbuf.size, NULL, 8);
 		stat.blocksize  =   512;
+		if(tar_header.dbuf.typeflag == LONGLINK){	// tar_header.dbuf.name == "././@LongLink"
+			char longfilename[2000] = "";
+			int readsize = ((stat.original_size-1)/512+1)*512;
+			ret = m_pfile->read(longfilename, readsize);
+			if(ret == 0){
+				throw CTar32Exception("can't get filename(LongLink)",ERROR_HEADER_BROKEN);
+			}
+			longfilename[stat.original_size]='\0';
+			{
+				ret = m_pfile->read(&tar_header,sizeof(tar_header));
+				if(ret == 0){return false;}
+				if(ret != sizeof(tar_header)){
+					throw CTar32Exception("can't read tar header(LongLink)",ERROR_HEADER_BROKEN);
+				}
+				HEADER zero_header;
+				memset(&zero_header,0,sizeof(zero_header));
+				if(memcmp(&tar_header,&zero_header,sizeof(tar_header)) == 0){
+					return false;
+				}
+				if((unsigned long)tar_header.compsum() != (unsigned long)strtol(tar_header.dbuf.chksum , NULL, 8)){
+					throw CTar32Exception("tar header checksum error.(LongLink)",ERROR_HEADER_CRC);
+				}
+			}
+			stat.filename = longfilename;
+			stat.original_size		=	strtol(tar_header.dbuf.size, NULL, 8);
+		}
 		
 		stat.mode		=   strtol(tar_header.dbuf.mode, NULL, 8);
 		stat.uid		=   strtol(tar_header.dbuf.uid , NULL, 8);
@@ -237,15 +266,29 @@ bool CTar32::addheader(const CTar32FileStatus &stat)
 			const CTar32FileStatus *p = &stat;
 			string fname = p->filename;
 
+			if(fname.length() > sizeof(pblock->dbuf.name)/*100*/){
+				CTar32FileStatus tmpstat = stat;
+				tmpstat.filename = "././@LongLink";
+				tmpstat.typeflag = LONGLINK;
+				tmpstat.original_size = fname.length();
+				bool bret = addheader(tmpstat);
+				char filename[2000];
+				strcpy(filename, fname.c_str());
+				int writesize = ((fname.length() - 1)/512+1)*512;
+				ret = m_pfile->write(filename, writesize);
+				if(ret != writesize){
+					throw CTar32Exception("LongLink filename write error", ERROR_CANNOT_WRITE);
+				}
+			}
 			strncpy(pblock->dbuf.name, fname.c_str(),NAMSIZ-1); /* tarnt 0.96->0.97 */
 			sprintf(pblock->dbuf.mode, "%6o ", (unsigned int)p->mode);
 			sprintf(pblock->dbuf.uid, "%06o ",p->uid);
 			sprintf(pblock->dbuf.gid, "%06o ",p->gid);
 			sprintf(pblock->dbuf.size, "%11lo ", p->original_size);
 			sprintf(pblock->dbuf.mtime, "%11lo ", p->mtime);
+			pblock->dbuf.typeflag = p->typeflag;
 			memcpy(pblock->dbuf.magic, p->magic_version, sizeof(p->magic_version));
 			strncpy(pblock->dbuf.uname, p->uname, sizeof pblock->dbuf.uname);
-
 			sprintf(pblock->dbuf.chksum, "%6o ", pblock->compsum());
 		}
 
