@@ -36,6 +36,9 @@
 
 class CTarArcFile_Normal : public ITarArcFile{
 public:
+	CTarArcFile_Normal::~CTarArcFile_Normal(){
+		close();
+	};
 	bool open(const char *arcfile, const char *mode){
 		m_arcfile = arcfile;
 		m_fp = fopen(arcfile,mode);
@@ -51,7 +54,9 @@ public:
 		return fseek(m_fp, offset,origin);
 	}
 	void close(){
-		fclose(m_fp);
+		if(m_fp){
+			fclose(m_fp);m_fp=NULL;
+		}
 	}
 	int get_archive_type(){return ARCHIVETYPE_NORMAL;}
 private:

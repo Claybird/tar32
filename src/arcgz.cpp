@@ -53,6 +53,7 @@ CTarArcFile_GZip::CTarArcFile_GZip()
 }
 CTarArcFile_GZip::~CTarArcFile_GZip()
 {
+	close();
 }
 bool CTarArcFile_GZip::open(const char *arcfile, const char *mode)
 {
@@ -104,6 +105,13 @@ bool CTarArcFile_GZip::open(const char *arcfile, const char *mode)
 			}
 			m_gzip_comment = comment;
 		}
+		fs_r.seekg(-4, ios_base::end);
+		size_t size;
+		size = fs_r.get();
+		size |= fs_r.get()<<8;
+		size |= fs_r.get()<<16;
+		size |= fs_r.get()<<24;
+		m_orig_filesize = size;
 	}
 	return true;
 	//return (f != NULL);
@@ -122,7 +130,10 @@ int CTarArcFile_GZip::seek(int offset, int origin)
 }
 void CTarArcFile_GZip::close()
 {
-	int ret = gzclose(m_gzFile);
+	if(m_gzFile){
+		int ret = gzclose(m_gzFile);
+		m_gzFile = NULL;
+	}
 }
 
 string CTarArcFile_GZip::get_orig_filename(){

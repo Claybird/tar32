@@ -41,6 +41,7 @@ CTarArcFile_BZip2::CTarArcFile_BZip2()
 }
 CTarArcFile_BZip2::~CTarArcFile_BZip2()
 {
+	close();
 }
 bool CTarArcFile_BZip2::open(const char *arcfile, const char *mode)
 {
@@ -59,7 +60,10 @@ int CTarArcFile_BZip2::write(void *buf, int size)
 }
 void CTarArcFile_BZip2::close()
 {
-	bzclose(m_pbzFile);
+	if(m_pbzFile){
+		bzclose(m_pbzFile);
+		m_pbzFile = NULL;
+	}
 }
 string CTarArcFile_BZip2::get_orig_filename(){
 	if(! m_orig_filename.empty()){return m_orig_filename;}
