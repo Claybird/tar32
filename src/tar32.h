@@ -119,7 +119,7 @@ public:
 	CTar32InternalFile();
 	~CTar32InternalFile();
 	// open after CTar32::readdir() or CTar32()::addheader()
-	bool open(CTar32 *pTar32);
+	bool open(CTar32 *pTar32, bool bWrite = false);
 	int write(void *buf, int size);
 	int read(void *buf, int size);
 	bool close();
@@ -128,6 +128,7 @@ private:
 	int m_readsize;
 	int m_size;
 	int m_blocksize;
+	bool m_write;
 };
 
 

@@ -473,7 +473,7 @@ static bool extract_file(CTar32CmdInfo &cmdinfo, CTar32 *pTarfile, const char *f
 
 
 	// ofstream fs_w;
-	fast_ofstream fs_w;
+	fast_fstream fs_w;
 	if(!cmdinfo.b_print){
 		mkdir_recursive(get_dirname(fname2.c_str()).c_str());
 		fs_w.open(fname2.c_str(), ios::out|ios::binary);
@@ -576,8 +576,76 @@ static void cmd_extract(CTar32CmdInfo &cmdinfo)
 		int ret = SendArcMessage(cmdinfo, ARCEXTRACT_END, &extractinfo);
 	}
 }
+static bool add_file(CTar32CmdInfo &cmdinfo, CTar32 *pTarfile, const char *fname)
+{
+	CTar32FileStatus &stat = pTarfile->m_currentfile_status;
+	string fname2 = fname;
+
+	EXTRACTINGINFOEX extractinfo;
+	{
+		memset(&extractinfo,0,sizeof(extractinfo));
+		extractinfo.exinfo.dwFileSize = stat.original_size;
+		extractinfo.exinfo.dwWriteSize = 0;
+		strncpy(extractinfo.exinfo.szSourceFileName, pTarfile->get_arc_filename().c_str(),FNAME_MAX32+1);
+		strncpy(extractinfo.exinfo.szDestFileName, fname2.c_str(), FNAME_MAX32+1);
+		extractinfo.dwCompressedSize = stat.compress_size;
+		extractinfo.dwCRC = stat.chksum;
+		extractinfo.uOSType = 0;
+		extractinfo.wRatio = extractinfo.exinfo.dwFileSize ? (1000 * extractinfo.dwCompressedSize / extractinfo.exinfo.dwFileSize) : 0;
+		extractinfo.wDate = GetARCDate(stat.mtime);
+		extractinfo.wTime = GetARCTime(stat.mtime);
+		GetARCAttribute(stat.mode, extractinfo.szAttribute,sizeof(extractinfo.szAttribute));
+		GetARCMethod(pTarfile->m_archive_type, extractinfo.szMode, sizeof(extractinfo.szMode));
+		int ret = SendArcMessage(cmdinfo, ARCEXTRACT_BEGIN, &extractinfo);
+		if(ret){throw CTar32Exception("Cancel button was pushed.",ERROR_USER_CANCEL);}
+		// fname2 = extractinfo.exinfo.szDestFileName;
+	}
+
+	int filesize = pTarfile->m_currentfile_status.original_size;
+	if(filesize == 0){return true;}
+	CTar32InternalFile file; file.open(pTarfile, /*write*/true);
+
+
+	// ofstream fs_w;
+	fast_fstream fs_r;
+	fs_r.open(fname2.c_str(), ios::in|ios::binary);
+	if(fs_r.fail()){throw CTar32Exception("can't read file", ERROR_CANNOT_READ);return false;}
+
+	int readsize = 0;
+	int n;
+	char buf[65536];
+	while(fs_r.read(buf,sizeof(buf)),(n=fs_r.gcount())>0){
+		int m = file.write(buf, n);
+		if(m>0){readsize += m;}
+		if(n!=m){
+			throw CTar32Exception("can't write to arcfile", ERROR_CANNOT_WRITE);
+		}
+		if(cmdinfo.hTar32StatusDialog){
+			extractinfo.exinfo.dwWriteSize = readsize;
+			int ret = SendArcMessage(cmdinfo, ARCEXTRACT_INPROCESS, &extractinfo);
+			if(ret){throw CTar32Exception("Cancel button was pushed.",ERROR_USER_CANCEL);}
+		}
+	}
+	bool bret = file.close();
+	if(!bret){throw CTar32Exception("can't write to arcfile", ERROR_CANNOT_WRITE);}
+	if(cmdinfo.hTar32StatusDialog){
+		extractinfo.exinfo.dwWriteSize = readsize;
+		int ret = SendArcMessage(cmdinfo, ARCEXTRACT_END, &extractinfo);
+		if(ret){throw CTar32Exception("Cancel button was pushed.",ERROR_USER_CANCEL);}
+	}
+	return true;
+}
+
 static void cmd_create(CTar32CmdInfo &cmdinfo)
 {
+	{
+		EXTRACTINGINFOEX extractinfo;
+		memset(&extractinfo,0,sizeof(extractinfo));
+		strncpy(extractinfo.exinfo.szSourceFileName, cmdinfo.arcfile.c_str() ,FNAME_MAX32);
+		int ret = SendArcMessage(cmdinfo, ARCEXTRACT_BEGIN, &extractinfo);
+	}
+
+	
 	CTar32 tarfile;
 	int ret;
 	bool bret;
@@ -624,10 +692,18 @@ static void cmd_create(CTar32CmdInfo &cmdinfo)
 			}
 			stat.filename = file_internal2;
 			bret = tarfile.addheader(stat);
-			bret = tarfile.addbody(file_external2.c_str());
+			// bret = tarfile.addbody(file_external2.c_str());
+			bool bret2 = add_file(cmdinfo,&tarfile,file_external2.c_str());
 			filenum ++;
 		}
 	}
+
+	{
+		EXTRACTINGINFOEX extractinfo;
+		memset(&extractinfo,0,sizeof(extractinfo));
+		int ret = SendArcMessage(cmdinfo, ARCEXTRACT_END, &extractinfo);
+	}
+	
 	if(filenum == 0){
 		// fixed by tsuneo. 2001.05.14
 		throw CTar32Exception("There is no file to archive. ", ERROR_FILE_OPEN);

@@ -10,20 +10,25 @@
 
 #include <stdio.h>
 
-class fast_ofstream
+class fast_fstream
 {
 	FILE *m_fp;
 	bool m_berror;
+	bool m_bwrite;
+	int m_count;
 public:
-	fast_ofstream(){
+	fast_fstream(){
 		m_fp = NULL;
 		m_berror = false;
+		m_bwrite = false;
+		m_count = 0;
 	};
-	~fast_ofstream(){
+	~fast_fstream(){
 		close();
 	};
 	void open(const char *fname, int mode){
-		m_fp = fopen(fname,"wb");
+		if(mode & ios::out){m_bwrite=true;}
+		m_fp = fopen(fname, (m_bwrite ? "wb" : "rb"));
 		m_berror = (m_fp == NULL);
 	};
 	bool fail(){
@@ -31,14 +36,21 @@ public:
 	};
 	void write(const char *buf, int n){
 		int m = fwrite(buf,1,n,m_fp);
+		m_count = m;
 		m_berror = (m!=n);
 	};
+	void read(char *buf, int n){
+		int m = fread(buf,1,n,m_fp);
+		m_count = m;
+		m_berror = (m!=n);
+	}
 	void close(){
 		if(m_fp){
 			fclose(m_fp);
 			m_fp = NULL;
 		}
 	};
+	int gcount(){return m_count;}
 };
 
 class fast_strstreambuf

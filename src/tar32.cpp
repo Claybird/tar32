@@ -410,12 +410,12 @@ bool CTar32::extract(const char *fname_extract_to)
 bool CTar32::addheader(const CTar32FileStatus &stat)
 {
 	int ret;
-	
+	int blocksize = 1;
 	if(m_archive_type == ARCHIVETYPE_TAR 
 		|| m_archive_type == ARCHIVETYPE_TARGZ 
 		|| m_archive_type == ARCHIVETYPE_TARZ 
 		|| m_archive_type == ARCHIVETYPE_TARBZ2){
-
+		blocksize = 512;
 		HEADER tar_header;
 		{
 			HEADER *pblock = &tar_header;
@@ -457,6 +457,7 @@ bool CTar32::addheader(const CTar32FileStatus &stat)
 		;
 	}
 	m_currentfile_status = stat;
+	m_currentfile_status.blocksize = blocksize;
 	return true;
 }
 bool CTar32::addbody(const char *file)
@@ -523,29 +524,50 @@ CTar32InternalFile::~CTar32InternalFile(){
 	if(m_pfile)close();
 }
 // open after CTar32::readdir() or CTar32()::addheader()
-bool CTar32InternalFile::open(CTar32 *pTar32){
+bool CTar32InternalFile::open(CTar32 *pTar32, bool bWrite){
 	m_pfile = pTar32->m_pfile;
 	m_size = pTar32->m_currentfile_status.original_size;
 	m_readsize = 0;
 	m_blocksize = pTar32->m_currentfile_status.blocksize;
+	m_write = bWrite;
 	return true;
 }
 int  CTar32InternalFile::write(void *buf, int size){
-	return m_pfile->write(buf, size);
+	int n = m_pfile->write(buf, size);
+	if(n>0){m_readsize += n;}
+	return n;
 }
 int  CTar32InternalFile::read(void *buf, int size){
 	int n = m_pfile->read(buf, m_size==-1 ? size : min(size, m_size-m_readsize));
-	m_readsize += n;
+	if(n>0){m_readsize += n;}
 	return n;
 }
 bool CTar32InternalFile::close(){
-	int size = m_size;
+	int size;
+	if(m_write){
+		size = m_readsize;
+	}else{
+		size = m_size;
+	}
 	bool bret = true;
 	if(size != -1 && size!=0){
 		size = (((size-1)/m_blocksize)+1) * m_blocksize;
 		size = size - m_readsize;
-		int ret = m_pfile->seek(size, SEEK_CUR);
-		bret = (ret != -1);
+		if(m_write){
+			char buf[512];
+
+			memset(buf,0,sizeof(buf));
+			while(size>0){
+				int s;
+				if(size>sizeof(buf)){s=sizeof(buf);}else{s=size;}
+				int ret = this->write(buf, s);
+				if(ret>0){size -= ret;}
+				if(ret != s){bret=false;break;}
+			}
+		}else{
+			int ret = m_pfile->seek(size, SEEK_CUR);
+			bret = (ret != -1);
+		}
 	}
 	m_pfile = NULL;
 	return bret;
