@@ -1,0 +1,247 @@
+<html>
+<head><title>TAR32.DLL @OpenLab</title></head>
+<body>
+<h1>TAR32.DLL
+<a href="http://www.csdinc.co.jp/archiver/"><img src="http://www.csdinc.co.jp/archiver/images/archivers.gif" border="0" width="88" height="31"></a width=88 height=31>
+<IMG SRC="http://openlab.ring.gr.jp/tsuneo/cgi-bin/Count.cgi?df=tsuneo-tar32.dat|dd=D|ft=0">
+</h1>
+
+<h2>はじめに</h2>
+<ul>
+TAR32.DLLはWindows用のTAR/GZ/BZ2/Zの圧縮/展開用ライブラリプログラムです。<br>
+統合アーカイバプロジェクトのAPI仕様に準拠しています。
+</ul>
+
+<h2>ダウンロード</h2>
+<ul>
+<h3>最新版ダウンロード</h3>
+1時間おきにCVSが更新されているかチェックして、更新されていればパッケージを作成しています。
+<br>(注:パッケージ全体の入手方法を提供しないDLL単体の再配布は、なるべく避けた方がいいと思います)
+<li>TAR32.DLL Ver0.xx
+    <ul>
+    <a href="http://openlab.ring.gr.jp/tsuneo/soft/tar32_1/">パッケージ</a>
+    <br><a href="http://openlab.ring.gr.jp/tsuneo/soft/tar32_1/tar32_1/TAR32.DLL">DLL単体</a>
+    </ul>
+<li>TAR32.DLL Ver2.xx
+    <ul>
+    <a href="http://openlab.ring.gr.jp/tsuneo/soft/tar32_2/">パッケージ</a>
+    <br><a href="http://openlab.ring.gr.jp/tsuneo/soft/tar32_2/tar32_2/tar32.dll">DLL単体</a>
+    </ul>
+<h3>その他の由緒正しい(?)ダウンロード先</h3>
+<li><a href="http://www.csdinc.co.jp/archiver/lib/tar32.html">統合アーカイバプロジェクトのページ</a>
+<li><a href="http://www.vector.co.jp/soft/win95/util/se040414.html">VECTOR</a>
+</ul>
+
+<h2>機能</h2>
+<ul>
+<li>.tar/.tar.gz/.tar.Z/.gz/.Z/.bz2の形式の圧縮/展開が行えます。ただし、.tar.Z/.Zについては展開のみ行えます。
+<li>統合アーカイバプロジェクトのAPI仕様に準拠。TAR32.DLLのAPIに対応した多数のアプリケーションで利用できます。
+<li>Windows95以降、WindowsNT4.0以降で動作します。
+</ul>
+
+<h2>動作環境</h2>
+<ul>
+<li>Windows95以降,WindowsNT4.0以降(一般的なWIN32APIが使えるプラットホーム)
+</ul>
+
+<h2>使い方</h2>
+<ul>
+<h3>アプリケーション利用者</h3>
+  <ul>
+  <li>エクスプローラの設定によってはTAR32.DLLが見えない場合があります。その場合はエクスプローラのメニューバーの表示/オプションでオプションダイアログを出し、「全てのファイルを表示」をチェックし、「登録されているファイルの拡張子は表示しない」のチェックを外してください。
+  <li>TAR32.DLLをWindowsのSYSTEMフォルダにコピーしてください。<br>
+  Windows95,Windows98の場合は普通C:\Windows\Systemとなります。<br>
+  WindowsNTの場合は普通C:\WINNT\SYSTEM32です。
+  <li>TAR32.DLLに対応したアプリケーションプログラムをお使いください。
+  </ul>
+<h3>アプリケーション開発者</h3>
+   <ul>
+   <li>基本的なAPIの使い方はUNLHA32.DLLとほぼ同じです。UNLHA32.DLLのドキュメントを参考にしてください。
+   <li>Ver0.xx系にはいくつかドキュメントが付属していますので、そちらもご覧ください。
+   <li>Ver2.xx系には現在ほとんどドキュメントがないので、ソースを見るか統合アーカイバ開発系などで質問してください。まだα版程度なので、Ver0.xxの方が安定していると思います。
+   </ul>
+</ul>
+
+<h2>バージョンについて</h2>
+<ul>
+TAR32.DLLは現在Ver0.xx系とVer2.xx系に別れています。違いは以下のとおりです。
+<h3>Ver0.xx系</h3>
+<ul>
+<li>Ver0.01は1996/12/17に公開
+<li>kmtar(PowerUpKit) for WINNTをベースとして開発(Ver0.10以降)
+<li>kmtarに付属しているさまざまな機能が使えます。
+<li>kmtarを独自に拡張したいくつかの機能を使えます。
+<li>ライセンスはGPLです。
+</ul>
+<h3>Ver2.xx系</h3>
+<ul>
+<li>Ver0.xxソースプログラムが汚くなってきたように思ったため、コードを再利用しながらほぼ１から書き直した。多少プログラムが見やすく、変更しやすくなったと思います。バグも発生しにくくなったはず。
+<li>スレッドセーフになったはず...
+<li>Ver0.xx系の機能のうち、いくつか利用できないものがあります。
+<li>基本的にzlibとlibbzip2とオリジナルのコードから成り立ちます。
+<li>Public Domain Softwareに近いライセンスです。
+<li>LhMelt,ExpLzhなどである程度動作確認していますが、Ver0.xx系でないと動かないアプリケーションがあるかもしれません。
+</ul>
+</ul>
+
+<h2>開発に参加するには?</h2>
+<ul>
+<table>
+<tr>
+<td>
+TAR32.DLLはCVSというファイルシステムを用いて開発しています。<br>
+最新版ソースの取得はゲスト用アカウントで誰でも行うことができます。<br>
+ソースプログラム、ドキュメントなどを変更したい方は書き込み用アカウント(ユーザ名、パスワード)が必要です。基本的に誰でも行うことができますので、どしどし申請してください(^^;<br>
+＃ 最近ほとんど開発していないので、書き換えたいところがあれば勝手に自由に書き換えてくださいということです。(^^;<br>
+CVSクライアントとしては、マウスで操作できるWinCVS(右図)がお勧めです。<br>
+<a href="../cvs/">・WinCVSによる最新ソースの取得、開発方法</a>
+</td>
+<td>
+<a href="http://www.wincvs.org/shots.html"><IMG SRC="http://www.wincvs.org/screen1.gif" width=234 height=178></a>
+</td>
+</tr>
+</table>
+<h3>私の開発環境</h3>
+<ul>
+<li>Visual C++ Ver6.0(J) + Service Pack3<br>
+    Win32APIが使える普通のC++コンパイラでコンパイルできると思います。
+<li>WindowsNT4.0 + Service Pack5<br>
+    Windows9xでもコンパイルできます。
+</ul>
+
+<h3>CVSの設定</h3>
+設定は以下の通りです。
+但し、ゲスト用アカウントではファイルの変更、追加はできません。
+<table border=1>
+<tr><td>通信プロトコル</td>					<td>pserver</td></tr>
+<tr><td>サーバ名</td>						<td>openlab.ring.gr.jp</td></tr>
+<tr><td>CVSパス名</td>						<td>/circus/cvsroot</td></tr>
+<tr><td>モジュール名</td>					<td>tar32_1 (tar32 ver0.xxの場合)<br>tar32_2 (tar32 ver2.xxの場合)</td></tr>
+<tr><td>ゲスト用ユーザ名(read only)</td>	<td>guest</td></tr>
+<tr><td>ゲスト用パスワード(read only)</td>	<td>guest</td></tr>
+<tr><td>CVSレボジトリ名(ゲストユーザ)</td>	<td>:pserver:guest@openlab.ring.gr.jp:/circus/cvsroot</td></tr>
+</table>
+
+<h3>CVSへの書き込み可能アカウントの申請方法</h3>
+<ol>
+<li>統合アーカイバ開発系メーリングリストに入会してください。
+<li>お好きなユーザ名とパスワードを以下の場所で入れてください。アカウント申請用のURLが表示されます。(そのURLはみなくて結構です。また、認証ページなので見ることはできません。)<br>
+<a href="http://openlab.ring.gr.jp/tsuneo/cgi-bin/cvsadduser.html">アカウント申請用URLの作成</a>
+<li>申請理由を適当に決めてください。以下のような方はどしどしどうぞ(^^
+<ul>
+<li>プログラムを書きたい、変更したい。
+<li>ドキュメントを書きたい、変更したい。
+<li>ビルドして、ビルド済みプログラムを置きたい。
+<li>その他なんでも。メールでお尋ねください。
+</ul>
+<li>メールで、アカウント申請用URL、申請理由、名前を私(吉岡)まで送ってください。<br>
+申請先：<a href="mailto:tsuneo@rr.iij4u.or.jp">tsuneo@rr.iij4u.or.jp</a>
+<li>申請したアカウントの登録を私(吉岡)が行い、登録した旨メールで返信します。
+<li>申請したユーザ名とパスワードでCVSサーバに接続してどんどん書き換えましょう(^^。うまくいかない場合はWinCVSのプロジェクトディレクトリは一度削除(or移動)して作り直してみてください。
+</ol>
+
+<h3>プログラムの変更の指針</h3>
+<ul>
+<li>特に決まりはありません。すべて自由に書き換えてください。
+<li>なるべく変更履歴を書いてください。
+<li>なるべく統合アーカイバ開発系メーリングリストに変更点をなげてください。
+<li>変更部分は基本的にPublic Domain Softwareとして扱います。他のライセンスにしたい場合は別途相談してください。
+<li>パッケージ化は一時間に一度行っています。
+</ul>
+
+<h3>もっといろいろしたい、フリーソフトをCVSで開発したいとき</h3>
+RingServerのオープンラボラトリなどに参加しましょう。基本的に誰でも参加できるようです。また、sourceforge.netでもオープンソースソフトウェア開発用にCVSサーバなどを無料で利用できます。
+<ul>
+<li><a href="http://openlab.ring.gr.jp/">Open Laboratory</a>
+<li><a href="http://openlab.ring.gr.jp/ringserver/join-proj-j.html">Ring Serverプロジェクトへの参加</a>
+<li><a href="http://sourceforge.net/">sourceforge.net</a>
+</ul>
+
+
+</ul>
+
+
+<h2>特許</h2>
+TAR32.DLLではcompress形式(拡張子.Z)の展開ができます。<br>
+compress形式の圧縮/展開にはLZWアルゴリズム(LZ78を実用化したもの)が使われています。<br>
+UNISYSはLZWの圧縮/展開に関する特許を取得していると強く主張しています。<br>
+そのため、TAR32.DLLを用いてcompress形式の展開を行うプログラムを作成、利用するとUNISYSの特許に抵触し、ライセンス料の支払いを要求されたり、訴えられる可能性があります。
+<ul>
+<li>
+  <a href="http://www.geocities.co.jp/SiliconValley/3453/gif_info/lzw_patent_jp.html">GIFとLZW圧縮伸長法の特許について</a>
+<li>
+   <a href="http://www.unisys.co.jp/">日本UNISYSのLZWライセンス</a><br>
+<li>
+   <a href="http://mordor.lpt.fi/doc/ncompress/copyright">Public Domainのcompress形式圧縮展開プログラムncompressに付属ドキュメント(LZW.INFO)</a>UNISYS特許に関する情報
+<li>
+  <a href="http://164.195.100.11/netahtml/search-bool.html">US Patent Full-Text Database Boolean Search(アメリカの特許検索)</a>
+<li>
+  <a href="http://www.jpo-miti.go.jp/indexj.htm">日本の特許庁</a>
+<li>
+  <a href="http://www.plaza.hitachi-sk.co.jp/~masa-k/doc/think-gnu/text/tgc03.html">なぜ特許はソフトウェアに有害なのか</a>
+<li>
+  <a href="http://www.fdi.co.jp/tech/kaisetu/kaisetu.html">富士通デバイスによる圧縮アルゴリズム技術解説</a>LZ77系の特許に関する解説があります。
+</ul>
+
+<h2>利用条件</h2>
+<ul>
+TAR32.DLL Version 0.x,1.xはGPLに従ってください。<br>
+TAR32.DLL Version 2.xは基本的にPublic Domain Softwareとして配布、改造、ソース等の一部利用など自由に行ってください。ただし、ZLIB及びlibbzip2を用いていますので、この部分についてはそれぞれの利用条件に従ってください。また、義務ではありませんが、ソースを改良した場合はその変更をオリジナルにも反映させるためなるべく変更点を教えてください。
+<li><a href="http://www.gnu.org/copyleft/licenses.html">GPL(GNU GENERAL PUBLIC LICENSE)</a>
+    (<a href="ftp://ftp.sra.co.jp/pub/gnu/local-fix/GPL2-j/gpl.text.gz">日本語GPL</a>)
+<li><a href="http://www.cdrom.com/pub/infozip/zlib/rfc-zlib.html">ZLIB利用条件</a>
+<li><a href="LICENSE-bzip2.txt">bzip2とlibbzip2の利用条件</a>
+</ul>
+<h2>関連サイト</h2>
+<ul>
+<li>
+  <a href="http://www.csdinc.co.jp/archiver/">統合アーカイバプロジェクト(Common Archivers Library Project)</a>
+  <a href="http://www.csdinc.co.jp/archiver/"><img src="http://www.csdinc.co.jp/archiver/images/archivers.gif" border="0" width="88" height="31"></a width=88 height=31>
+<li>
+  <a href="http://www.matsusaka-u.ac.jp/~okumura/compression.html">奥村晴彦さんによるData Compression Pointers</a>
+<li>
+  <a href="http://www.vector.co.jp/soft/win95/util/se031460.html">
+  kmtar for Win32</a>
+<li>
+  <a href="http://www.gnu.org/manual/tar/index.html">
+  GNU tar</a>
+<li>
+  <a href="http://www.gzip.org/">The gzip homepage</a>
+<li>
+  <a href="http://www.cdrom.com/pub/infozip/zlib">zlib Home Page
+  <IMG SRC="http://www.gzip.org/zlib.gif" width=71 height=38>
+  </a>
+<li>
+  <a href="http://sourceware.cygnus.com/bzip2/index.html">
+  The bzip2 and libbzip2 official home page
+  </a>
+<li>
+  <a href="http://www.goice.co.jp/member/mo/formats/tar.html">File Formts</a>
+<li>
+  <a href="http://www.wotsit.org/">The Programmer's File Format Collection</a>
+</ul>
+
+<h2>問い合わせ先</h2>
+このプログラムについての問い合わせはなるべく統合アーカイバメーリングリスト又は開発系メーリングリストにお願いします。私(吉岡)宛に出されてもすぐには返事ができない場合があります。
+<ul>
+<li><a href="http://www.csdinc.co.jp/archiver/docs/ml.html">統合アーカイバプロジェクトメーリングリスト</a><br>
+主にアプリケーションユーザ向け
+<li><a href="http://www.csdinc.co.jp/archiver/dev/ml.html">統合アーカイバプロジェクト開発系メーリングリスト</a><br>
+主にアプリケーション開発、DLL開発にかかわっている、又は興味がある方向け
+</ul>
+
+<hr>
+<a href="mailto:tsuneo@rr.iij4u.or.jp">吉岡 恒夫(Yoshioka Tsuneo/tsuneo@rr.iij4u.or.jp</a>,tsuneo@ring.gr.jp,tsuneo@rr.iij4u.or.jp,QWF00133@nifty.ne.jp)
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
