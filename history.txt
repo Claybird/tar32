@@ -148,3 +148,7 @@
 	・CTar32::close()でのm_pfileの削除忘れによるメモリリーク修正
 	・メモリリークチェック用関数の追加(_CrtMemDumpAllObjectsSince()などを利用)
 	by tsuneo(tsuneo@rr.iij4u.or.jp)
+
+2000/11/28
+	・英語HTML,SDK文書を少し追加
+	by tsuneo(tsuneo@rr.iij4u.or.jp)
