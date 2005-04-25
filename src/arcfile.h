@@ -30,13 +30,13 @@ interface ITarArcFile{
 		if(! m_orig_filename.empty()){return m_orig_filename;}
 		return m_arcfile + "_extracted";
 	}
-	virtual size_t get_orig_size(){return m_orig_filesize;}
+	virtual __int64 get_orig_size(){return m_orig_filesize;}
 	virtual time_t get_mtime(){return m_mtime;}
 	string get_arc_filename(){return m_arcfile;}
 protected:
 	string m_arcfile;
 	string m_orig_filename;
-	size_t m_orig_filesize;
+	__int64 m_orig_filesize;
 	time_t m_mtime;
 };
 

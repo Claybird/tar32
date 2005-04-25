@@ -68,7 +68,7 @@ int CTarArcFile_Compress::read(void *buf, int size)
 {
 	int nread = 0;
 	
-	while(!m_eof && size > 0){
+	while(!eof() && size > 0){
 		int in_avail;
 		in_avail = m_strstream.rdbuf()->in_avail();
 		if(in_avail == 0){
@@ -83,6 +83,16 @@ int CTarArcFile_Compress::read(void *buf, int size)
 	}
 	return nread;
 }
+bool CTarArcFile_Compress::eof()
+{
+	if(m_strstream.rdbuf()->in_avail() == 0){
+		if(m_eof){
+			return true;
+		}
+	}
+	return false;
+}
+
 bool CTarArcFile_Compress::readonce()
 {
 resetbuf:

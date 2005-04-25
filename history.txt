@@ -269,4 +269,9 @@
 	・TarGetOriginalSizeEx/TarGetCompressedSizeEx関数を追加。
 	by tsuneo
 
+2005/05/25 Ver2.28
+	・Z(Compress)形式のファイルを展開できないことがある問題に対応。
+	・TarGetFileCount()で正しくファイル数が取得できないことがある問題に対応。
+	  (Special thanks to 石田さん、HALさん)
+	by tsuneo
 

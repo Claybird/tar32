@@ -44,6 +44,7 @@ public:
 	bool open(const char *arcfile, const char *mode);
 	int read(void *buf, int size);
 	int write(void *buf, int size){return -1;}
+	bool eof();
 	// int seek(int offset, int origin);
 	void close();
 	int get_archive_type(){return ARCHIVETYPE_Z;}

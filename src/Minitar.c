@@ -32,6 +32,8 @@ int (WINAPI *TarFindFirst)(HANDLE hwnd,char *fname,INDIVIDUALINFO *pinfo);
 int (WINAPI *TarFindNext)(HANDLE hwnd,INDIVIDUALINFO *pinfo);
 int (WINAPI *TarGetFileCount)(LPCSTR _szArcFile);
 BOOL (WINAPI *TarConfigDialog)(const HWND _hwnd, LPSTR _lpszComBuffer,const int _iMode);
+int (WINAPI *TarGetFileCount)(LPCSTR _szArcFile);
+
 
 void SelfTest()
 {
@@ -77,6 +79,11 @@ int main(int argc,char *argv[])
 	if(argc==3 && (strcmp(argv[1],"check")==0 || strcmp(argv[1],"find")==0)){
 		TarCheckArchive = GetProcAddress(hLib,"TarCheckArchive");
 		ret = TarCheckArchive(argv[2],0);
+	}
+	if(argc==3 && (strcmp(argv[1],"count")==0 || strcmp(argv[1],"find")==0)){
+		TarGetFileCount = GetProcAddress(hLib,"TarGetFileCount");
+		ret = TarGetFileCount(argv[2]);
+		printf("count=%d\n", ret);
 	}
 	
 	if(argc>=3 && strcmp(argv[1],"find")==0){
