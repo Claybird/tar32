@@ -309,7 +309,10 @@ extern "C" BOOL WINAPI _export TarGetOriginalSizeEx(HARC _harc, __int64 *_lpllSi
 	CTar32 *pTar32 = HARC2PTAR32(_harc);
 	CTar32FileStatus *pstat = &(pTar32->m_currentfile_status);
 	// サイズが不明の場合は 0を返す
-	if(pstat->original_size == -1){return 0;}
+	if(pstat->original_size == -1){
+		*_lpllSize = 0;
+		return 0;
+	}
 	*_lpllSize = pstat->original_size;
 	return TRUE;
 }

@@ -170,10 +170,11 @@ static int tar_cmd_itr(const HWND hwnd, LPCSTR szCmdLine,LPSTR szOutput, const D
 	char command = 0;	// main command. ('x','c','l')
 	string current_directory;
 	list<string>::iterator argi = args.begin();
+	bool option_end = false;
 
 	while(argi != args.end()){
 		string::iterator stri = (*argi).begin();
-		if(argi==args.begin() || (*stri == '-' && *(stri+1) != '\0')){
+		if(argi==args.begin() || (*stri == '-' && *(stri+1) != '\0' && option_end == false)){
 			if(*stri == '-'){
 				stri++;
 			}
@@ -299,6 +300,9 @@ static int tar_cmd_itr(const HWND hwnd, LPCSTR szCmdLine,LPSTR szOutput, const D
 						stri++;
 					}
 					/*ignore*/
+					break;
+				case '-':	// added by tsuneo on 2006/08/04. Patch is provided by Niiyama(HEROPA)-san. Special Thanks to Niiyama(HEROPA)-san.
+					option_end = true;
 					break;
 				default:
 					throw CTar32Exception("Invalid Arguments", ERROR_COMMAND_NAME);
