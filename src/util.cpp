@@ -29,22 +29,17 @@
 		I want any trivial information.
 		If you use this file, please report me.
 */
+#include "stdafx.h"
 #include "util.h"
-#include <string>
-#include <direct.h> // _mkdir
-#include <wtypes.h>
-#include <winnls.h>
-#include <io.h>
-#include <mbstring.h>
 
 int mkdir_recursive(const char *dirname_)
 {
-	string dirname = dirname_;
+	std::string dirname = dirname_;
 	int pos = 0;
 	int ret;
 	
 	while(1){
-		string make_dirname;
+		std::string make_dirname;
 		char *ptr = (char*)_mbspbrk((const unsigned char*)dirname.c_str()+pos,(const unsigned char*)"/\\");
 
 		if(ptr==NULL){
@@ -59,9 +54,9 @@ int mkdir_recursive(const char *dirname_)
 	ret = _mkdir(dirname.c_str());
 	return 0;
 }
-string get_dirname(const char *pathname)
+std::string get_dirname(const char *pathname)
 {
-	string filename = pathname;
+	std::string filename = pathname;
 	//int pos1 = filename.rfind('/');
 	//int pos2 = filename.rfind('\\');
 	//int pos = max(pos1 ,pos2);
@@ -69,20 +64,20 @@ string get_dirname(const char *pathname)
 	//string dirname = filename.substr(0, pos);
 	// fixed by tsuneo 2001.05.14
 	char *p = (char*)max(_mbsrchr((const unsigned char*)pathname,'/'),_mbsrchr((const unsigned char*)pathname,'\\'));
-	if(! p){
+	if(!p){
 		return "";
 	}
-	string dirname = filename.substr(0, p - pathname);
+	std::string dirname = filename.substr(0, p - pathname);
 	return dirname;
 }
-string get_filename(const char *pathname)
+std::string get_filename(const char *pathname)
 {
 
 	char *p = (char*)max(_mbsrchr((const unsigned char*)pathname,'/'),_mbsrchr((const unsigned char*)pathname,'\\'));
 	if(p){
-		return string(p+1);
+		return std::string(p+1);
 	}else{
-		return string(pathname);
+		return std::string(pathname);
 	}
 }
 bool is_absolute_pathname(const char *fname)
@@ -91,13 +86,13 @@ bool is_absolute_pathname(const char *fname)
 	if(isalpha(*fname) && fname[1] == ':' && fname[2] == '\\'){return true;}
 	return false;
 }
-string make_pathname(const char *dirname_, const char *filename_)
+std::string make_pathname(const char *dirname_, const char *filename_)
 {
-	if(*dirname_ == '\0'){return string(filename_);}
+	if(*dirname_ == '\0'){return std::string(filename_);}
 	if(is_absolute_pathname(filename_)){
-		return string(filename_);
+		return std::string(filename_);
 	}
-	string pathname = dirname_;
+	std::string pathname = dirname_;
 	// if(_mbsrchr((const unsigned char *)dirname_,'\\') == (const unsigned char *)dirname_ + _mbslen((const unsigned char *)dirname_) -1){
 	if(_mbsrchr((const unsigned char *)dirname_,'\\') == (const unsigned char *)dirname_ + strlen(dirname_) -1){	// fixed by tsuneo 2001.05.15
 		;
@@ -108,26 +103,27 @@ string make_pathname(const char *dirname_, const char *filename_)
 	return pathname;
 }
 
-static void escape_filename(char *filename)
+static void escape_filename(std::string &filename)
 {
-	while(*filename){
-		if(*filename == ':'){
-			*filename = '_';
+	for(unsigned int i=0;i<filename.length();){
+		if(filename[i] == ':'){
+			filename[i] = '_';
 		}
-		filename += _mbclen((unsigned char*)filename);
+		i += _mbclen((const unsigned char*)filename.c_str()+i);
 	}
 }
 
-string escape_absolute_paths(const char *pathname_)
+std::string escape_absolute_paths(const char *pathname_)
 {
 	while(*pathname_ == '/' || *pathname_== '\\' ){pathname_ ++;}
 
-	string esc_path;
-	string pathname = pathname_;
-	int oldpos=0, pos = 0;
+	std::string esc_path;
+	std::string pathname = pathname_;
+	int oldpos=0;
+	unsigned int pos = 0;
 	
 	while(pos < pathname.length()){
-		string fname;
+		std::string fname;
 
 		const char *ptr = (char*)_mbspbrk((const unsigned char*)pathname.c_str()+pos,(const unsigned char*)"/\\");
 		if(ptr==NULL){
@@ -135,7 +131,7 @@ string escape_absolute_paths(const char *pathname_)
 		}
 		pos = ptr - pathname.c_str();
 		fname = pathname.substr(oldpos,pos-oldpos);
-		escape_filename((char*)fname.c_str());
+		escape_filename(fname);
 		if(fname == ".."){
 			fname = "__";
 		}
@@ -149,47 +145,11 @@ string escape_absolute_paths(const char *pathname_)
 	return esc_path;
 }
 
-class dbcschar{
-public:
-	dbcschar(const char *str){
-		if(str == NULL){highbyte = 0; lowbyte = 0;return;}
-		if(::IsDBCSLeadByte(*str) && *(str+1)){
-			highbyte = *(str);
-			lowbyte  = *(str+1);
-		}else{
-			highbyte = 0;
-			lowbyte  = *str;
-		}
-	};
-	bool isnull(){
-		return (highbyte == 0) && (lowbyte == 0);
-	}
-	operator int(){
-		return highbyte*256 + lowbyte;
-	}
-private:
-	char highbyte;
-	char lowbyte;
-	friend bool operator==(dbcschar c1, dbcschar c2);
-};
-bool operator==(dbcschar c1, dbcschar c2)
-{
-	/* ignore case comaration */
-	if(c1.highbyte == 0 && c2.highbyte == 0){
-		return tolower(c1.lowbyte) == tolower(c2.lowbyte);
-	}else{
-		return c1.highbyte == c2.highbyte && c1.lowbyte == c2.lowbyte;
-	}
-}
-/*
-	ASCII-Caracter	=> 0x00cc
-	HANKAKU-KANA    => 0x00cc
-	2 byte KANJI    => 0xcccc
-*/
-typedef basic_string<dbcschar> dbcsstring;
+typedef USHORT dbcschar;	//2バイト文字はUpperByte*256+LowerByte、1バイト文字はそのまま
+typedef std::basic_string<dbcschar> dbcsstring;
 
-static bool is_regexp_match(dbcsstring::iterator regexp_begin, dbcsstring::iterator regexp_end
-					 , dbcsstring::iterator str_begin, dbcsstring::iterator str_end)
+static bool is_regexp_match(const dbcschar* regexp_begin, const dbcschar* regexp_end
+					 , const dbcschar* str_begin, const dbcschar* str_end)
 {
 	switch(*regexp_begin){
 	case '*':
@@ -216,12 +176,12 @@ static dbcsstring str2dbcsstring(const char *str)
 {
 	dbcsstring dbcsstr;
 	while(*str){
-		dbcschar ch = str;
-		// ch.str2dbcschar(str);
-		dbcsstr.append(1, ch);
+		dbcschar ch = *str;
 		if(::IsDBCSLeadByte(*str)){
 			str++;
+			ch=ch*256+*str;
 		}
+		dbcsstr.append(1, ch);
 		str++;
 	}
 	return dbcsstr;
@@ -230,39 +190,58 @@ bool is_regexp_match_dbcs(const char *regexp, const char *str)
 {
 	dbcsstring regexp_dbcsstr = str2dbcsstring(regexp);
 	dbcsstring str_dbcsstr = str2dbcsstring(str);
-	return is_regexp_match(regexp_dbcsstr.begin(), regexp_dbcsstr.end()
-							, str_dbcsstr.begin(), str_dbcsstr.end());	
+	return is_regexp_match(regexp_dbcsstr.c_str(), regexp_dbcsstr.c_str()+regexp_dbcsstr.length()
+							, str_dbcsstr.c_str(), str_dbcsstr.c_str()+str_dbcsstr.length());	
 }
-void convert_yen_to_slash(char *pathname)
+void convert_yen_to_slash(std::string &pathname)
 {
-	while(*pathname){
-		if(*pathname == '\\'){
-			*pathname = '/';
+	for(unsigned int i=0;i<pathname.length();){
+		if(pathname[i] == '\\'){
+			pathname[i] = '/';
 		}
-		pathname += _mbclen((unsigned char*)pathname);
+		i += _mbclen((unsigned char*)pathname.c_str() + i);
 	}
 }
-static void find_files(const char *regexp, list<string> &files)
+
+void convert_slash_to_backslash(std::string &pathname)
+{
+	for(unsigned int i=0;i<pathname.length();){
+		if(pathname[i] == '/'){
+			pathname[i] = '\\';
+		}
+		i += _mbclen((unsigned char*)pathname.c_str() + i);
+	}
+}
+
+void get_full_path(const char *pPath,std::string &full)
+{
+	char buf[_MAX_PATH];
+	_fullpath(buf,pPath,COUNTOF(buf));
+
+	full=buf;
+}
+
+void find_files(const char *regexp, std::list<std::string> &files)
 {
 	//WIN32_FIND_DATA finddata;
 	//HANDLE hFindFile;
 	long handle;
 	struct _finddata_t finddata;
-	string dirname = get_dirname(regexp);
+	std::string dirname = get_dirname(regexp);
 
 	handle = _findfirst(regexp, &finddata);
 	int ret;
 	// hFindFile = ::FindFirstFile(regexp, &finddata);
 	ret = (handle != -1);
 	while(ret){
-		string fname = finddata.name;
+		std::string fname = finddata.name;
 		if(fname == "." || fname == ".."){
 			;
 		}else{
-			string pathname = make_pathname(dirname.c_str(), fname.c_str());
+			std::string pathname = make_pathname(dirname.c_str(), fname.c_str());
 			files.push_back(pathname);
 			if((finddata.attrib & _A_SUBDIR) == _A_SUBDIR){
-				string searchname = make_pathname(pathname.c_str(), "*.*");
+				std::string searchname = make_pathname(pathname.c_str(), "*.*");
 				find_files(searchname.c_str(), files);
 			}
 		}
@@ -274,9 +253,49 @@ static void find_files(const char *regexp, list<string> &files)
 	}
 }
 
-list<string> find_files(const char *regexp)
+//8進数表記の数字を解析する
+//念のため入力バッファサイズを受け取ることとする
+__int64 parseOctNum(const char *oct,int length)
 {
-	list<string> files;
-	find_files(regexp, files);
-	return files;
+	__int64 num = 0;
+	for(int i=0;i<length;i++){
+		char c = oct[i];
+		//NOTE:プログラムの文字コードとしてASCIIを仮定している
+		if('0'<=c && c<='9'){
+			num = num * 8 + (c - '0');
+		}
+	}
+	return num;
+}
+
+//http://support.microsoft.com/kb/167296/ja
+void UnixTimeToFileTime(time_t t, FILETIME &ft)
+{
+	// Note that LONGLONG is a 64-bit value
+	LONGLONG ll;
+
+	ll = Int32x32To64(t, 10000000) + 116444736000000000;
+	ft.dwLowDateTime = (DWORD)ll;
+	ft.dwHighDateTime = (DWORD)(ll >> 32);
+}
+
+std::string fsizeToString(size64 fsize)
+{
+	const char* units[]={
+		"Byte",
+		"KB",
+		"MB",
+		"GB",
+		"TB",
+	};
+
+	int level;
+	for(level=0;level<COUNTOF(units);level++){
+		if(fsize<1024*16)break;
+		fsize/=1024;
+	}
+
+	char buf[16];
+	sprintf(buf,"%I64u %s",fsize,units[level]);
+	return std::string(buf);
 }

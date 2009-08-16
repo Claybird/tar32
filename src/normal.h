@@ -31,7 +31,6 @@
 		If you use this file, please report me.
 */
 #include "arcfile.h"
-#include <stdio.h>
 #include "tar32api.h" // ARCHIVETYPE_
 
 class CTarArcFile_Normal : public ITarArcFile{
@@ -39,19 +38,19 @@ public:
 	CTarArcFile_Normal::~CTarArcFile_Normal(){
 		close();
 	};
-	bool open(const char *arcfile, const char *mode){
+	bool open(const char *arcfile, const char *mode, int /*compress_level*/){
 		m_arcfile = arcfile;
 		m_fp = fopen(arcfile,mode);
-		return (bool)(m_fp!=NULL);
+		return m_fp!=NULL;
 	};
-	int read(void *buf, int size){
-		return fread(buf,1,size,m_fp);
+	size64 read(void *buf, size64 size){
+		return fread(buf,1,(size_t)size,m_fp);	//TODO:size lost
 	};
-	int write(void *buf, int size){
-		return fwrite(buf,1,size,m_fp);
+	size64 write(void *buf, size64 size){
+		return fwrite(buf,1,(size_t)size,m_fp);	//TODO:size lost
 	};
-	int seek(int offset, int origin){
-		return fseek(m_fp, offset,origin);
+	size64 seek(size64 offset, int origin){
+		return _fseeki64(m_fp, offset,origin);
 	}
 	void close(){
 		if(m_fp){

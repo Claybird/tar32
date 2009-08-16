@@ -30,6 +30,7 @@
 		I want any trivial information.
 		If you use this file, please report me.
 */
+#include "stdafx.h"
 #include "tar32api.h"
 #include "cmdline.h"
 #include "tar32.h"
@@ -37,20 +38,7 @@
 #include "tarcmd.h"
 #include "util.h"
 #include "dlg.h"
-#include <mbstring.h>
-#include <process.h> // _beginthread
-#include <io.h>	// chmod
-#include <sys/utime.h> // utime
-#include <time.h> // time
-#include <sys/types.h>
-#include <sys/stat.h>
-
-#pragma warning(disable: 4786)
-#include <list>
-#include <string>
-#include <strstream>
-#include <fstream>
-using namespace std;
+#include "tar32res.h"
 
 #include "fast_stl.h"
 
@@ -58,9 +46,9 @@ class CTar32CmdInfo
 {
 public:
 	struct CArgs{
-		CArgs(const string &f, const string &dir) : file(f), current_dir(dir){};
-		string file;
-		string current_dir;
+		CArgs(const std::string &f, const std::string &dir) : file(f), current_dir(dir){};
+		std::string file;
+		std::string current_dir;
 	};
 	CTar32CmdInfo(char *s, int len) : output(s,len), exception("",0){
 		hTar32StatusDialog = NULL;
@@ -69,6 +57,7 @@ public:
 		b_display_dialog = true;
 		b_message_loop = true;
 		b_print = false;
+		b_confirm_overwrite = false;
 
 		b_archive_tar = true;
 		archive_type = ARCHIVETYPE_NORMAL;
@@ -79,10 +68,10 @@ public:
 		idMessageThread = 0;
 
 	};
-	string arcfile;
-	list<CArgs> argfiles;
+	std::string arcfile;
+	std::list<CArgs> argfiles;
 	// list<string> files;
-	strstream output;
+	std::strstream output;
 	HWND hTar32StatusDialog;
 	CTar32Exception exception;
 
@@ -91,6 +80,8 @@ public:
 	bool b_display_dialog;
 	bool b_message_loop;
 	bool b_print;
+
+	bool b_confirm_overwrite;	//上書き確認(解凍時)
 
 	bool b_archive_tar;
 	int archive_type;
@@ -127,6 +118,8 @@ static void cmd_usage(CTar32CmdInfo &info)
 		<< "       --display-dialog=[0|1](1)  display dialog box\n"
 		<< "       --message-loop=[0|1](1)  run message loop\n"
 		<< "       --bzip2=[N]     compress by bzip2 with level N\n"
+		<< "       --confirm-overwrite=[0|1](0) ask for confirmation for\n"
+		<< "                                    overwriting existing file\n"
 		<< "    ignore option,command: a,v,V,I,i,f,e,g,S,A,b,N,U,--xxxx=xxx\n"
 		;
 }
@@ -138,7 +131,7 @@ int tar_cmd(const HWND hwnd, LPCSTR szCmdLine,LPSTR szOutput, const DWORD dwSize
 	try{
 		ret =  tar_cmd_itr(hwnd, szCmdLine,szOutput,dwSize,cmdinfo);
 	}catch(CTar32Exception &e){
-		cmdinfo.output << "TAR32 Error(0x" << hex << e.m_code << "): " << e.m_str << "\n";
+		cmdinfo.output << "TAR32 Error(0x" << std::hex << e.m_code << "): " << e.m_str << "\n";
 		cmdinfo.output << "Tar((HWND)" << (unsigned)hwnd << ",(LPCSTR)" << szCmdLine << ",,(DWORD)" << (unsigned)dwSize << ")\n";
 		ret =  e.m_code;
 		cmd_usage(cmdinfo);
@@ -152,64 +145,58 @@ int tar_cmd(const HWND hwnd, LPCSTR szCmdLine,LPSTR szOutput, const DWORD dwSize
 static void _cdecl tar_cmd_main_thread(LPVOID param);
 static int tar_cmd_itr(const HWND hwnd, LPCSTR szCmdLine,LPSTR szOutput, const DWORD dwSize,CTar32CmdInfo &cmdinfo)
 {
-	list<string> args;	// command line array
-	{
-		char **argv;
-		argv = split_cmdline_with_response(szCmdLine);
-		if(!argv){
-			throw CTar32Exception("commandline split error", ERROR_COMMAND_NAME);
-		}
-		char **argv2 = argv;
-		while(*argv2){
-			args.push_back(*argv2);
-			argv2++;
-		}
-		free(argv);
+	std::vector<std::string> args;	// command line array
+	if(!split_cmdline_with_response(szCmdLine,args)){
+		throw CTar32Exception("commandline split error", ERROR_COMMAND_NAME);
 	}
 
 	char command = 0;	// main command. ('x','c','l')
-	string current_directory;
-	list<string>::iterator argi = args.begin();
+	std::string current_directory;
+	std::vector<std::string>::iterator argi = args.begin();
 	bool option_end = false;
 
 	while(argi != args.end()){
-		string::iterator stri = (*argi).begin();
+		//string::iterator stri = (*argi).begin();
+		const char *stri = (*argi).c_str();
 		if(argi==args.begin() || (*stri == '-' && *(stri+1) != '\0' && option_end == false)){
 			if(*stri == '-'){
 				stri++;
 			}
 			if(*stri == '-' && *(stri+1) != '\0'){
 				stri++;
-				const string &long_option = (*argi).substr(stri - argi->begin());
-				string key = long_option;
-				string val;
+				const std::string long_option = (*argi).substr(stri - (*argi).c_str());
+				std::string key = long_option;
+				std::string val;
 				int len;
-				if((len = long_option.find('=')) != string::npos){
+				if((len = long_option.find('=')) != std::string::npos){
 					key = long_option.substr(0, len);
 					val = long_option.substr(len + 1);
 				}
 				if(key == "use-directory"){
-					cmdinfo.b_use_directory = ((val=="") ? true : (bool)atoi(val.c_str()));
+					cmdinfo.b_use_directory = ((val=="") ? true : (0!=atoi(val.c_str())));
 				}else if(key == "absolute-paths"){
-					cmdinfo.b_absolute_paths = ((val=="") ? true : (bool)atoi(val.c_str()));
+					cmdinfo.b_absolute_paths = ((val=="") ? true : (0!=atoi(val.c_str())));
 				}else if(key == "display-dialog"){
-					cmdinfo.b_display_dialog = ((val=="") ? true : (bool)atoi(val.c_str()));
+					cmdinfo.b_display_dialog = ((val=="") ? true : (0!=atoi(val.c_str())));
 				}else if(key == "message-loop"){
-					cmdinfo.b_message_loop = ((val=="") ? true : (bool)atoi(val.c_str()));
+					cmdinfo.b_message_loop = ((val=="") ? true : (0!=atoi(val.c_str())));
 				}else if(key == "bzip2" || key == "bzip"){
 					cmdinfo.archive_type = ARCHIVETYPE_BZ2;
-					cmdinfo.compress_level = ((val=="") ? 9 : (bool)atoi(val.c_str()));
+					cmdinfo.compress_level = ((val=="") ? 9 : (0!=atoi(val.c_str())));
 				}else if(key == "gzip"){
 					cmdinfo.archive_type = ARCHIVETYPE_GZ;
-					cmdinfo.compress_level = ((val=="") ? 5 : (bool)atoi(val.c_str()));
+					cmdinfo.compress_level = ((val=="") ? 5 : (0!=atoi(val.c_str())));
+				}else if(key == "confirm-overwrite"){
+					cmdinfo.b_confirm_overwrite = ((val=="") ? true : (0!=atoi(val.c_str())));
 				}else{
 					/* igonore */;
 				}
 				argi++;
 				continue;
 			}
-			list<string>::iterator cur_argi = argi;
-			while(stri != (*cur_argi).end()){
+			std::vector<std::string>::iterator cur_argi = argi;
+			//while(stri != (*cur_argi).end()){
+			while(stri != (*cur_argi).c_str()+(*cur_argi).length()){
 				switch(*stri){
 				case 'x':
 					command = 'x';break;
@@ -291,7 +278,8 @@ static int tar_cmd_itr(const HWND hwnd, LPCSTR szCmdLine,LPSTR szOutput, const D
 				case 'b':
 				case 'N':
 					argi++;
-					stri = argi->end()-1;
+					//stri = argi->end()-1;
+					stri = (*argi).c_str()+(*argi).length()-1;
 					/*ignore*/
 					break;
 
@@ -317,7 +305,7 @@ static int tar_cmd_itr(const HWND hwnd, LPCSTR szCmdLine,LPSTR szOutput, const D
 			}else if(cmdinfo.arcfile.length() == 0){
 				cmdinfo.arcfile = *argi;
 			}else{
-				string file = *argi;
+				std::string file = *argi;
 				cmdinfo.argfiles.push_back(CTar32CmdInfo::CArgs(file,current_directory));
 			}
 			argi++;
@@ -435,92 +423,181 @@ static void _cdecl tar_cmd_main_thread(LPVOID param)
 		if(pCmdInfo->wm_main_thread_end)PostThreadMessage(pCmdInfo->idMessageThread, pCmdInfo->wm_main_thread_end, 0, 0);
 		cmdinfo.exception = e;
 		// throw e;
+	}catch(...){
+		dlg.Destroy();
 	}
 	//return 0;
 }
 
-static int SendArcMessage(CTar32CmdInfo &cmdinfo, int arcmode, EXTRACTINGINFOEX *pExtractingInfoEx)
+int SendArcMessage(CTar32CmdInfo &cmdinfo, int arcmode, EXTRACTINGINFOEX *pExtractingInfoEx,EXTRACTINGINFOEX64 *pExtractingInfoEx64)
 {
-		extern UINT wm_arcextract;
-		int ret1,ret2,ret3;
-		extern HWND g_hwndOwnerWindow;
-		extern ARCHIVERPROC *g_pArcProc;
-		ret1 = ret2 = ret3 = 0;
+	extern UINT wm_arcextract;
+	int ret1,ret2,ret3;
+	extern HWND g_hwndOwnerWindow;
+	extern ARCHIVERPROC *g_pArcProc;
+	ret1 = ret2 = ret3 = 0;
 
-		if(cmdinfo.hTar32StatusDialog){
-			ret1 = ::SendMessage(cmdinfo.hTar32StatusDialog, wm_arcextract, arcmode, (long)pExtractingInfoEx);
-		}
-		if(g_hwndOwnerWindow){
-			ret2 = ::SendMessage(g_hwndOwnerWindow,wm_arcextract, arcmode,(long)pExtractingInfoEx);
-		}
-		if(g_pArcProc){
-			ret3 = (*g_pArcProc)(g_hwndOwnerWindow, wm_arcextract, arcmode, pExtractingInfoEx);
-		}
-		return (ret1 || ret2 || ret3);
+	if(cmdinfo.hTar32StatusDialog){
+		//ret1 = ::SendMessage(cmdinfo.hTar32StatusDialog, wm_arcextract, arcmode, (long)pExtractingInfoEx);
+		//EXTRACTINGINFOEX64 : internal use only
+		ret1 = ::SendMessage(cmdinfo.hTar32StatusDialog, wm_arcextract, arcmode, (long)pExtractingInfoEx64);
+	}
+	if(g_hwndOwnerWindow){
+		ret2 = ::SendMessage(g_hwndOwnerWindow,wm_arcextract, arcmode,(long)pExtractingInfoEx);
+	}
+	if(g_pArcProc){
+		ret3 = (*g_pArcProc)(g_hwndOwnerWindow, wm_arcextract, arcmode, pExtractingInfoEx);
+	}
+	return (ret1 || ret2 || ret3);
 }
 
-static bool extract_file(CTar32CmdInfo &cmdinfo, CTar32 *pTarfile, const char *fname)
+int ConfirmOverwrite(const CTar32CmdInfo &cmdinfo,EXTRACTINGINFOEX64 &ExtractingInfoEx64)
+{
+	extern HINSTANCE dll_instance;
+	extern HWND g_hwndOwnerWindow;
+	std::string path=ExtractingInfoEx64.szDestFileName;
+	convert_slash_to_backslash(path);
+
+	//存在確認
+	if(_access(path.c_str(),0)==0){
+		HWND hWnd=NULL;
+		if(cmdinfo.hTar32StatusDialog){
+			hWnd=cmdinfo.hTar32StatusDialog;
+		}else if(g_hwndOwnerWindow){
+			hWnd=g_hwndOwnerWindow;
+		}
+
+		get_full_path(path.c_str(),path);
+
+		std::stringstream msg;
+		msg << "File " << path << " already exists.\n"
+			<< "Do you want to overwrite?";
+		int ret=::DialogBoxParam(dll_instance,MAKEINTRESOURCE(IDD_CONFIRM_OVERWRITE),hWnd,Tar32ConfirmOverwriteDialogProc,(LPARAM)(const char*)(msg.str().c_str()));
+		switch(ret){
+		case IDCANCEL:
+			return -1;
+		case IDC_BUTTON_OVERWRITE:
+			return 0;
+		case IDC_BUTTON_OVERWRITE_ALL:
+			return 1;
+		default:
+			return 0;
+		}
+	}
+	return 0;
+}
+
+void MakeExtractingInfo(CTar32* pTarfile,const char *fname,EXTRACTINGINFOEX &extractinfo,EXTRACTINGINFOEX64 &exinfo64)
 {
 	CTar32FileStatus &stat = pTarfile->m_currentfile_status;
-	string fname2 = fname;
 
-	EXTRACTINGINFOEX extractinfo;
+	//EXTRACTINGINFOEX extractinfo;
 	{
 		memset(&extractinfo,0,sizeof(extractinfo));
-		extractinfo.exinfo.dwFileSize = stat.original_size;
+		extractinfo.exinfo.dwFileSize = (DWORD)stat.original_size;
 		extractinfo.exinfo.dwWriteSize = 0;
 		strncpy(extractinfo.exinfo.szSourceFileName, pTarfile->get_arc_filename().c_str(),FNAME_MAX32+1);
-		strncpy(extractinfo.exinfo.szDestFileName, fname2.c_str(), FNAME_MAX32+1);
-		extractinfo.dwCompressedSize = stat.compress_size;
+		strncpy(extractinfo.exinfo.szDestFileName, fname, FNAME_MAX32+1);
+		extractinfo.dwCompressedSize = (DWORD)stat.compress_size;
 		extractinfo.dwCRC = stat.chksum;
 		extractinfo.uOSType = 0;
-		extractinfo.wRatio = extractinfo.exinfo.dwFileSize ? (1000 * extractinfo.dwCompressedSize / extractinfo.exinfo.dwFileSize) : 0;
+		extractinfo.wRatio = (WORD)(extractinfo.exinfo.dwFileSize ? (1000 * extractinfo.dwCompressedSize / extractinfo.exinfo.dwFileSize) : 0);
 		extractinfo.wDate = GetARCDate(stat.mtime);
 		extractinfo.wTime = GetARCTime(stat.mtime);
 		GetARCAttribute(stat.mode, extractinfo.szAttribute,sizeof(extractinfo.szAttribute));
 		GetARCMethod(pTarfile->m_archive_type, extractinfo.szMode, sizeof(extractinfo.szMode));
-		int ret = SendArcMessage(cmdinfo, ARCEXTRACT_BEGIN, &extractinfo);
+	}
+	//EXTRACTINGINFOEX64 exinfo64;
+	{
+		memset(&exinfo64,0,sizeof(exinfo64));
+		exinfo64.dwStructSize=sizeof(exinfo64);
+
+		exinfo64.exinfo=extractinfo.exinfo;
+
+		exinfo64.llFileSize			=stat.original_size;
+		exinfo64.llCompressedSize	=stat.compress_size;
+		exinfo64.llWriteSize		=0;
+		exinfo64.dwAttributes		=GetARCAttribute(stat.mode);
+		exinfo64.dwCRC				=extractinfo.dwCRC;
+		exinfo64.uOSType			=extractinfo.uOSType;
+		exinfo64.wRatio				=extractinfo.wRatio;
+		UnixTimeToFileTime(stat.ctime,exinfo64.ftCreateTime);
+		UnixTimeToFileTime(stat.atime,exinfo64.ftAccessTime);
+		UnixTimeToFileTime(stat.mtime,exinfo64.ftWriteTime);
+		strncpy(exinfo64.szMode,extractinfo.szMode,sizeof(exinfo64.szMode));
+		strncpy(exinfo64.szSourceFileName, extractinfo.exinfo.szSourceFileName,FNAME_MAX32+1);
+		strncpy(exinfo64.szDestFileName, extractinfo.exinfo.szDestFileName, FNAME_MAX32+1);
+	}
+}
+
+
+bool extract_file(CTar32CmdInfo &cmdinfo, CTar32 *pTarfile, const char *fname,std::vector<char> &buffer)
+{
+	CTar32FileStatus &stat = pTarfile->m_currentfile_status;
+	std::string fname2 = fname;
+
+	EXTRACTINGINFOEX extractinfo;
+	EXTRACTINGINFOEX64 exinfo64;
+	MakeExtractingInfo(pTarfile,fname2.c_str(),extractinfo,exinfo64);
+	{
+		int ret = SendArcMessage(cmdinfo, ARCEXTRACT_BEGIN, &extractinfo,&exinfo64);
 		if(ret){throw CTar32Exception("Cancel button was pushed.",ERROR_USER_CANCEL);}
 		fname2 = extractinfo.exinfo.szDestFileName;
 	}
 
-	__int64 filesize = pTarfile->m_currentfile_status.original_size;
+	//上書き確認
+	if(cmdinfo.b_confirm_overwrite){
+		switch(ConfirmOverwrite(cmdinfo, exinfo64)){
+		case -1://cancel(abort)
+			throw CTar32Exception("Cancel button was pushed.",ERROR_USER_CANCEL);
+			break;
+		case 1:	//yes to all
+			cmdinfo.b_confirm_overwrite=false;
+			break;
+		}
+	}
+
+	size64 filesize = pTarfile->m_currentfile_status.original_size;
 
 	CTar32InternalFile file; file.open(pTarfile);
 
 
-	// ofstream fs_w;
+	//std::ofstream fs_w;
 	fast_fstream fs_w;
 	if(!cmdinfo.b_print){
 		mkdir_recursive(get_dirname(fname2.c_str()).c_str());
-		fs_w.open(fname2.c_str(), ios::out|ios::binary);
+		fs_w.open(fname2.c_str(), std::ios::out|std::ios::binary);
 		if(fs_w.fail()){return false;}
 	}
 
-	__int64 readsize = 0;
+	size64 readsize = 0;
+	//static std::vector<char> buf;
+	//const int bufsize=512*1024;
+	//buf.resize(bufsize);
+	const size_t bufsize=buffer.size();
 	while(filesize ==-1 || readsize<filesize){
-		char buf[65536];
-		int nextreadsize;
+		size64 nextreadsize;
 		if(filesize == -1){ // case ".gz",".Z",".bz2"
-			nextreadsize = sizeof(buf);
+			//nextreadsize = sizeof(buf);
+			nextreadsize=bufsize;
 		}else{
-			__int64 nextreadsize64 = filesize-readsize;
-			if(nextreadsize64 > sizeof(buf)){nextreadsize64 = sizeof(buf);}
-			nextreadsize = (int)nextreadsize64;
+			size64 nextreadsize64 = filesize-readsize;
+			if(nextreadsize64 > bufsize){nextreadsize64 = bufsize;}
+			nextreadsize = nextreadsize64;
 			if(nextreadsize==0){
 				Sleep(0);
 			}
 			// nextreadsize = (int)min(filesize-readsize, sizeof(buf));
 		}
-			if(nextreadsize==0){
-				Sleep(0);
-			}
-		int n = file.read(buf,nextreadsize);
+		if(nextreadsize==0){
+			Sleep(0);
+		}
+		size64 n = file.read(&buffer[0],nextreadsize);
 		readsize += n;
 		if(cmdinfo.b_print){
-			cmdinfo.output.write(buf,n);
+			cmdinfo.output.write(&buffer[0],(size_t)n);	//TODO:size lost
 		}else{
-			fs_w.write(buf,n);
+			fs_w.write(&buffer[0],n);
 			if(fs_w.fail()){return false;}
 		}
 		if(n != nextreadsize){
@@ -531,8 +608,10 @@ static bool extract_file(CTar32CmdInfo &cmdinfo, CTar32 *pTarfile, const char *f
 			}
 		}
 		if(cmdinfo.hTar32StatusDialog){
-			extractinfo.exinfo.dwWriteSize = readsize;
-			int ret = SendArcMessage(cmdinfo, ARCEXTRACT_INPROCESS, &extractinfo);
+			extractinfo.exinfo.dwWriteSize = (DWORD)readsize;
+			exinfo64.exinfo.dwWriteSize = (DWORD)readsize;
+			exinfo64.llWriteSize = readsize;
+			int ret = SendArcMessage(cmdinfo, ARCEXTRACT_INPROCESS, &extractinfo,&exinfo64);
 			if(ret){throw CTar32Exception("Cancel button was pushed.",ERROR_USER_CANCEL);}
 		}
 	}
@@ -546,8 +625,10 @@ static bool extract_file(CTar32CmdInfo &cmdinfo, CTar32 *pTarfile, const char *f
 		ret = _chmod(fname2.c_str(), stat.mode);
 	}
 	if(cmdinfo.hTar32StatusDialog){
-		extractinfo.exinfo.dwWriteSize = readsize;
-		int ret = SendArcMessage(cmdinfo, ARCEXTRACT_END, &extractinfo);
+		extractinfo.exinfo.dwWriteSize = (DWORD)readsize;
+		exinfo64.exinfo.dwWriteSize = (DWORD)readsize;
+		exinfo64.llWriteSize = readsize;
+		int ret = SendArcMessage(cmdinfo, ARCEXTRACT_END, &extractinfo,&exinfo64);
 		if(ret){throw CTar32Exception("Cancel button was pushed.",ERROR_USER_CANCEL);}
 	}
 	return true;
@@ -557,30 +638,39 @@ static void cmd_extract(CTar32CmdInfo &cmdinfo)
 	{
 		EXTRACTINGINFOEX extractinfo;
 		memset(&extractinfo,0,sizeof(extractinfo));
-		strncpy(extractinfo.exinfo.szSourceFileName, cmdinfo.arcfile.c_str() ,FNAME_MAX32);
-		int ret = SendArcMessage(cmdinfo, ARCEXTRACT_BEGIN, &extractinfo);
+		EXTRACTINGINFOEX64 exinfo64;
+		memset(&exinfo64,0,sizeof(exinfo64));
+		exinfo64.dwStructSize=sizeof(exinfo64);
+
+		strncpy(extractinfo.exinfo.szSourceFileName, cmdinfo.arcfile.c_str() ,FNAME_MAX32+1);
+		exinfo64.exinfo=extractinfo.exinfo;
+		strncpy(exinfo64.szSourceFileName, extractinfo.exinfo.szSourceFileName ,FNAME_MAX32+1);
+		int ret = SendArcMessage(cmdinfo, ARCEXTRACT_BEGIN, &extractinfo,&exinfo64);
+		if(ret){throw CTar32Exception("Cancel button was pushed.",ERROR_USER_CANCEL);}
 	}
-	
+
 	CTar32 tarfile;
 	int ret;
-	ret = tarfile.open(cmdinfo.arcfile.c_str(), "rb");
+	ret = tarfile.open(cmdinfo.arcfile.c_str(), "rb",-1,ARCHIVETYPE_AUTO);
 	if(!ret){
 		throw CTar32Exception("can't open archive file", ERROR_ARC_FILE_OPEN);
 	}
 
 	CTar32FileStatus stat;
+	std::vector<char> buffer;
+	buffer.resize(1024*1024);
 	while(true){
 		bool bret = tarfile.readdir(&stat);
 		if(!bret){break;}
-		
-		string file_internal = stat.filename;
-		string file_external;
+
+		std::string file_internal = stat.filename;
+		std::string file_external;
 		{
-			const list<CTar32CmdInfo::CArgs> &args = cmdinfo.argfiles;
-			list<CTar32CmdInfo::CArgs>::const_iterator filei;
+			const std::list<CTar32CmdInfo::CArgs> &args = cmdinfo.argfiles;
+			std::list<CTar32CmdInfo::CArgs>::const_iterator filei;
 			for(filei = args.begin();filei!=args.end();filei++){
 				if(::is_regexp_match_dbcs(filei->file.c_str(), file_internal.c_str())){
-					string file_internal2 = file_internal;
+					std::string file_internal2 = file_internal;
 					if(! cmdinfo.b_absolute_paths){
 						file_internal2 = escape_absolute_paths(file_internal2.c_str());
 					}
@@ -595,71 +685,67 @@ static void cmd_extract(CTar32CmdInfo &cmdinfo)
 		if(file_external.empty()){
 			bret = tarfile.readskip();
 		}else{
-			bool bret2 = extract_file(cmdinfo,&tarfile,file_external.c_str());
+			bool bret2 = extract_file(cmdinfo,&tarfile,file_external.c_str(),buffer);
 		}
 	}
 
 	{
 		EXTRACTINGINFOEX extractinfo;
 		memset(&extractinfo,0,sizeof(extractinfo));
-		int ret = SendArcMessage(cmdinfo, ARCEXTRACT_END, &extractinfo);
+		EXTRACTINGINFOEX64 exinfo64;
+		memset(&exinfo64,0,sizeof(exinfo64));
+		exinfo64.dwStructSize=sizeof(exinfo64);
+		int ret = SendArcMessage(cmdinfo, ARCEXTRACT_END, &extractinfo,&exinfo64);
+		if(ret){throw CTar32Exception("Cancel button was pushed.",ERROR_USER_CANCEL);}
 	}
 }
-static bool add_file(CTar32CmdInfo &cmdinfo, CTar32 *pTarfile, const char *fname)
+static bool add_file(CTar32CmdInfo &cmdinfo, CTar32 *pTarfile, const char *fname,std::vector<char> &buffer)
 {
 	CTar32FileStatus &stat = pTarfile->m_currentfile_status;
-	string fname2 = fname;
+	std::string fname2 = fname;
 
 	EXTRACTINGINFOEX extractinfo;
+	EXTRACTINGINFOEX64 exinfo64;
+	MakeExtractingInfo(pTarfile,fname2.c_str(),extractinfo,exinfo64);
 	{
-		memset(&extractinfo,0,sizeof(extractinfo));
-		extractinfo.exinfo.dwFileSize = stat.original_size;
-		extractinfo.exinfo.dwWriteSize = 0;
-		strncpy(extractinfo.exinfo.szSourceFileName, pTarfile->get_arc_filename().c_str(),FNAME_MAX32+1);
-		strncpy(extractinfo.exinfo.szDestFileName, fname2.c_str(), FNAME_MAX32+1);
-		extractinfo.dwCompressedSize = stat.compress_size;
-		extractinfo.dwCRC = stat.chksum;
-		extractinfo.uOSType = 0;
-		extractinfo.wRatio = extractinfo.exinfo.dwFileSize ? (1000 * extractinfo.dwCompressedSize / extractinfo.exinfo.dwFileSize) : 0;
-		extractinfo.wDate = GetARCDate(stat.mtime);
-		extractinfo.wTime = GetARCTime(stat.mtime);
-		GetARCAttribute(stat.mode, extractinfo.szAttribute,sizeof(extractinfo.szAttribute));
-		GetARCMethod(pTarfile->m_archive_type, extractinfo.szMode, sizeof(extractinfo.szMode));
-		int ret = SendArcMessage(cmdinfo, ARCEXTRACT_BEGIN, &extractinfo);
+		int ret = SendArcMessage(cmdinfo, ARCEXTRACT_BEGIN, &extractinfo,&exinfo64);
 		if(ret){throw CTar32Exception("Cancel button was pushed.",ERROR_USER_CANCEL);}
 		// fname2 = extractinfo.exinfo.szDestFileName;
 	}
 
-	__int64 filesize = pTarfile->m_currentfile_status.original_size;
+	size64 filesize = pTarfile->m_currentfile_status.original_size;
 	if(filesize == 0){return true;}
 	CTar32InternalFile file; file.open(pTarfile, /*write*/true);
 
 
-	// ofstream fs_w;
+	//std::ifstream fs_r;
 	fast_fstream fs_r;
-	fs_r.open(fname2.c_str(), ios::in|ios::binary);
+	fs_r.open(fname2.c_str(), std::ios::in|std::ios::binary);
 	if(fs_r.fail()){throw CTar32Exception("can't read file", ERROR_CANNOT_READ);return false;}
 
-	int readsize = 0;
-	int n;
-	char buf[65536];
-	while(fs_r.read(buf,sizeof(buf)),(n=fs_r.gcount())>0){
-		int m = file.write(buf, n);
+	size64 readsize = 0;
+	size64 n;
+	while(fs_r.read(&buffer[0],buffer.size()),(n=fs_r.gcount())>0){
+		size64 m = file.write(&buffer[0], n);
 		if(m>0){readsize += m;}
 		if(n!=m){
 			throw CTar32Exception("can't write to arcfile", ERROR_CANNOT_WRITE);
 		}
 		if(cmdinfo.hTar32StatusDialog){
-			extractinfo.exinfo.dwWriteSize = readsize;
-			int ret = SendArcMessage(cmdinfo, ARCEXTRACT_INPROCESS, &extractinfo);
+			extractinfo.exinfo.dwWriteSize = (DWORD)readsize;
+			exinfo64.exinfo.dwWriteSize = (DWORD)readsize;
+			exinfo64.llWriteSize = readsize;
+			int ret = SendArcMessage(cmdinfo, ARCEXTRACT_INPROCESS, &extractinfo,&exinfo64);
 			if(ret){throw CTar32Exception("Cancel button was pushed.",ERROR_USER_CANCEL);}
 		}
 	}
 	bool bret = file.close();
 	if(!bret){throw CTar32Exception("can't write to arcfile", ERROR_CANNOT_WRITE);}
 	if(cmdinfo.hTar32StatusDialog){
-		extractinfo.exinfo.dwWriteSize = readsize;
-		int ret = SendArcMessage(cmdinfo, ARCEXTRACT_END, &extractinfo);
+		extractinfo.exinfo.dwWriteSize = (DWORD)readsize;
+		exinfo64.exinfo.dwWriteSize = (DWORD)readsize;
+		exinfo64.llWriteSize = readsize;
+		int ret = SendArcMessage(cmdinfo, ARCEXTRACT_END, &extractinfo,&exinfo64);
 		if(ret){throw CTar32Exception("Cancel button was pushed.",ERROR_USER_CANCEL);}
 	}
 	return true;
@@ -670,39 +756,49 @@ static void cmd_create(CTar32CmdInfo &cmdinfo)
 	{
 		EXTRACTINGINFOEX extractinfo;
 		memset(&extractinfo,0,sizeof(extractinfo));
-		strncpy(extractinfo.exinfo.szSourceFileName, cmdinfo.arcfile.c_str() ,FNAME_MAX32);
-		int ret = SendArcMessage(cmdinfo, ARCEXTRACT_BEGIN, &extractinfo);
-	}
+		EXTRACTINGINFOEX64 exinfo64;
+		memset(&exinfo64,0,sizeof(exinfo64));
+		exinfo64.dwStructSize=sizeof(exinfo64);
 
+		strncpy(extractinfo.exinfo.szSourceFileName, cmdinfo.arcfile.c_str() ,FNAME_MAX32+1);
+		exinfo64.exinfo=extractinfo.exinfo;
+		strncpy(exinfo64.szSourceFileName, extractinfo.exinfo.szSourceFileName ,FNAME_MAX32+1);
+		int ret = SendArcMessage(cmdinfo, ARCEXTRACT_BEGIN, &extractinfo,&exinfo64);
+		if(ret){throw CTar32Exception("Cancel button was pushed.",ERROR_USER_CANCEL);}
+	}
 	
 	CTar32 tarfile;
 	int ret;
 	bool bret;
 	int filenum = 0;
-	char mode[10];
+	//char mode[10];
 
-	sprintf(mode, "wb%d", cmdinfo.compress_level);
-	ret = tarfile.open(cmdinfo.arcfile.c_str(), mode, cmdinfo.archive_type);
+	//sprintf(mode, "wb%d", cmdinfo.compress_level);
+	ret = tarfile.open(cmdinfo.arcfile.c_str(), "wb",cmdinfo.compress_level, cmdinfo.archive_type);
 	if(!ret){
 		throw CTar32Exception("can't open archive file", ERROR_ARC_FILE_OPEN);
 	}
 
+	std::vector<char> buffer;
+	buffer.resize(1024*1024);
 	// const list<string> &files = cmdinfo.files;
-	const list<CTar32CmdInfo::CArgs> &args = cmdinfo.argfiles;
-	list<CTar32CmdInfo::CArgs>::const_iterator filei;
+	const std::list<CTar32CmdInfo::CArgs> &args = cmdinfo.argfiles;
+	std::list<CTar32CmdInfo::CArgs>::const_iterator filei;
 	for(filei = args.begin();filei!=args.end();filei++){
-		string file_internal = (*filei).file;
-		string file_external = make_pathname((*filei).current_dir.c_str(), (*filei).file.c_str());
+		std::string file_internal = (*filei).file;
+		std::string file_external = make_pathname((*filei).current_dir.c_str(), (*filei).file.c_str());
 
-		list<string> files_internal2 = find_files(file_external.c_str());
+		//list<string> files_internal2 = find_files(file_external.c_str());
+		std::list<std::string> files_internal2;
+		find_files(file_external.c_str(),files_internal2);
 		if(_mbsrchr((const unsigned char*)file_external.c_str(),'*')==0 && files_internal2.empty()){
 			// fixed by tsuneo. 2001.05.15
-			throw CTar32Exception((string() + "can't find file [" + file_external + "]").c_str(), ERROR_FILE_OPEN);
+			throw CTar32Exception((std::string("can't find file [") + file_external + "]").c_str(), ERROR_FILE_OPEN);
 		}
-		list<string>::iterator files2i;
+		std::list<std::string>::iterator files2i;
 		for(files2i = files_internal2.begin(); files2i != files_internal2.end(); files2i++){
-			string file_external2 = *files2i;
-			string file_internal2 = file_external2.substr((*filei).current_dir.length());
+			std::string file_external2 = *files2i;
+			std::string file_internal2 = file_external2.substr((*filei).current_dir.length());
 			if(!cmdinfo.b_use_directory){
 				file_internal2 = get_filename(file_internal2.c_str());
 			}
@@ -710,12 +806,12 @@ static void cmd_create(CTar32CmdInfo &cmdinfo)
 			if(!stat.SetFromFile(file_external2.c_str())){
 				continue;
 			}
-			convert_yen_to_slash((char*)(file_internal2.c_str()));
+			convert_yen_to_slash(file_internal2);
 			{
 				// if file is directory, add '/' to the tail of filename.
 				struct _stat st;
 				if(_stat(file_external2.c_str(), &st)!=-1 && st.st_mode & _S_IFDIR){
-					char *f = (char*)file_internal2.c_str();
+					char const*f = file_internal2.c_str();
 					if((char*)max(_mbsrchr((unsigned char*)f, '/'), _mbsrchr((unsigned char*)f,'\\')) != f+strlen(f)-1){
 						file_internal2.append(1,'/');
 					}
@@ -724,7 +820,7 @@ static void cmd_create(CTar32CmdInfo &cmdinfo)
 			stat.filename = file_internal2;
 			bret = tarfile.addheader(stat);
 			// bret = tarfile.addbody(file_external2.c_str());
-			bool bret2 = add_file(cmdinfo,&tarfile,file_external2.c_str());
+			bool bret2 = add_file(cmdinfo,&tarfile,file_external2.c_str(),buffer);
 			filenum ++;
 		}
 	}
@@ -732,7 +828,12 @@ static void cmd_create(CTar32CmdInfo &cmdinfo)
 	{
 		EXTRACTINGINFOEX extractinfo;
 		memset(&extractinfo,0,sizeof(extractinfo));
-		int ret = SendArcMessage(cmdinfo, ARCEXTRACT_END, &extractinfo);
+		EXTRACTINGINFOEX64 exinfo64;
+		memset(&exinfo64,0,sizeof(exinfo64));
+		exinfo64.dwStructSize=sizeof(exinfo64);
+
+		int ret = SendArcMessage(cmdinfo, ARCEXTRACT_END, &extractinfo,&exinfo64);
+		if(ret){throw CTar32Exception("Cancel button was pushed.",ERROR_USER_CANCEL);}
 	}
 	
 	if(filenum == 0){
@@ -744,7 +845,7 @@ static void cmd_list(CTar32CmdInfo &cmdinfo)
 {
 	CTar32 tarfile;
 	bool bret;
-	bret = tarfile.open(cmdinfo.arcfile.c_str(), "rb");
+	bret = tarfile.open(cmdinfo.arcfile.c_str(), "rb",-1,ARCHIVETYPE_AUTO);
 	if(!bret){
 		throw CTar32Exception("can't open archive file", ERROR_ARC_FILE_OPEN);
 	}
@@ -757,6 +858,6 @@ static void cmd_list(CTar32CmdInfo &cmdinfo)
 		if(!bret){break;}
 		bret = tarfile.readskip();
 		if(!bret){break;}
-		cmdinfo.output << stat.filename << "\t" << (long)stat.original_size << "\n";
+		cmdinfo.output << stat.filename << "\t" << stat.original_size << "\n";
 	}
 }

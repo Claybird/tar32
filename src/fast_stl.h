@@ -3,6 +3,15 @@
    # SGIのSTLportも速いらしい...
    展開速度が約3倍になった。
    by tsuneo. 2000/09/14
+
+
+   VC2005標準のSTLでは32bitでコンパイルすると大容量(2^32)ファイルサイズを扱えないので、
+   大容量ファイルを扱えるよう拡張(int->size64)
+
+   とはいえ、一度の読み込み/書き込みは通常の環境であれば、バッファに使えるメモリの関係上
+   32bitで扱えるサイズ以下であると仮定しているなので、size64をintにキャストしてしまっている
+
+   by claybird. 2009/06/13
 */
 
 #ifndef __FAST_OFSTREAM_H
@@ -15,7 +24,7 @@ class fast_fstream
 	FILE *m_fp;
 	bool m_berror;
 	bool m_bwrite;
-	int m_count;
+	size_t m_count;
 public:
 	fast_fstream(){
 		m_fp = NULL;
@@ -27,20 +36,20 @@ public:
 		close();
 	};
 	void open(const char *fname, int mode){
-		if(mode & ios::out){m_bwrite=true;}
+		if(mode & std::ios::out){m_bwrite=true;}
 		m_fp = fopen(fname, (m_bwrite ? "wb" : "rb"));
 		m_berror = (m_fp == NULL);
 	};
 	bool fail(){
 		return m_berror;
 	};
-	void write(const char *buf, int n){
-		int m = fwrite(buf,1,n,m_fp);
+	void write(const char *buf, size64 n){
+		size_t m = fwrite(buf,1,(size_t)n,m_fp);	//TODO:size lost
 		m_count = m;
 		m_berror = (m!=n);
 	};
-	void read(char *buf, int n){
-		int m = fread(buf,1,n,m_fp);
+	void read(char *buf, size64 n){
+		size_t m = fread(buf,1,(size_t)n,m_fp);	//TODO:size lost
 		m_count = m;
 		m_berror = (m!=n);
 	}
@@ -50,15 +59,32 @@ public:
 			m_fp = NULL;
 		}
 	};
-	int gcount(){return m_count;}
-};
+	size_t gcount(){return m_count;}
 
+	fast_fstream& seekg(size64 _Off,std::ios_base::seek_dir _Way){
+		int _Origin=0;
+		if(_Way & std::ios_base::beg)_Origin=SEEK_SET;
+		if(_Way & std::ios_base::cur)_Origin=SEEK_CUR;
+		if(_Way & std::ios_base::end)_Origin=SEEK_END;
+		int ret=_fseeki64(m_fp,_Off,_Origin);
+		m_berror = (0!=ret);
+		return *this;
+	}
+
+	size64 tellg(){
+		return _ftelli64(m_fp);
+	}
+	int get(){
+		return fgetc(m_fp);
+	}
+};
+/*
 class fast_strstreambuf
 {
-	int buf_size;
+	int buf_size;	//size64精度が必要になるような巨大なバッファは想定していない
 	char *buf;
-	int start_pos;
-	int end_pos;
+	size64 start_pos;
+	size64 end_pos;
 public:
 	fast_strstreambuf(){
 		buf = new char[2];
@@ -68,11 +94,11 @@ public:
 	~fast_strstreambuf(){
 		delete [] buf;
 	};
-	int in_avail(){
+	size64 in_avail(){
 		return ((end_pos - start_pos) & (buf_size - 1));
 	};
-	int write(char *writebuf, int n){
-		int n2 = n;
+	size64 write(char *writebuf, size64 n){
+		size64 n2 = n;
 		while(buf_size - in_avail() <= n){
 			char *p = new char[buf_size*2];
 			char *newbuf = p;
@@ -93,8 +119,8 @@ public:
 		}
 		return n-n2;
 	};
-	int read(char *readbuf, int n){
-		int n2 = n;
+	size64 read(char *readbuf, size64 n){
+		size64 n2 = n;
 		while(n2>0){
 			*readbuf++ = buf[start_pos++];
 			start_pos &= (buf_size-1);
@@ -103,14 +129,15 @@ public:
 		return n-n2;
 	};
 };
+
 class fast_strstream
 {
 	fast_strstreambuf streambuf;
 public:
-	int write(char *writebuf, int n){
+	size64 write(char *writebuf, size64 n){
 		return streambuf.write(writebuf,n);
 	};
-	int read(char *writebuf, int n){
+	size64 read(char *writebuf, size64 n){
 		return streambuf.read(writebuf,n);
 	};
 	void put(char c){
@@ -120,5 +147,5 @@ public:
 		return &streambuf;
 	}
 };
-
+*/
 #endif // __FAST_OFSTREAM_H

@@ -33,22 +33,19 @@
 
 #include "arcfile.h"
 #include "tar32api.h" // ARCHIVETYPE_
-#include "fast_stl.h"
-// #include <sstream>
-using namespace std;
 
 class CTarArcFile_Compress : public ITarArcFile{
 public:
 	CTarArcFile_Compress();
 	~CTarArcFile_Compress();
-	bool open(const char *arcfile, const char *mode);
-	int read(void *buf, int size);
-	int write(void *buf, int size){return -1;}
+	bool open(const char *arcfile, const char *mode, int compress_level);
+	size64 read(void *buf, size64 size);
+	size64 write(void *buf, size64 size){return -1;}
 	bool eof();
 	// int seek(int offset, int origin);
 	void close();
 	int get_archive_type(){return ARCHIVETYPE_Z;}
-	virtual string get_orig_filename();
+	virtual std::string get_orig_filename();
 
 	static const unsigned char MAGIC_1;// = '\037';/* First byte of compressed file	*/
 	static const unsigned char MAGIC_2;// = '\235';/* Second byte of compressed file	*/
@@ -60,9 +57,9 @@ private:
 	// static const int HSIZE;//	= 1<<17;
 	unsigned short	m_codetab[HSIZE];
 	unsigned char   m_htab[HSIZE];
-	unsigned char m_inbuf[BUFSIZ + 64];
+	unsigned char	m_inbuf[BUFSIZ + 64];
 	bool m_eof;
-	fast_strstream m_strstream;
+	std::strstream	m_strstream;	//TODO:大容量ファイル未対応
 	int				m_finchar;
 	int				m_oldcode;
 	int				m_posbits;

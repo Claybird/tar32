@@ -39,25 +39,27 @@ class CTarArcFile_GZip : public ITarArcFile{
 public:
 	CTarArcFile_GZip();
 	~CTarArcFile_GZip();
-	bool open(const char *arcfile, const char *mode);
-	int read(void *buf, int size);
-	int write(void *buf, int size);
-	int seek(int offset, int origin);
+	bool open(const char *arcfile, const char *mode, int compress_level);
+	size64 read(void *buf, size64 size);
+	size64 write(void *buf, size64 size);
+	size64 seek(size64 offset, int origin);
 	void close();
 	int get_archive_type(){return ARCHIVETYPE_GZ;}
-	virtual string get_orig_filename();
+	virtual std::string get_orig_filename();
 private:
 	gzFile m_gzFile;
 
 	/* gzip flag byte */
-	static const GZIP_FLAG_ASCII_FLAG;//   =0x01; /* bit 0 set: file probably ascii text */
-	static const GZIP_FLAG_CONTINUATION;// =0x02; /* bit 1 set: continuation of multi-part gzip file */
-	static const GZIP_FLAG_EXTRA_FIELD;//  =0x04; /* bit 2 set: extra field present */
-	static const GZIP_FLAG_ORIG_NAME;//    =0x08; /* bit 3 set: original file name present */
-	static const GZIP_FLAG_COMMENT;//      =0x10; /* bit 4 set: file comment present */
-	static const GZIP_FLAG_ENCRYPTED;//    =0x20; /* bit 5 set: file is encrypted */
-	static const GZIP_FLAG_RESERVED;//     =0xC0; /* bit 6,7:   reserved */
-	static const GZIP_METHOD_DEFLATED;//   =8;
+	enum{
+		GZIP_FLAG_ASCII_FLAG	=0x01, /* bit 0 set: file probably ascii text */
+		GZIP_FLAG_CONTINUATION	=0x02, /* bit 1 set: continuation of multi-part gzip file */
+		GZIP_FLAG_EXTRA_FIELD	=0x04, /* bit 2 set: extra field present */
+		GZIP_FLAG_ORIG_NAME		=0x08, /* bit 3 set: original file name present */
+		GZIP_FLAG_COMMENT		=0x10, /* bit 4 set: file comment present */
+		GZIP_FLAG_ENCRYPTED		=0x20, /* bit 5 set: file is encrypted */
+		GZIP_FLAG_RESERVED		=0xC0, /* bit 6,7:   reserved */
+		GZIP_METHOD_DEFLATED	=8,
+	};
 
 	int		m_gzip_compress_method;
 	unsigned 		m_gzip_flags;
@@ -66,6 +68,6 @@ private:
 	int		m_gzip_os_type;
 
 	int		m_gzip_part;
-	string	m_gzip_orig_name;
-	string	m_gzip_comment;
+	std::string	m_gzip_orig_name;
+	std::string	m_gzip_comment;
 };

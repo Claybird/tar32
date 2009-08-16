@@ -25,16 +25,17 @@
 		I want any trivial information.
 		If you use this file, please report me.
 */
-#pragma warning(disable: 4786)	// stl warning
-#include <string>
-#include <list>
-using namespace std;
 
 int mkdir_recursive(const char *dirname_);
-string get_dirname(const char *pathname_);
-string get_filename(const char *pathname);
-string make_pathname(const char *dirname_, const char *filename_);
-string escape_absolute_paths(const char *pathname_);
-void convert_yen_to_slash(char *pathname);
+std::string get_dirname(const char *pathname_);
+std::string get_filename(const char *pathname);
+std::string make_pathname(const char *dirname_, const char *filename_);
+std::string escape_absolute_paths(const char *pathname_);
+void convert_yen_to_slash(std::string &pathname);
+void convert_slash_to_backslash(std::string &pathname);
+void get_full_path(const char *pPath,std::string &full);
 bool is_regexp_match_dbcs(const char *regexp, const char *str);
-list<string> find_files(const char *regexp);
+void find_files(const char *regexp, std::list<std::string> &files);
+__int64 parseOctNum(const char *oct,int length);
+void UnixTimeToFileTime(time_t t, FILETIME &ft);
+std::string fsizeToString(size64 fsize);

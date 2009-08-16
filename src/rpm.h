@@ -8,7 +8,7 @@
 #ifndef ___RPM_H
 #define ___RPM_H
 
-int rpm_getheadersize(const char *arcfile);
+size64 rpm_getheadersize(const char *arcfile);
 
 #endif /* ___RPM_H */
 

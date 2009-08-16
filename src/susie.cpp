@@ -3,11 +3,10 @@
   TAR32.DLL version.2.xx
   Susie 32bit Plug-in Spec Rev4 Interface.
 */
+#include "stdafx.h"
 
 #include "tar32api.h"
 #include "tar32dll.h"
-#include <time.h>
-#include <windows.h>
 
 /*********************************************************
 	 Susie Plug-In APIs 
@@ -35,7 +34,7 @@ extern "C" int WINAPI _export GetPluginInfo(int infono, LPSTR buf,int buflen)
 		memcpy(buf,"00AM",nRet=min(buflen,5));
 	} else if(1==infono) {
 		const char *pPluginName="Tar32.DLL by Yoshioka Tsuneo(QWF00133@nifty.ne.jp)";
-		memcpy(buf,pPluginName,nRet=min(buflen,strlen(pPluginName)+1));
+		memcpy(buf,pPluginName,nRet=min((unsigned int)buflen,strlen(pPluginName)+1));
 	} else {
 		const char *ppExtNames[]={"*.tar;*.tgz;*.tbz;*.gz;*.bz2;*.Z;"};
 		const char *ppFmtNames[]={"tar/gz/bz2/Z format"};
@@ -45,9 +44,9 @@ extern "C" int WINAPI _export GetPluginInfo(int infono, LPSTR buf,int buflen)
 			return 0;
 		}
 		if(0==(infono&1)) {
-			memcpy(buf,ppExtNames[infono>>1],nRet=min(buflen,strlen(ppExtNames[infono>>1])+1));
+			memcpy(buf,ppExtNames[infono>>1],nRet=min((unsigned int)buflen,strlen(ppExtNames[infono>>1])+1));
 		} else {
-			memcpy(buf,ppFmtNames[infono>>1],nRet=min(buflen,strlen(ppFmtNames[infono>>1])+1));
+			memcpy(buf,ppFmtNames[infono>>1],nRet=min((unsigned int)buflen,strlen(ppFmtNames[infono>>1])+1));
 		}
 	}
 

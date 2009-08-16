@@ -1,6 +1,6 @@
+#include "stdafx.h"
 #include "rpm.h"
-#include <fstream>
-using namespace std;
+#include "fast_stl.h"
 
 /* Reference: lib/rpmlib.h of rpm package. */
 struct rpmlead{
@@ -68,13 +68,14 @@ struct rpmsig_headersig{
 
 #define RPMSIG_HEADERSIG    5  /* New Header style signature */
 
-int rpm_getheadersize(const char *arcfile)
+size64 rpm_getheadersize(const char *arcfile)
 {
 	rpmlead lead;
 	rpmsig_headersig sigheader,header;
 	
-	ifstream fs;
-	fs.open(arcfile, ios::in|ios::binary);
+	//std::ifstream fs;
+	fast_fstream fs;
+	fs.open(arcfile, std::ios::in|std::ios::binary);
 	if(fs.fail()){return false;}
 	
 	fs.read((char*)&lead, sizeof(lead));
@@ -85,7 +86,7 @@ int rpm_getheadersize(const char *arcfile)
 	if(lead.signature_type == RPMSIG_NONE){
 		;
 	}else if(lead.signature_type == RPMSIG_PGP262_1024){
-		fs.seekg(256, ios::cur);
+		fs.seekg(256, std::ios::cur);
 		if(fs.fail()){return false;}
 	}else if(lead.signature_type == RPMSIG_HEADERSIG){
 		fs.read((char*)&sigheader,sizeof(sigheader));
@@ -94,16 +95,16 @@ int rpm_getheadersize(const char *arcfile)
 		sigheader.hton();
 
 		int siglen = sigheader.get_lostheaderlen();
-		fs.seekg(siglen, ios::cur);
+		fs.seekg(siglen, std::ios::cur);
 		if(fs.fail()){return -1;}
 
-		int pos = fs.tellg();
+		size64 pos = fs.tellg();
 		if(pos == -1){return -1;}
 		if((pos%8) != 0){
 			/* 8 byte padding */
 			// int pad = pos - (pos/8)*8;
-			int pad = (pos/8 + 1) * 8 - pos ;  // fix by tsuneo 2001.05.14
-			fs.seekg(pad, ios::cur);
+			size64 pad = (pos/8 + 1) * 8 - pos ;  // fix by tsuneo 2001.05.14
+			fs.seekg(pad, std::ios::cur);
 			if(fs.fail()){return -1;}
 		}
 	}else{
@@ -116,10 +117,10 @@ int rpm_getheadersize(const char *arcfile)
 	header.hton();
 	int hdrlen = header.get_lostheaderlen();
 	if(hdrlen == -1){return -1;}
-	fs.seekg(hdrlen, ios::cur);
+	fs.seekg(hdrlen, std::ios::cur);
 	if(fs.fail()){return -1;}
 	
-	int size = fs.tellg();
+	size64 size = fs.tellg();
 	return size;
 
 }

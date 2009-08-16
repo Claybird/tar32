@@ -4,7 +4,6 @@
 
 #ifndef ___CPIO_H
 #define ___CPIO_H
-#include <memory.h>
 
 /*	Reference: GNU cpio cpiohdr.h */
 /* "New" portable format and CRC format:

@@ -65,7 +65,11 @@ OPTION:
 	--message-loop=[0|1]
 		run message loop in library.
 		default is 1.
-        
+
+	--confirm-overwrite=[0|1]
+		ask for confirmation for overwriting existing file.
+		default is 0.
+
 [Examples]
 
         tar -cvf foo.tar *.c *.h makefile

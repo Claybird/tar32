@@ -29,9 +29,6 @@
 		I want any trivial information.
 		If you use this file, please report me.
 */
-#include <string>
-using namespace std;
-#include <wtypes.h>
 
 class CTar32Exception{
 public:
@@ -39,7 +36,7 @@ public:
 		m_str = str;
 		m_code = code;
 	};
-	string m_str;
+	std::string m_str;
 	int m_code;
 };
 
@@ -53,5 +50,6 @@ void Tar32LeaveCriticalSection();
 // time_t to CommonArchive-Time(?) converter
 WORD GetARCDate(time_t ti);
 WORD GetARCTime(time_t ti);
+DWORD GetARCAttribute(int st_mode);
 void GetARCAttribute(int st_mode, char *buf, int buflen);
 bool GetARCMethod(int archive_type, char *buf, int buf_len);

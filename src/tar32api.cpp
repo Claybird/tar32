@@ -30,16 +30,12 @@
 		I want any trivial information.
 		If you use this file, please report me.
 */
+#include "stdafx.h"
 #include "tar32api.h"
 #include "tarcmd.h"
 #include "tar32dll.h"
 #include "tar32.h"		// CTar32
 #include "tar32res.h"
-#include <time.h>
-#include <windows.h>
-#include <sys/stat.h>	// S_IWRITE
-#include <crtdbg.h>		// _CrtMemCheckpoint, _CrtMemDumpAllObjectsSince
-
 
 HINSTANCE dll_instance=NULL;	/* TAR32.DLL module handle */
 UINT wm_arcextract;	/* Window Message */
@@ -51,7 +47,9 @@ BOOL WINAPI DllMain(HINSTANCE hInst,ULONG ul_reason_for_call,LPVOID lpReserved)
 			dll_instance = hInst;
 			Tar32InitializeCriticalSection();
 			wm_arcextract = ::RegisterWindowMessage(WM_ARCEXTRACT);
-            break;
+
+			InitCommonControls();
+			break;
         case DLL_THREAD_ATTACH:
             break;
         case DLL_THREAD_DETACH:
@@ -90,25 +88,7 @@ WORD WINAPI _export TarGetCursorInterval(VOID){return s_CursorInterval;}
 BOOL WINAPI _export TarSetCursorInterval(const WORD _Interval){s_CursorInterval; return TRUE;}
 } // extern "C"
 
-static HCURSOR s_orig_cursor = NULL;
-static void tar32_cursor_set() // ‚Ç‚ñ‚¼Fvoid‚ð’Ç‰Á
-{
-	Tar32EnterCriticalSection();
-	if(s_orig_cursor == NULL){
-		HCURSOR hCursor = ::LoadCursor(dll_instance, MAKEINTRESOURCE(IDC_POINTER));
-		s_orig_cursor = ::SetCursor(hCursor);
-	}
-	Tar32LeaveCriticalSection();
-}
-static void tar32_cursor_unset() // ‚Ç‚ñ‚¼Fvoid‚ð’Ç‰Á
-{
-	Tar32EnterCriticalSection();
-	if(s_orig_cursor){
-		::SetCursor(s_orig_cursor);
-	}
-	s_orig_cursor = NULL;
-	Tar32LeaveCriticalSection();
-}
+
 extern "C" int WINAPI _export Tar(const HWND _hwnd, LPCSTR _szCmdLine,LPSTR _szOutput, const DWORD _dwSize){
 	int ret;
 	_CrtMemState memstate;
@@ -120,7 +100,7 @@ extern "C" int WINAPI _export Tar(const HWND _hwnd, LPCSTR _szCmdLine,LPSTR _szO
 	return ret;
 }
 extern "C" int WINAPI _export TarExtractMem(const HWND _hwndParent,LPCSTR _szCmdLine, LPBYTE _lpBuffer, const DWORD _dwSize,time_t *_lpTime, LPWORD _lpwAttr, LPDWORD _lpdwWriteSize){
-	string cmd;
+	std::string cmd;
 	cmd = cmd + "-p -x " + _szCmdLine;
 	int ret = tar_cmd(_hwndParent,cmd.c_str(),(char*)_lpBuffer,_dwSize,(int*)_lpdwWriteSize);
 	if(_lpTime){*_lpTime = 0;}
@@ -129,7 +109,7 @@ extern "C" int WINAPI _export TarExtractMem(const HWND _hwndParent,LPCSTR _szCmd
 	return ret;
 }
 extern "C" int WINAPI _export TarCompressMem(const HWND _hwndParent,LPCSTR _szCmdLine, const LPBYTE _lpBuffer, const DWORD _dwSize,const time_t *_lpTime, const LPWORD _lpwAttr,LPDWORD _lpdwWriteSize){
-	string cmd;
+	std::string cmd;
 	cmd = cmd + "-p -c " + _szCmdLine;
 	return Tar(_hwndParent, cmd.c_str(), (char*)_lpBuffer, _dwSize);
 }
@@ -142,25 +122,26 @@ extern "C" BOOL WINAPI _export TarCheckArchive(LPCSTR _szFileName, const int _iM
 }
 extern "C" BOOL WINAPI _export TarConfigDialog(const HWND _hwnd, LPSTR _lpszComBuffer,const int _iMode)
 {
-	char msg[10000]="";
 	int ver = TarGetVersion();
 	time_t ti;
-	char fname[1000]="";
-	GetModuleFileName(dll_instance,fname,sizeof(fname));
+	char fname[MAX_PATH]="";
+	GetModuleFileName(dll_instance,fname,COUNTOF(fname));
 	{
 		FILE *fp;
 		fp=fopen(fname,"rb");
 		IMAGE_DOS_HEADER idh;
 		fread(&idh,1,sizeof(idh),fp);
-		fseek(fp, idh.e_lfanew, SEEK_SET);
-		fseek(fp,4,SEEK_CUR);// skip IMAGE_NT_SIGNATURE
+		_fseeki64(fp, idh.e_lfanew, SEEK_SET);
+		_fseeki64(fp,4,SEEK_CUR);// skip IMAGE_NT_SIGNATURE
 		IMAGE_FILE_HEADER ifh;
 		fread(&ifh,1,sizeof(ifh),fp);
 		ti = ifh.TimeDateStamp;
 		fclose(fp);
 	}
-	char tistr[1000]; strftime(tistr,1000,"%Y/%m/%d %H:%M:%S",localtime(&ti));
+	char tistr[128];
+	strftime(tistr,128,"%Y/%m/%d %H:%M:%S",localtime(&ti));
 
+	char msg[1024];
 	sprintf(msg, "TAR32.DLL Configuration.\n"
 			"ModuleFileName: %s\n"
 			"TarGetVersion(): %d.%02d\n"
@@ -198,7 +179,7 @@ CTar32 *HARC2PTAR32(HARC _harc)
 extern "C" HARC WINAPI _export TarOpenArchive(const HWND _hwnd, LPCSTR _szFileName,const DWORD _dwMode)
 {
 	CTar32Find *pTar32Find = new CTar32Find;
-	bool bret = pTar32Find->tar32.open(_szFileName,"rb");
+	bool bret = pTar32Find->tar32.open(_szFileName,"rb",-1,ARCHIVETYPE_AUTO);
 	if(!bret){delete pTar32Find;return 0;}
 	return (HARC)pTar32Find;
 }
@@ -227,7 +208,7 @@ extern "C" int WINAPI _export TarFindNext(HARC _harc, INDIVIDUALINFO *_lpSubInfo
 		if(!bret){return -1;}
 		bret = pTar32->readskip();
 		if(!bret){return -1;}
-	}catch(CTar32Exception &e){
+	}catch(CTar32Exception &){
 		return -1;
 	}
 	if(_lpSubInfo){
@@ -318,7 +299,7 @@ extern "C" BOOL WINAPI _export TarGetOriginalSizeEx(HARC _harc, __int64 *_lpllSi
 }
 extern "C" DWORD WINAPI _export TarGetOriginalSize(HARC _harc)
 {
-	__int64 size = 0;
+	size64 size = 0;
 	TarGetOriginalSizeEx(_harc, &size);
 	return (DWORD)size;
 }
@@ -331,7 +312,7 @@ extern "C" BOOL WINAPI _export TarGetCompressedSizeEx(HARC _harc, __int64 *_lpll
 }
 extern "C" DWORD WINAPI _export TarGetCompressedSize(HARC _harc)
 {
-	__int64 size = 0;
+	size64 size = 0;
 	TarGetCompressedSizeEx(_harc, &size);
 	return (DWORD)size;
 }
@@ -339,7 +320,7 @@ extern "C" DWORD WINAPI _export TarGetCompressedSize(HARC _harc)
 extern "C" WORD WINAPI _export TarGetRatio(HARC _harc)
 {
 	if(TarGetOriginalSize(_harc)){
-		return 1000*TarGetCompressedSize(_harc)/TarGetOriginalSize(_harc);
+		return (WORD)(1000*TarGetCompressedSize(_harc)/TarGetOriginalSize(_harc));
 	}
 	return 0;
 }

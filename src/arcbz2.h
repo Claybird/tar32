@@ -39,12 +39,12 @@ class CTarArcFile_BZip2 : public ITarArcFile{
 public:
 	CTarArcFile_BZip2();
 	~CTarArcFile_BZip2();
-	bool open(const char *arcfile, const char *mode);
-	int read(void *buf, int size);
-	int write(void *buf, int size);
+	bool open(const char *arcfile, const char *mode, int compress_level);
+	size64 read(void *buf, size64 size);
+	size64 write(void *buf, size64 size);
 	void close();
 	int get_archive_type(){return ARCHIVETYPE_BZ2;}
-	virtual string get_orig_filename();
+	virtual std::string get_orig_filename();
 private:
 	BZFILE *m_pbzFile;
 };

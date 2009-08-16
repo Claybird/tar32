@@ -30,6 +30,7 @@
 		I want any trivial information.
 		If you use this file, please report me.
 */
+#include "stdafx.h"
 #include "arcfile.h"
 
 #include "normal.h" // CTarArcFile_Normal
@@ -38,29 +39,25 @@
 #include "arcz.h"	// CTarArcFile_Compress
 #include "tar32api.h"
 
-#include <string.h>
-#include <assert.h>
 
-#include <algorithm>
-using namespace std;
-
-int ITarArcFile::seek(int offset, int origin)
+size64 ITarArcFile::seek(size64 offset, int origin)
 {
 	if(origin != SEEK_CUR){
 		return -1;
 	}
+	const int bufsize=1024*16;
+	std::vector<char> buf;
+	buf.resize(bufsize);
 	while(offset > 0){
-		// char buf[4096];
-		char buf[1000];
-		int size = min(offset,(int)sizeof(buf));
-		int n = read(buf,size);
+		size64 size = min(offset,bufsize);
+		size64 n = read(&buf[0],size);
 		if(n != size){return -1;}
 		offset -= n;
 	}
 	return 0;
 }
 /*static*/
-ITarArcFile *ITarArcFile::s_open(const char *arcfile, const char *mode, int type)
+ITarArcFile *ITarArcFile::s_open(const char *arcfile, const char *mode, int compress_level, int type)
 {
 	ITarArcFile *pfile = NULL;
 	int ret = 0;
@@ -98,7 +95,7 @@ ITarArcFile *ITarArcFile::s_open(const char *arcfile, const char *mode, int type
 	default:
 		return NULL;
 	}
-	ret = pfile->open(arcfile, mode);
+	ret = pfile->open(arcfile, mode, compress_level);
 	if(!ret){delete pfile;return NULL;}
 	return pfile;
 }

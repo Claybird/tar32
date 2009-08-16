@@ -1,12 +1,14 @@
 /* zconf.h -- configuration of the zlib compression library
- * Copyright (C) 1995-2004 Jean-loup Gailly.
+ * Copyright (C) 1995-2005 Jean-loup Gailly.
  * For conditions of distribution and use, see copyright notice in zlib.h
  */
 
-/* @(#) $Id: zconf.h,v 1.2 2005/04/01 14:39:32 tsuneo Exp $ */
+/* @(#) $Id: zconf.h,v 1.3 2009/08/16 09:47:02 claybird Exp $ */
 
 #ifndef ZCONF_H
 #define ZCONF_H
+
+#define z_off_t __int64
 
 /*
  * If you *really* need a unique prefix for all types and library functions,
@@ -43,6 +45,10 @@
 #  define get_crc_table         z_get_crc_table
 #  define zError                z_zError
 
+#  define alloc_func            z_alloc_func
+#  define free_func             z_free_func
+#  define in_func               z_in_func
+#  define out_func              z_out_func
 #  define Byte                  z_Byte
 #  define uInt                  z_uInt
 #  define uLong                 z_uLong
@@ -64,8 +70,10 @@
 #if defined(_WINDOWS) && !defined(WINDOWS)
 #  define WINDOWS
 #endif
-#if (defined(_WIN32) || defined(__WIN32__)) && !defined(WIN32)
-#  define WIN32
+#if defined(_WIN32) || defined(_WIN32_WCE) || defined(__WIN32__)
+#  ifndef WIN32
+#    define WIN32
+#  endif
 #endif
 #if (defined(MSDOS) || defined(OS2) || defined(WINDOWS)) && !defined(WIN32)
 #  if !defined(__GNUC__) && !defined(__FLAT__) && !defined(__386__)
@@ -292,7 +300,7 @@ typedef uLong FAR uLongf;
 #  define SEEK_END        2       /* Set file pointer to EOF plus "offset" */
 #endif
 #ifndef z_off_t
-#  define z_off_t __int64
+#  define z_off_t long
 #endif
 
 #if defined(__OS400__)

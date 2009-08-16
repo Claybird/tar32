@@ -50,10 +50,17 @@ typedef long time_t;
 
 #ifndef ARC_DECSTRACT
 #define ARC_DECSTRACT
+
+#if !defined(__BORLANDC__) || __BORLANDC__ >= 0x550
+typedef LONGLONG	TAR_INT64;
+#else
+typedef struct {
+	DWORD	LowPart;
+	LONG	HighPart;
+} TAR_INT64, *LPTAR_INT64;
+#endif
+
 /* #define void *HGLOBAL */
-
-#include <wtypes.h>
-
 typedef	HGLOBAL	HARC;
 
 typedef struct {
@@ -95,6 +102,26 @@ typedef struct {
 } EXTRACTINGINFOEX;
 typedef BOOL CALLBACK ARCHIVERPROC(HWND _hwnd,UINT _uMsg,UINT _nState, EXTRACTINGINFOEX * _lpEis);
 
+typedef struct {
+	DWORD				dwStructSize;
+	EXTRACTINGINFO		exinfo;
+	TAR_INT64			llFileSize;			/* 格納ファイルのサイズ */
+	TAR_INT64			llCompressedSize;
+	TAR_INT64			llWriteSize;		/* 書き込みサイズ */
+	DWORD				dwAttributes;
+	DWORD 				dwCRC;
+	UINT  				uOSType;
+	WORD  				wRatio;
+	FILETIME			ftCreateTime;
+	FILETIME			ftAccessTime;
+	FILETIME			ftWriteTime;
+	char  				szMode[8];
+	char				szSourceFileName[FNAME_MAX32 + 1];	/* 格納ファイル名 */
+	char				dummy1[3];
+	char				szDestFileName[FNAME_MAX32 + 1];
+										/* 解凍先または圧縮元パス名 */
+	char				dummy2[3];
+} EXTRACTINGINFOEX64, *LPEXTRACTINGINFOEX64;
 #endif
 
 #if !defined(__BORLANDC__)

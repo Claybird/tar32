@@ -1,6 +1,6 @@
+#include "stdafx.h"
 #include "arcz.h"
 #include "util.h"
-#include <stdlib.h>
 
 
 const unsigned char	CTarArcFile_Compress::MAGIC_1 = '\037';	/* First byte of compressed file	*/
@@ -24,7 +24,7 @@ CTarArcFile_Compress::~CTarArcFile_Compress()
 {
 	if(m_pFile){fclose(m_pFile);}
 }
-bool CTarArcFile_Compress::open(const char *arcfile, const char *mode)
+bool CTarArcFile_Compress::open(const char *arcfile, const char *mode, int /*compress_level*/)
 {
 	m_arcfile = arcfile;
 
@@ -64,19 +64,19 @@ bool CTarArcFile_Compress::open(const char *arcfile, const char *mode)
 
 	return true;
 }
-int CTarArcFile_Compress::read(void *buf, int size)
+size64 CTarArcFile_Compress::read(void *buf, size64 size)
 {
-	int nread = 0;
+	size64 nread = 0;
 	
 	while(!eof() && size > 0){
-		int in_avail;
+		size64 in_avail;
 		in_avail = m_strstream.rdbuf()->in_avail();
 		if(in_avail == 0){
 			if(!readonce()){break;}
 		}
 		in_avail = m_strstream.rdbuf()->in_avail();
-		int n = min(in_avail, size);
-		m_strstream.read((char*)buf, n);
+		size64 n = min(in_avail, size);
+		m_strstream.read((char*)buf, (size_t)n);	//TODO:size lost
 		nread += n;
 		size -= n;
 		buf = (void*)((char*)buf + n);
@@ -196,9 +196,9 @@ void CTarArcFile_Compress::close()
 {
 	if(m_pFile){fclose(m_pFile);m_pFile=NULL;}
 }
-string CTarArcFile_Compress::get_orig_filename(){
+std::string CTarArcFile_Compress::get_orig_filename(){
 	if(! m_orig_filename.empty()){return m_orig_filename;}
-	string fname = get_filename(m_arcfile.c_str());
+	std::string fname = get_filename(m_arcfile.c_str());
 	if(fname.length()>2 && stricmp(fname.substr(fname.length()-2).c_str(),".z") == 0){
 		return fname.substr(0, fname.length()-2);
 	}

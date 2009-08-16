@@ -31,25 +31,22 @@
 		If you use this file, please report me.
 */
 #include "arcfile.h"
-#include <string>
 
 #include "tar.h"
-#include <sys/types.h>	// stat
-#include <sys/stat.h>	// stat
-
-using namespace std;
 
 struct CTar32FileStatus{
 	CTar32FileStatus(){
 
-		compress_size = original_size = blocksize = mode = uid = gid = mtime = chksum = typeflag = devmajor = devminor = atime = ctime = offset = 0;
+		compress_size = original_size = 0;
+		blocksize = mode = uid = gid = mtime = chksum = typeflag = devmajor = devminor = atime = ctime = 0;
+		offset = 0;
 		mode = 0666;	// _S_IWRITE|_S_IREAD
 		memcpy(magic_version, TMAGIC "\0" TVERSION/*"ustar\000"*/,8);
 		strcpy(uname, "root");
 	}
-	string filename;
-	__int64 original_size;
-	__int64 compress_size;
+	std::string filename;
+	size64 original_size;
+	size64 compress_size;
 	int blocksize;
 
 	int mode;
@@ -58,7 +55,7 @@ struct CTar32FileStatus{
 	time_t mtime;
 	unsigned int chksum;
 	int typeflag;
-	string linkname;
+	std::string linkname;
 	char magic_version[8];
 	char uname[32];
 	char gname[32];
@@ -66,10 +63,11 @@ struct CTar32FileStatus{
 	int  devminor;
 	time_t atime;
 	time_t ctime;
-	int offset;
+	size64 offset;
+
 	bool SetFromFile(const char *fname){
-		struct _stat st;
-		if(_stat(fname,&st)==-1){return false;}
+		struct _stati64 st;
+		if(_stati64(fname,&st)==-1){return false;}
 		mode = st.st_mode;
 		uid = st.st_uid;
 		gid = st.st_gid;
@@ -80,17 +78,22 @@ struct CTar32FileStatus{
 		if((st.st_mode & _S_IFMT) == _S_IFDIR){
 			typeflag = DIRTYPE;
 		}
+
 		return true;
 	}
 };
 
 class CTar32InternalFile;
 class CTar32{
+protected:
+	bool readdir_TAR(CTar32FileStatus &stat);
+	bool readdir_CPIO(CTar32FileStatus &stat);
+	bool readdir_AR(CTar32FileStatus &stat);
 public:
 	CTar32();
 	virtual ~CTar32();
 	static int s_get_archive_type(const char *arcfile);
-	bool open(const char *arcfile, const char*mode, int archive_type = ARCHIVETYPE_AUTO);
+	bool open(const char *arcfile, const char*mode,int compress_level, int archive_type/* = ARCHIVETYPE_AUTO*/);
 	bool close();
 
 	bool readdir(CTar32FileStatus *stat);
@@ -102,7 +105,7 @@ public:
 
 	CTar32FileStatus m_currentfile_status;
 	int m_archive_type;
-	string get_arc_filename(){return m_pfile->get_arc_filename();}
+	std::string get_arc_filename(){return m_pfile->get_arc_filename();}
 private:
 	ITarArcFile *m_pfile;
 	int m_filecount;	
@@ -110,7 +113,8 @@ private:
 	int m_error_code;
 
 	/* for ar(a.out) format */
-	char *longfilenames_buf;
+	//char *longfilenames_buf;
+	std::string longfilenames_buf;
 
 	friend CTar32InternalFile; // use m_currentfile_status.size
 };
@@ -123,13 +127,13 @@ public:
 	~CTar32InternalFile();
 	// open after CTar32::readdir() or CTar32()::addheader()
 	bool open(CTar32 *pTar32, bool bWrite = false);
-	int write(void *buf, int size);
-	int read(void *buf, int size);
+	size64 write(void *buf, size64 size);
+	size64 read(void *buf, size64 size);
 	bool close();
 private:
 	ITarArcFile *m_pfile;
-	__int64 m_readsize;
-	__int64 m_size;
+	size64 m_readsize;
+	size64 m_size;
 	int m_blocksize;
 	bool m_write;
 };

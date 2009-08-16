@@ -30,10 +30,10 @@
 		I want any trivial information.
 		If you use this file, please report me.
 */
+#include "stdafx.h"
 #include "arcbz2.h"
 #include "util.h"
 #include "bzlib.h"
-#include <stdlib.h>
 
 CTarArcFile_BZip2::CTarArcFile_BZip2()
 {
@@ -43,20 +43,26 @@ CTarArcFile_BZip2::~CTarArcFile_BZip2()
 {
 	close();
 }
-bool CTarArcFile_BZip2::open(const char *arcfile, const char *mode)
+bool CTarArcFile_BZip2::open(const char *arcfile, const char *mode, int compress_level)
 {
 	m_arcfile = arcfile;
+	char buf[16];
+	bool bReadMode=(NULL!=strchr(mode,'r'));
+	if(!bReadMode){
+		_snprintf(buf,COUNTOF(buf),"%s%d",mode,compress_level);
+		mode=buf;	//ƒ‚[ƒh‚Ì•¶Žš—ñ‚ð‚·‚è‘Ö‚¦
+	}
 	BZFILE * f = BZ2_bzopen(arcfile, mode);
 	m_pbzFile = f;
 	return (f != NULL);
 }
-int CTarArcFile_BZip2::read(void *buf, int size)
+size64 CTarArcFile_BZip2::read(void *buf, size64 size)
 {
-	return BZ2_bzread(m_pbzFile, buf, size);
+	return BZ2_bzread(m_pbzFile, buf, (size_t)size);	//TODO:size lost
 }
-int CTarArcFile_BZip2::write(void *buf, int size)
+size64 CTarArcFile_BZip2::write(void *buf, size64 size)
 {
-	return BZ2_bzwrite(m_pbzFile, buf, size);
+	return BZ2_bzwrite(m_pbzFile, buf, (size_t)size);	//TODO:size lost
 }
 void CTarArcFile_BZip2::close()
 {
@@ -65,9 +71,9 @@ void CTarArcFile_BZip2::close()
 		m_pbzFile = NULL;
 	}
 }
-string CTarArcFile_BZip2::get_orig_filename(){
+std::string CTarArcFile_BZip2::get_orig_filename(){
 	if(! m_orig_filename.empty()){return m_orig_filename;}
-	string fname = get_filename(m_arcfile.c_str());
+	std::string fname = get_filename(m_arcfile.c_str());
 	if(fname.length()>4 && stricmp(fname.substr(fname.length()-4).c_str(),".bz2") == 0){
 		return fname.substr(0, fname.length()-4);
 	}

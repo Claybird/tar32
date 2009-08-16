@@ -1,4 +1,4 @@
-//Microsoft Developer Studio generated resource script.
+// Microsoft Visual C++ generated resource script.
 //
 #include "tar32res.h"
 
@@ -21,15 +21,14 @@ LANGUAGE LANG_JAPANESE, SUBLANG_DEFAULT
 #pragma code_page(932)
 #endif //_WIN32
 
-#ifndef _MAC
 /////////////////////////////////////////////////////////////////////////////
 //
 // Version
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 2,30,0,1
- PRODUCTVERSION 2,30,0,1
+ FILEVERSION 2,31,0,1
+ PRODUCTVERSION 2,31,0,1
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -44,18 +43,14 @@ BEGIN
     BEGIN
         BLOCK "041104b0"
         BEGIN
-            VALUE "Comments", "\0"
-            VALUE "CompanyName", " \0"
-            VALUE "FileDescription", "tar32\0"
-            VALUE "FileVersion", "2, 30, 0, 1\0"
-            VALUE "InternalName", "tar32\0"
-            VALUE "LegalCopyright", "Copyright (C) 1999 Yoshioka Tsuneo URL: http://openlab.ring.gr.jp/tsuneo/tar32/\0"
-            VALUE "LegalTrademarks", "\0"
-            VALUE "OriginalFilename", "tar32.dll\0"
-            VALUE "PrivateBuild", "\0"
-            VALUE "ProductName", "  tar32\0"
-            VALUE "ProductVersion", "2, 30, 0, 1\0"
-            VALUE "SpecialBuild", "\0"
+            VALUE "CompanyName", " "
+            VALUE "FileDescription", "tar32"
+            VALUE "FileVersion", "2, 31, 0, 1"
+            VALUE "InternalName", "tar32"
+            VALUE "LegalCopyright", "Copyright (C) 1999 Yoshioka Tsuneo URL: http://openlab.ring.gr.jp/tsuneo/tar32/"
+            VALUE "OriginalFilename", "tar32.dll"
+            VALUE "ProductName", "  tar32"
+            VALUE "ProductVersion", "2, 31, 0, 1"
         END
     END
     BLOCK "VarFileInfo"
@@ -64,8 +59,6 @@ BEGIN
     END
 END
 
-#endif    // !_MAC
-
 
 #ifdef APSTUDIO_INVOKED
 /////////////////////////////////////////////////////////////////////////////
@@ -73,18 +66,18 @@ END
 // TEXTINCLUDE
 //
 
-1 TEXTINCLUDE DISCARDABLE 
+1 TEXTINCLUDE 
 BEGIN
     "tar32res.h\0"
 END
 
-2 TEXTINCLUDE DISCARDABLE 
+2 TEXTINCLUDE 
 BEGIN
     "#include ""afxres.h""\r\n"
     "\0"
 END
 
-3 TEXTINCLUDE DISCARDABLE 
+3 TEXTINCLUDE 
 BEGIN
     "\r\n"
     "\0"
@@ -95,18 +88,11 @@ END
 
 /////////////////////////////////////////////////////////////////////////////
 //
-// Cursor
-//
-
-IDC_POINTER             CURSOR  DISCARDABLE     "pointer.cur"
-
-/////////////////////////////////////////////////////////////////////////////
-//
 // Dialog
 //
 
-IDD_CONFIG DIALOG DISCARDABLE  0, 0, 187, 95
-STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+IDD_CONFIG DIALOG  0, 0, 187, 95
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "TAR32.DLL Config Dialog"
 FONT 9, "‚l‚r ‚oƒSƒVƒbƒN"
 BEGIN
@@ -115,18 +101,28 @@ BEGIN
     LTEXT           "There is no configuration, now.",IDC_STATIC,46,45,90,8
 END
 
-IDD_DIALOG_STATUS DIALOG DISCARDABLE  0, 0, 234, 71
-STYLE DS_MODALFRAME | DS_SETFOREGROUND | DS_CENTER | WS_POPUP | WS_CAPTION | 
-    WS_SYSMENU
+IDD_DIALOG_STATUS DIALOGEX 0, 0, 235, 86
+STYLE DS_SETFONT | DS_MODALFRAME | DS_SETFOREGROUND | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "TAR32.DLL is executing..."
-FONT 9, "‚l‚r ‚oƒSƒVƒbƒN"
+FONT 9, "‚l‚r ‚oƒSƒVƒbƒN", 0, 0, 0x0
 BEGIN
-    DEFPUSHBUTTON   "OK",IDOK,123,50,50,14
-    PUSHBUTTON      "Cancel",IDCANCEL,177,50,50,14
     LTEXT           "FileName",IDC_STATIC,7,7,31,8
-    EDITTEXT        IDC_FILENAME,39,7,188,14,ES_AUTOHSCROLL | ES_READONLY
-    LTEXT           "FileSize",IDC_STATIC,7,26,31,8
-    EDITTEXT        IDC_FILESIZE,39,26,188,14,ES_AUTOHSCROLL | ES_READONLY
+    LTEXT           "Progress",IDC_STATIC,7,23,31,8
+    CONTROL         "",IDC_PROGRESS_FILE,"msctls_progress32",WS_BORDER,7,36,221,24
+    PUSHBUTTON      "Cancel",IDCANCEL,178,65,50,14
+    LTEXT           "processing file name",IDC_STATIC_FILENAME,38,7,189,12
+    LTEXT           "progress in percentage",IDC_STATIC_PROGRESS,38,23,189,11
+END
+
+IDD_CONFIRM_OVERWRITE DIALOGEX 0, 0, 194, 94
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION
+CAPTION "Overwrite confirmation"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    PUSHBUTTON      "&Yes",IDC_BUTTON_OVERWRITE,7,73,50,14
+    PUSHBUTTON      "Yes to &all",IDC_BUTTON_OVERWRITE_ALL,72,73,50,14
+    PUSHBUTTON      "&Cancel",IDCANCEL,137,73,50,14
+    LTEXT           "Message Area",IDC_STATIC_STATUS,7,7,180,51
 END
 
 
@@ -136,7 +132,7 @@ END
 //
 
 #ifdef APSTUDIO_INVOKED
-GUIDELINES DESIGNINFO DISCARDABLE 
+GUIDELINES DESIGNINFO 
 BEGIN
     IDD_CONFIG, DIALOG
     BEGIN
@@ -149,10 +145,18 @@ BEGIN
     IDD_DIALOG_STATUS, DIALOG
     BEGIN
         LEFTMARGIN, 7
-        RIGHTMARGIN, 227
+        RIGHTMARGIN, 228
         VERTGUIDE, 39
         TOPMARGIN, 7
-        BOTTOMMARGIN, 64
+        BOTTOMMARGIN, 79
+    END
+
+    IDD_CONFIRM_OVERWRITE, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 187
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 87
     END
 END
 #endif    // APSTUDIO_INVOKED
