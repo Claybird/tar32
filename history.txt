@@ -297,5 +297,5 @@
 	・"--confirm-overwrite"オプションを展開時の上書き確認用に導入。明示的に
 	  指定しない限りは従来と同様、確認無しでの上書きとなります。
 	・zlibを1.2.3に、bzip2を1.0.5に更新。
-	by Claybird(claybiwd.without.wing@gmail.com)
+	by Claybird(claybird.without.wing@gmail.com)
 
