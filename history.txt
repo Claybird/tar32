@@ -284,7 +284,7 @@
 	・"--"オプションを追加。"-"ではじまるファイルを指定できるように改善。
       (Special Thanks to  新山(へろぱ) さん)
 
-2009/08/16 Ver2.31
+2009/08/16
 	・コンパイラをVisual C++ 2005に変更。
 	  MSDNによれば、この変更により一部の古いWindowsは動作対象外となります。
 	・fopen()に指定するモードがzlib/bzip2用だったので、本来のものに修正。
@@ -298,4 +298,17 @@
 	  指定しない限りは従来と同様、確認無しでの上書きとなります。
 	・zlibを1.2.3に、bzip2を1.0.5に更新。
 	by Claybird(claybird.without.wing@gmail.com)
+
+2009/08/30
+	・--inverse_procresultスイッチを追加しました。
+	・処理ダイアログを表示していない場合、WM_ARCEXTRACTやARCHIVERPROCに
+	  ARCEXTRACT_INPROCESSが送信されない(恐らく)不具合を修正。
+	・ARCEXTRACT_ENDが誤って使用されている個所でモードを6に変更。
+	Special Thank to Silkyさん
+
+2009/08/31 Ver.2.31
+	・ARCEXTRACT_BEGINが誤って使用されている個所でモードをARCEXTRACT_OPENに変更。
+	Special Thank to Silkyさん
+	commit by Claybird
+
 

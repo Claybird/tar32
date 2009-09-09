@@ -56,6 +56,7 @@ public:
 		b_absolute_paths = false;
 		b_display_dialog = true;
 		b_message_loop = true;
+		b_inverse_procresult = false;
 		b_print = false;
 		b_confirm_overwrite = false;
 
@@ -79,6 +80,7 @@ public:
 	bool b_absolute_paths;
 	bool b_display_dialog;
 	bool b_message_loop;
+	bool b_inverse_procresult;
 	bool b_print;
 
 	bool b_confirm_overwrite;	//ã‘‚«Šm”F(‰ğ“€)
@@ -117,6 +119,7 @@ static void cmd_usage(CTar32CmdInfo &info)
 		<< "       --absolute-paths=[0|1](0)  extract absolute paths(/, .., xx:)\n"
 		<< "       --display-dialog=[0|1](1)  display dialog box\n"
 		<< "       --message-loop=[0|1](1)  run message loop\n"
+		<< "       --inverse_procresult=[0|1](0)  inverse result value of ARCHIVERPROC\n"
 		<< "       --bzip2=[N]     compress by bzip2 with level N\n"
 		<< "       --confirm-overwrite=[0|1](0) ask for confirmation for\n"
 		<< "                                    overwriting existing file\n"
@@ -180,6 +183,8 @@ static int tar_cmd_itr(const HWND hwnd, LPCSTR szCmdLine,LPSTR szOutput, const D
 					cmdinfo.b_display_dialog = ((val=="") ? true : (0!=atoi(val.c_str())));
 				}else if(key == "message-loop"){
 					cmdinfo.b_message_loop = ((val=="") ? true : (0!=atoi(val.c_str())));
+				}else if(key == "inverse-procresult"){
+					cmdinfo.b_inverse_procresult = ((val=="") ? true : (0!=atoi(val.c_str())));
 				}else if(key == "bzip2" || key == "bzip"){
 					cmdinfo.archive_type = ARCHIVETYPE_BZ2;
 					cmdinfo.compress_level = ((val=="") ? 9 : (0!=atoi(val.c_str())));
@@ -447,6 +452,10 @@ int SendArcMessage(CTar32CmdInfo &cmdinfo, int arcmode, EXTRACTINGINFOEX *pExtra
 	}
 	if(g_pArcProc){
 		ret3 = (*g_pArcProc)(g_hwndOwnerWindow, wm_arcextract, arcmode, pExtractingInfoEx);
+		if (cmdinfo.b_inverse_procresult)
+		{
+			ret3 = ! ret3;
+		}
 	}
 	return (ret1 || ret2 || ret3);
 }
@@ -607,13 +616,13 @@ bool extract_file(CTar32CmdInfo &cmdinfo, CTar32 *pTarfile, const char *fname,st
 				return false;
 			}
 		}
-		if(cmdinfo.hTar32StatusDialog){
+//		if(cmdinfo.hTar32StatusDialog){
 			extractinfo.exinfo.dwWriteSize = (DWORD)readsize;
 			exinfo64.exinfo.dwWriteSize = (DWORD)readsize;
 			exinfo64.llWriteSize = readsize;
 			int ret = SendArcMessage(cmdinfo, ARCEXTRACT_INPROCESS, &extractinfo,&exinfo64);
 			if(ret){throw CTar32Exception("Cancel button was pushed.",ERROR_USER_CANCEL);}
-		}
+//		}
 	}
 	if(!cmdinfo.b_print){
 		fs_w.close();
@@ -624,13 +633,13 @@ bool extract_file(CTar32CmdInfo &cmdinfo, CTar32 *pTarfile, const char *fname,st
 		ret = _utime(fname2.c_str(), &ut);
 		ret = _chmod(fname2.c_str(), stat.mode);
 	}
-	if(cmdinfo.hTar32StatusDialog){
+//	if(cmdinfo.hTar32StatusDialog){
 		extractinfo.exinfo.dwWriteSize = (DWORD)readsize;
 		exinfo64.exinfo.dwWriteSize = (DWORD)readsize;
 		exinfo64.llWriteSize = readsize;
-		int ret = SendArcMessage(cmdinfo, ARCEXTRACT_END, &extractinfo,&exinfo64);
+		int ret = SendArcMessage(cmdinfo, 6, &extractinfo,&exinfo64);
 		if(ret){throw CTar32Exception("Cancel button was pushed.",ERROR_USER_CANCEL);}
-	}
+//	}
 	return true;
 }
 static void cmd_extract(CTar32CmdInfo &cmdinfo)
@@ -645,7 +654,7 @@ static void cmd_extract(CTar32CmdInfo &cmdinfo)
 		strncpy(extractinfo.exinfo.szSourceFileName, cmdinfo.arcfile.c_str() ,FNAME_MAX32+1);
 		exinfo64.exinfo=extractinfo.exinfo;
 		strncpy(exinfo64.szSourceFileName, extractinfo.exinfo.szSourceFileName ,FNAME_MAX32+1);
-		int ret = SendArcMessage(cmdinfo, ARCEXTRACT_BEGIN, &extractinfo,&exinfo64);
+		int ret = SendArcMessage(cmdinfo, ARCEXTRACT_OPEN, &extractinfo,&exinfo64);
 		if(ret){throw CTar32Exception("Cancel button was pushed.",ERROR_USER_CANCEL);}
 	}
 
@@ -731,23 +740,23 @@ static bool add_file(CTar32CmdInfo &cmdinfo, CTar32 *pTarfile, const char *fname
 		if(n!=m){
 			throw CTar32Exception("can't write to arcfile", ERROR_CANNOT_WRITE);
 		}
-		if(cmdinfo.hTar32StatusDialog){
+//		if(cmdinfo.hTar32StatusDialog){
 			extractinfo.exinfo.dwWriteSize = (DWORD)readsize;
 			exinfo64.exinfo.dwWriteSize = (DWORD)readsize;
 			exinfo64.llWriteSize = readsize;
 			int ret = SendArcMessage(cmdinfo, ARCEXTRACT_INPROCESS, &extractinfo,&exinfo64);
 			if(ret){throw CTar32Exception("Cancel button was pushed.",ERROR_USER_CANCEL);}
-		}
+//		}
 	}
 	bool bret = file.close();
 	if(!bret){throw CTar32Exception("can't write to arcfile", ERROR_CANNOT_WRITE);}
-	if(cmdinfo.hTar32StatusDialog){
+//	if(cmdinfo.hTar32StatusDialog){
 		extractinfo.exinfo.dwWriteSize = (DWORD)readsize;
 		exinfo64.exinfo.dwWriteSize = (DWORD)readsize;
 		exinfo64.llWriteSize = readsize;
-		int ret = SendArcMessage(cmdinfo, ARCEXTRACT_END, &extractinfo,&exinfo64);
+		int ret = SendArcMessage(cmdinfo, 6, &extractinfo,&exinfo64);
 		if(ret){throw CTar32Exception("Cancel button was pushed.",ERROR_USER_CANCEL);}
-	}
+//	}
 	return true;
 }
 
@@ -763,7 +772,7 @@ static void cmd_create(CTar32CmdInfo &cmdinfo)
 		strncpy(extractinfo.exinfo.szSourceFileName, cmdinfo.arcfile.c_str() ,FNAME_MAX32+1);
 		exinfo64.exinfo=extractinfo.exinfo;
 		strncpy(exinfo64.szSourceFileName, extractinfo.exinfo.szSourceFileName ,FNAME_MAX32+1);
-		int ret = SendArcMessage(cmdinfo, ARCEXTRACT_BEGIN, &extractinfo,&exinfo64);
+		int ret = SendArcMessage(cmdinfo, ARCEXTRACT_OPEN, &extractinfo,&exinfo64);
 		if(ret){throw CTar32Exception("Cancel button was pushed.",ERROR_USER_CANCEL);}
 	}
 	

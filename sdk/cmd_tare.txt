@@ -70,6 +70,10 @@ OPTION:
 		ask for confirmation for overwriting existing file.
 		default is 0.
 
+	--inverse_procresult=[0|1]
+		inverse result value of ARCHIVERPROC.
+		default is 0.
+
 [Examples]
 
         tar -cvf foo.tar *.c *.h makefile
