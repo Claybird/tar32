@@ -73,6 +73,7 @@ size64 CTarArcFile_Compress::read(void *buf, size64 size)
 		in_avail = m_strstream.rdbuf()->in_avail();
 		if(in_avail == 0){
 			if(!readonce()){break;}
+			m_strstream.peek();	// buffer underflow
 		}
 		in_avail = m_strstream.rdbuf()->in_avail();
 		size64 n = min(in_avail, size);
@@ -85,8 +86,8 @@ size64 CTarArcFile_Compress::read(void *buf, size64 size)
 }
 bool CTarArcFile_Compress::eof()
 {
-	if(m_strstream.rdbuf()->in_avail() == 0){
-		if(m_eof){
+	if(m_eof){
+		if(m_strstream.eof()){
 			return true;
 		}
 	}
