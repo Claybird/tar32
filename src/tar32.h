@@ -41,7 +41,8 @@ struct CTar32FileStatus{
 		blocksize = mode = uid = gid = mtime = chksum = typeflag = devmajor = devminor = atime = ctime = 0;
 		offset = 0;
 		mode = 0666;	// _S_IWRITE|_S_IREAD
-		memcpy(magic_version, TMAGIC "\0" TVERSION/*"ustar\000"*/,8);
+		//memcpy(magic_version, TMAGIC "\0" TVERSION/*"ustar\000"*/,8);	//POSIX
+		memcpy(magic_version, TOMAGIC/*"ustar  \0"*/,TOMAGLEN);	//GNU tar
 		strcpy(uname, "root");
 	}
 	std::string filename;

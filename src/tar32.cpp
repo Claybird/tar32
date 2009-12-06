@@ -166,6 +166,9 @@ bool CTar32::readdir_TAR(CTar32FileStatus &stat)
 		}
 	}
 
+	//get tar format : GNU or POSIX
+	int tar_format=tar_header.getFormat();
+
 	// HP-UX's tar command create 100chars filename part. fixed on 2003.12.19
 	char tmp_name[sizeof(tar_header.dbuf.name)+1];
 	strncpy(tmp_name, tar_header.dbuf.name, sizeof(tar_header.dbuf.name));
@@ -179,6 +182,9 @@ bool CTar32::readdir_TAR(CTar32FileStatus &stat)
 	}
 	stat.blocksize  =   512;
 	if(tar_header.dbuf.typeflag == LONGLINK){	// tar_header.dbuf.name == "././@LongLink"
+		//NOTE:TAR32.DLL earlier than 2.33 makes LONGLINK entry with POSIX header
+		tar_format=TAR_FORMAT_GNU;
+
 		//char longfilename[2000] = "";
 		std::vector<char> longfilename;
 		size64 readsize = (size_t(stat.original_size-1)/512+1)*512;
@@ -219,9 +225,18 @@ bool CTar32::readdir_TAR(CTar32FileStatus &stat)
 	strncpy(stat.gname, tar_header.dbuf.gname, 32);
 	stat.devmajor	=   strtol(tar_header.dbuf.devmajor , NULL, 8);
 	stat.devminor	=   strtol(tar_header.dbuf.devminor , NULL, 8);
-	stat.atime		=   strtol(tar_header.dbuf.atime , NULL, 8);
-	stat.ctime		=   strtol(tar_header.dbuf.ctime , NULL, 8);
-	stat.offset		=   parseOctNum(tar_header.dbuf.offset , COUNTOF(tar_header.dbuf.offset));
+	if(tar_format==TAR_FORMAT_GNU){
+		stat.atime		=   strtol(tar_header.dbuf.exthead.gnu.atime , NULL, 8);
+		stat.ctime		=   strtol(tar_header.dbuf.exthead.gnu.ctime , NULL, 8);
+		stat.offset		=   parseOctNum(tar_header.dbuf.exthead.gnu.offset , COUNTOF(tar_header.dbuf.exthead.gnu.offset));
+	}else{	//POSIX
+		int length=min(COUNTOF(tar_header.dbuf.exthead.posix.prefix),strlen(tar_header.dbuf.exthead.posix.prefix));
+		if(length>0){
+			std::string prefix(tar_header.dbuf.exthead.posix.prefix,tar_header.dbuf.exthead.posix.prefix+length);
+
+			stat.filename= prefix + '/' + stat.filename;
+		}
+	}
 	if(stat.typeflag == DIRTYPE){
 		stat.mode &= ~_S_IFMT;
 		stat.mode |= _S_IFDIR;
