@@ -61,6 +61,14 @@
 　--inverse_procresult=[0|1](0)
 　　　　　指定するとARCHIVERPROCの返し値を反転します。
 
+　--convert-charset=[none|auto|sjis|eucjp|utf8](auto)
+　　　　　展開時、アーカイブ内ファイル名を指定された文字コードからShift_JISに
+　　　　　変換します。文字コード指定無し、もしくはautoが指定されていれば文字
+　　　　　コードを推定します。
+　　　　　noneが指定されている場合には変換を行いません。
+　　　　　注:現状、Shift_JISで表現出来ない文字は'_'に置換されます。
+　　　　　　 EUC-JPの変換には、Internet Explorer 5.5以降が必要です。
+
 ●ひとこと
 
 　未知のコマンドに遭遇すると、簡単な説明を出力します。

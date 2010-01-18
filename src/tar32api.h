@@ -158,6 +158,7 @@ BOOL WINAPI _export TarCheckArchive(LPCSTR _szFileName, const int _iMode);
 BOOL WINAPI _export TarConfigDialog(const HWND _hwnd, LPSTR _lpszComBuffer,const int _iMode);
 int WINAPI _export TarGetFileCount(LPCSTR _szArcFile);
 HARC WINAPI _export TarOpenArchive(const HWND _hwnd, LPCSTR _szFileName,const DWORD _dwMode);
+HARC WINAPI _export TarOpenArchive2(const HWND _hwnd, LPCSTR _szFileName,const DWORD _dwMode,LPCSTR _szOption);
 int WINAPI _export TarCloseArchive(HARC _harc);
 int WINAPI _export TarFindFirst(HARC _harc, LPCSTR _szWildName,INDIVIDUALINFO *_lpSubInfo);
 int WINAPI _export TarFindNext(HARC _harc, INDIVIDUALINFO *_lpSubInfo);
@@ -297,6 +298,7 @@ int WINAPI _export TarGetArchiveType(LPCSTR _szFileName);
 #define ISARC_GET_ORIGINAL_SIZE_EX		85	/* UnlhaGetOriginalSizeEx */
 #define ISARC_GET_COMPRESSED_SIZE_EX	86	/* UnlhaGetCompressedSizeEx */
 
+#define ISARC_OPEN_ARCHIVE2				91	/* UnlhaOpenArchive2 */
 
 #define ISARC_FUNCTION_END				100
 #endif	/* ISARC_FUNCTION_START */

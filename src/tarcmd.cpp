@@ -35,71 +35,39 @@
 #include "cmdline.h"
 #include "tar32.h"
 #include "tar32dll.h"
-#include "tarcmd.h"
 #include "util.h"
 #include "dlg.h"
 #include "tar32res.h"
 
 #include "fast_stl.h"
+#include "tarcmd.h"
 
-class CTar32CmdInfo
-{
-public:
-	struct CArgs{
-		CArgs(const std::string &f, const std::string &dir) : file(f), current_dir(dir){};
-		std::string file;
-		std::string current_dir;
-	};
-	CTar32CmdInfo(char *s, int len) : output(s,len), exception("",0){
-		hTar32StatusDialog = NULL;
-		b_use_directory = true;
-		b_absolute_paths = false;
-		b_display_dialog = true;
-		b_message_loop = true;
-		b_inverse_procresult = false;
-		b_print = false;
-		b_confirm_overwrite = false;
+CTar32CmdInfo::CTar32CmdInfo(char *s, int len) : output(s,len), exception("",0){
+	hTar32StatusDialog = NULL;
+	b_use_directory = true;
+	b_absolute_paths = false;
+	b_display_dialog = true;
+	b_message_loop = true;
+	b_inverse_procresult = false;
+	b_print = false;
+	b_confirm_overwrite = false;
 
-		b_archive_tar = true;
-		archive_type = ARCHIVETYPE_NORMAL;
-		compress_level = 0;
-		
-		wm_main_thread_end = 0;
-		hParentWnd = NULL;
-		idMessageThread = 0;
+	b_archive_tar = true;
+	archive_type = ARCHIVETYPE_NORMAL;
+	compress_level = 0;
+	
+	wm_main_thread_end = 0;
+	hParentWnd = NULL;
+	idMessageThread = 0;
 
-	};
-	std::string arcfile;
-	std::list<CArgs> argfiles;
-	// list<string> files;
-	std::strstream output;
-	HWND hTar32StatusDialog;
-	CTar32Exception exception;
+	archive_charset=CHARSET_UNKNOWN;	//従来のプログラムでも文字変換が働くように、デフォルトで変換を行うようにする
+	//archive_charset=CHARSET_DONTCARE;	//デフォルトでは変換無し
+}
 
-	bool b_use_directory;
-	bool b_absolute_paths;
-	bool b_display_dialog;
-	bool b_message_loop;
-	bool b_inverse_procresult;
-	bool b_print;
-
-	bool b_confirm_overwrite;	//上書き確認(解凍時)
-
-	bool b_archive_tar;
-	int archive_type;
-	int compress_level;
-
-
-	UINT wm_main_thread_end;
-	HWND hParentWnd;
-	DWORD idMessageThread;
-	char command;
-};
 
 static void cmd_create(CTar32CmdInfo &cmdinfo);
 static void cmd_extract(CTar32CmdInfo &cmdinfo);
 static void cmd_list(CTar32CmdInfo &cmdinfo);
-static int tar_cmd_itr(const HWND hwnd, LPCSTR szCmdLine,LPSTR szOutput, const DWORD dwSize,CTar32CmdInfo &info);
 static void cmd_usage(CTar32CmdInfo &info)
 {
 	info.output 
@@ -123,15 +91,20 @@ static void cmd_usage(CTar32CmdInfo &info)
 		<< "       --bzip2=[N]     compress by bzip2 with level N\n"
 		<< "       --confirm-overwrite=[0|1](0) ask for confirmation for\n"
 		<< "                                    overwriting existing file\n"
+		<< "       --convert-charset=[none|auto|sjis|eucjp|utf8](auto)\n"
+		<< "                       convert charset of filename. If charset is not specified,\n"
+		<< "                       charset is detected automatically.\n"
 		<< "    ignore option,command: a,v,V,I,i,f,e,g,S,A,b,N,U,--xxxx=xxx\n"
 		;
 }
 
+static int tar_cmd_itr(const HWND hwnd, LPCSTR szCmdLine,LPSTR szOutput, const DWORD dwSize,CTar32CmdInfo &cmdinfo);
 int tar_cmd(const HWND hwnd, LPCSTR szCmdLine,LPSTR szOutput, const DWORD dwSize, int *pWriteSize)
 {
 	CTar32CmdInfo cmdinfo(szOutput, dwSize-1);
 	int ret;
 	try{
+		tar_cmd_parser(szCmdLine,cmdinfo);
 		ret =  tar_cmd_itr(hwnd, szCmdLine,szOutput,dwSize,cmdinfo);
 	}catch(CTar32Exception &e){
 		cmdinfo.output << "TAR32 Error(0x" << std::hex << e.m_code << "): " << e.m_str << "\n";
@@ -146,7 +119,7 @@ int tar_cmd(const HWND hwnd, LPCSTR szCmdLine,LPSTR szOutput, const DWORD dwSize
 	return ret;
 }
 static void _cdecl tar_cmd_main_thread(LPVOID param);
-static int tar_cmd_itr(const HWND hwnd, LPCSTR szCmdLine,LPSTR szOutput, const DWORD dwSize,CTar32CmdInfo &cmdinfo)
+void tar_cmd_parser(LPCSTR szCmdLine,CTar32CmdInfo &cmdinfo)
 {
 	std::vector<std::string> args;	// command line array
 	if(!split_cmdline_with_response(szCmdLine,args)){
@@ -154,7 +127,7 @@ static int tar_cmd_itr(const HWND hwnd, LPCSTR szCmdLine,LPSTR szOutput, const D
 	}
 
 	char command = 0;	// main command. ('x','c','l')
-	std::string current_directory;
+	//std::string current_directory; -> into CTar32CmdInfo
 	std::vector<std::string>::iterator argi = args.begin();
 	bool option_end = false;
 
@@ -193,6 +166,14 @@ static int tar_cmd_itr(const HWND hwnd, LPCSTR szCmdLine,LPSTR szOutput, const D
 					cmdinfo.compress_level = ((val=="") ? 5 : (0!=atoi(val.c_str())));
 				}else if(key == "confirm-overwrite"){
 					cmdinfo.b_confirm_overwrite = ((val=="") ? true : (0!=atoi(val.c_str())));
+				}else if(key == "convert-charset"){
+					if(val=="")cmdinfo.archive_charset = CHARSET_UNKNOWN;
+					else if(stricmp(val.c_str(),"none")==0)cmdinfo.archive_charset  = CHARSET_DONTCARE;
+					else if(stricmp(val.c_str(),"auto")==0)cmdinfo.archive_charset  = CHARSET_UNKNOWN;
+					else if(stricmp(val.c_str(),"sjis")==0)cmdinfo.archive_charset  = CHARSET_SJIS;
+					else if(stricmp(val.c_str(),"eucjp")==0)cmdinfo.archive_charset = CHARSET_EUCJP;
+					else if(stricmp(val.c_str(),"utf8")==0)cmdinfo.archive_charset  = CHARSET_UTF8;
+					else cmdinfo.archive_charset = CHARSET_DONTCARE;
 				}else{
 					/* igonore */;
 				}
@@ -224,7 +205,7 @@ static int tar_cmd_itr(const HWND hwnd, LPCSTR szCmdLine,LPSTR szOutput, const D
 					if(++argi == args.end()){
 						throw CTar32Exception("'o' follow no directory name", ERROR_COMMAND_NAME);
 					}
-					current_directory = *argi;
+					cmdinfo.current_directory = *argi;
 					// stri = argi->end()-1;
 					break;
 				case 'z':
@@ -306,23 +287,29 @@ static int tar_cmd_itr(const HWND hwnd, LPCSTR szCmdLine,LPSTR szOutput, const D
 		}else{
 			const char *file = (*argi).c_str();
 			if(*file && ((char*)_mbsrchr((const unsigned char*)file, '\\') == file + strlen(file) - 1)){
-				current_directory = (char*)file;
+				cmdinfo.current_directory = (char*)file;
 			}else if(cmdinfo.arcfile.length() == 0){
 				cmdinfo.arcfile = *argi;
 			}else{
 				std::string file = *argi;
-				cmdinfo.argfiles.push_back(CTar32CmdInfo::CArgs(file,current_directory));
+				cmdinfo.argfiles.push_back(CTar32CmdInfo::CArgs(file,cmdinfo.current_directory));
 			}
 			argi++;
 		}
 	}
+
+	cmdinfo.command = command;
+}
+
+static int tar_cmd_itr(const HWND hwnd, LPCSTR szCmdLine,LPSTR szOutput, const DWORD dwSize,CTar32CmdInfo &cmdinfo)
+{
 	if(cmdinfo.arcfile.empty()){
 		throw CTar32Exception("Archive File is not specified.", ERROR_NOT_ARC_FILE);
 	}
 	if(cmdinfo.argfiles.empty()){
-		if(command == 'x' || command == 'l'){
+		if(cmdinfo.command == 'x' || cmdinfo.command == 'l'){
 			// If no file to extract/create is specified, I assume as all file is specified.
-			cmdinfo.argfiles.push_back(CTar32CmdInfo::CArgs("*",current_directory));
+			cmdinfo.argfiles.push_back(CTar32CmdInfo::CArgs("*",cmdinfo.current_directory));
 		}else{
 			throw CTar32Exception("no file to archive is specified.", ERROR_NOT_ARC_FILE);
 		}
@@ -365,7 +352,7 @@ static int tar_cmd_itr(const HWND hwnd, LPCSTR szCmdLine,LPSTR szOutput, const D
 		throw CTar32Exception("Command not specified.", ERROR_COMMAND_NAME);
 	}
 	*/
-	cmdinfo.command = command;
+	//cmdinfo.command = command;
 	cmdinfo.hParentWnd = hwnd;
 	int func_ret = 0;
 	// extern static void _cdecl tar_cmd_main_thread(LPVOID param);
@@ -660,7 +647,7 @@ static void cmd_extract(CTar32CmdInfo &cmdinfo)
 
 	CTar32 tarfile;
 	int ret;
-	ret = tarfile.open(cmdinfo.arcfile.c_str(), "rb",-1,ARCHIVETYPE_AUTO);
+	ret = tarfile.open(cmdinfo.arcfile.c_str(), "rb",-1,ARCHIVETYPE_AUTO,cmdinfo.archive_charset);
 	if(!ret){
 		throw CTar32Exception("can't open archive file", ERROR_ARC_FILE_OPEN);
 	}
@@ -783,7 +770,7 @@ static void cmd_create(CTar32CmdInfo &cmdinfo)
 	//char mode[10];
 
 	//sprintf(mode, "wb%d", cmdinfo.compress_level);
-	ret = tarfile.open(cmdinfo.arcfile.c_str(), "wb",cmdinfo.compress_level, cmdinfo.archive_type);
+	ret = tarfile.open(cmdinfo.arcfile.c_str(), "wb",cmdinfo.compress_level, cmdinfo.archive_type,cmdinfo.archive_charset);
 	if(!ret){
 		throw CTar32Exception("can't open archive file", ERROR_ARC_FILE_OPEN);
 	}
@@ -854,7 +841,7 @@ static void cmd_list(CTar32CmdInfo &cmdinfo)
 {
 	CTar32 tarfile;
 	bool bret;
-	bret = tarfile.open(cmdinfo.arcfile.c_str(), "rb",-1,ARCHIVETYPE_AUTO);
+	bret = tarfile.open(cmdinfo.arcfile.c_str(), "rb",-1,ARCHIVETYPE_AUTO,cmdinfo.archive_charset);
 	if(!bret){
 		throw CTar32Exception("can't open archive file", ERROR_ARC_FILE_OPEN);
 	}

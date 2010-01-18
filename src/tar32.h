@@ -94,7 +94,7 @@ public:
 	CTar32();
 	virtual ~CTar32();
 	static int s_get_archive_type(const char *arcfile);
-	bool open(const char *arcfile, const char*mode,int compress_level, int archive_type/* = ARCHIVETYPE_AUTO*/);
+	bool open(const char *arcfile, const char*mode,int compress_level, int archive_type/* = ARCHIVETYPE_AUTO*/,int archive_charset);
 	bool close();
 
 	bool readdir(CTar32FileStatus *stat);
@@ -112,6 +112,7 @@ private:
 	int m_filecount;	
 	bool m_write_mode;
 	int m_error_code;
+	int m_archive_charset;	//filename charset of content of this archive
 
 	/* for ar(a.out) format */
 	//char *longfilenames_buf;

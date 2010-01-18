@@ -322,3 +322,10 @@
 	  記録方式が矛盾していた問題を修正
 	by Claybird(claybird.without.wing@gmail.com)
 
+2010/01/17 Ver.2.34
+	・進捗ダイアログにて、ファイル名が長くなりすぎたときは省略表示するようにした
+	・--convert-charsetスイッチをファイル名文字コード変換のために追加。
+	  デフォルトで文字コード変換を行います。
+	・TarOpenArchive2() APIを追加
+	Special Thanks to 鬼束さん
+	by Claybird(claybird.without.wing@gmail.com)

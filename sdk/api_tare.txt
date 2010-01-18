@@ -161,6 +161,24 @@ Example:
 		}
 		TarCloseArchive(harc);
 
+-----------------------------------------------------------------------
+HARC WINAPI TarOpenArchive2(const HWND hWnd,LPCSTR szFileName,
+				const DWORD dwMode,LPCSTR szOptions);
+-----------------------------------------------------------------------
+Description
+	Same as TarOpenArchive(), but can use command line options like Tar().
+	Commands or files specified in szOptions are ignored.
+
+Arguments.
+	hwnd		Window Handle
+	szFileName	filename
+	dwMode		mode(current ignore)
+	szOptions	command line options
+
+Return Value:
+	Archiver Handle.
+	If error,return NULL.
+
 
 -----------------------------------------------------------------------
 int WINAPI TarCloseArchive(HARC hArc);

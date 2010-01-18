@@ -299,3 +299,228 @@ std::string fsizeToString(size64 fsize)
 	sprintf(buf,"%I64u %s",fsize,units[level]);
 	return std::string(buf);
 }
+
+
+//---文字コード判定
+//Special Thanks to 鬼束さん
+static int high_ones(int c) 
+{
+	int n;
+	for (n = 0; (c & 0x80) == 0x80; c <<= 1)
+		++n;
+	return n;
+}
+
+//Special Thanks to 鬼束さん
+int detect_charset(const char *buf)
+{
+	int n, remaining_bytes;
+
+	unsigned long line, len, col;
+	BYTE multi_byte = 0;
+	const char* p = buf;
+
+	len = 1;
+	remaining_bytes = 0;
+	line = 1;
+	col = 1;
+	while ( *p )
+	{
+		if( *p==ESC && *(p+1)=='$' ) return CHARSET_JIS;
+
+		if ((BYTE)*p==(BYTE)0xEF && (BYTE)p[1]==(BYTE)0xBB && (BYTE)p[2]==(BYTE)0xBF)	// BOM
+		{
+			return CHARSET_UTF8;
+		}
+
+		n = high_ones(*p);
+		if (remaining_bytes > 0) 
+		{
+			if (n == 1)
+			{
+				--remaining_bytes;
+				if (remaining_bytes == 0)
+					++col;
+			}
+			else
+				goto other_char;
+		}
+		else if (n == 0)
+		{
+			// 7-bit character, skip, but adjust position
+			if (*p == '\n')
+			{
+				++line;
+				col = 1;
+			}
+			else
+				++col;
+		}
+		else if (n == 1)
+		{
+			goto other_char; // wrong place for continuation byte
+		}
+		else
+		{
+			remaining_bytes = n - 1; // start of multi-byte sequence
+			multi_byte++;
+		}
+
+		len++;
+		p++;
+	}
+
+	if (remaining_bytes > 0)
+		goto other_char;
+
+	if (len==col)
+		return CHARSET_SJIS;
+	else if (len>col+1)
+		return CHARSET_UTF8N;
+
+other_char:
+
+	int result_char = CHARSET_UNKNOWN;
+	unsigned int c, d, e;
+	p = buf;
+	while ( *p )
+	{
+		c = *(p++) & 0xFF;
+		d = *p & 0xFF;
+		e = p[1] && 0xFF;
+
+		if ((c >= 0xa1 && c <= 0xfe) && (d >= 0xa1 && d <= 0xfe))
+			result_char = CHARSET_EUCJP;
+
+		if (c==0x8e && (d>=0xa1 && d<=0xdf))	// EUC 半角の可能性大
+		{
+			if (e==0x8e && !(e>=0xA1 && e<=0xDF))
+				return CHARSET_EUCJP;
+		}
+		else if (c!=0x8e && (d>=0x80 && d<=0xa0))
+		{
+			return CHARSET_SJIS;		// S-JIS 確定
+		}
+
+		if (c==0x8F)
+		{
+			if ((d>=0xA1 && d<=0xFE) && (e>=0xA1 && e<=0xFE))
+			{
+				if ( (d==0xFD || d==0xFE) || (e==0xFD || e==0xFE))
+					return CHARSET_EUCJP;		// EUC 確定
+			}
+			else if ((d>=0x80 && d<=0xA0) && (e>=0x80 && e<=0xa0))
+			{
+				return CHARSET_SJIS;	// S-JIS 確定
+			}
+		}
+	}
+
+	return result_char;
+}
+
+
+
+//---文字コード変換ヘルパ
+//ここではConvertINetMultiByteToUnicodeを変換ライブラリに使用
+CConvertCharsetHelper::CConvertCharsetHelper():
+	m_lpfnConvertINetMultiByteToUnicode(NULL),m_hDLL(NULL)
+{
+}
+
+CConvertCharsetHelper::~CConvertCharsetHelper()
+{
+	finish();
+}
+
+bool CConvertCharsetHelper::init()
+{
+	finish();
+
+	m_hDLL=LoadLibrary("mlang.dll");
+	if(m_hDLL){
+		m_lpfnConvertINetMultiByteToUnicode=(LPCONVERTINETMULTIBYTETOUNICODE)GetProcAddress(m_hDLL,"ConvertINetMultiByteToUnicode");
+		if(m_lpfnConvertINetMultiByteToUnicode){
+			return true;
+		}
+	}
+	finish();
+	return false;
+}
+
+void CConvertCharsetHelper::finish()
+{
+	if(m_hDLL){
+		m_lpfnConvertINetMultiByteToUnicode=NULL;
+		HMODULE hTmp=m_hDLL;
+		m_hDLL=NULL;
+		FreeLibrary(hTmp);
+	}
+}
+
+bool CConvertCharsetHelper::utf16_to_sjis(std::string &strRet,LPCWSTR lpcStr)
+{
+	DWORD dwFlags=WC_DISCARDNS|WC_COMPOSITECHECK|WC_DEFAULTCHAR|WC_NO_BEST_FIT_CHARS;
+	std::vector<char> buf(::WideCharToMultiByte(CP_ACP,dwFlags,lpcStr,-1,NULL,0,"_",NULL)+1);	//バッファ確保
+	//変換
+	if(!::WideCharToMultiByte(CP_ACP,dwFlags,lpcStr,-1,&buf[0],buf.size(),"_",NULL)){
+		return false;
+	}
+	strRet=&buf[0];
+	return true;
+}
+
+bool CConvertCharsetHelper::utf8_to_utf16(std::wstring &strRet,const char* lpcByte,size_t length)
+{
+	if(lpcByte[0]==0xEF && lpcByte[1]==0xBB && lpcByte[2]==0xBF){	//BOM check
+		lpcByte+=3;
+	}
+	std::vector<wchar_t> buf(::MultiByteToWideChar(CP_UTF8,0,(LPCSTR)lpcByte,-1,NULL,0)+1);	//バッファ確保
+	//変換
+	if(!::MultiByteToWideChar(CP_UTF8,0,(LPCSTR)lpcByte,-1,&buf[0],buf.size())){
+		return false;
+	}
+	strRet=(LPCWSTR)&buf[0];
+	return true;
+}
+
+bool CConvertCharsetHelper::utf8_to_sjis(std::string &strRet,const char* lpcByte,size_t length)
+{
+	std::wstring utf16str;
+	if(!utf8_to_utf16(utf16str,lpcByte,length))return false;
+	return utf16_to_sjis(strRet,utf16str.c_str());
+}
+
+std::string CConvertCharsetHelper::utf8_to_sjis(const char* lpcByte,size_t length)
+{
+	std::string strRet;
+	if(!utf8_to_sjis(strRet,lpcByte,length))strRet=lpcByte;		//文字化け覚悟で元の文字列を返す
+	return strRet;
+}
+
+bool CConvertCharsetHelper::eucjp_to_utf16(std::wstring &strRet,const char* lpcByte,size_t length)
+{
+	if(!m_lpfnConvertINetMultiByteToUnicode)return false;
+	//手抜き
+	std::vector<wchar_t> buf(length+1);
+	DWORD dwMode=0;
+	int nWideCharCount=buf.size();
+	if(FAILED(m_lpfnConvertINetMultiByteToUnicode(&dwMode,CP_EUCJP,(LPCSTR)lpcByte,NULL,&buf[0],&nWideCharCount)))return false;
+
+	strRet.assign(&buf[0],&buf[0]+nWideCharCount);
+	return true;
+}
+
+bool CConvertCharsetHelper::eucjp_to_sjis(std::string &strRet,const char* lpcByte,size_t length)
+{
+	std::wstring utf16str;
+	if(!eucjp_to_utf16(utf16str,lpcByte,length))return false;
+	return utf16_to_sjis(strRet,utf16str.c_str());
+}
+
+std::string CConvertCharsetHelper::eucjp_to_sjis(const char* lpcByte,size_t length)
+{
+	std::string strRet;
+	if(!eucjp_to_sjis(strRet,lpcByte,length))strRet=lpcByte;	//文字化け覚悟で元の文字列を返す
+	return strRet;
+}

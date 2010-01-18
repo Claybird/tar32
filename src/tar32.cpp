@@ -48,6 +48,7 @@ CTar32::CTar32()
 	m_filecount = 0;
 	m_write_mode = false;
 	m_error_code = 0;
+	m_archive_charset=CHARSET_DONTCARE;
 }
 CTar32::~CTar32()
 {
@@ -112,9 +113,10 @@ int CTar32::s_get_archive_type(const char *arcfile)
 	}
 	return archive_type;
 }
-bool CTar32::open(const char *arcfile,const char *mode,int compress_level,int archive_type /*= ARCHIVETYPE_AUTO*/)
+bool CTar32::open(const char *arcfile,const char *mode,int compress_level,int archive_type /*= ARCHIVETYPE_AUTO*/,int archive_charset)
 {
 	m_archive_type = archive_type;
+	m_archive_charset = archive_charset;
 	m_write_mode = (strchr(mode,'w') != NULL);
 	if((!strchr(mode,'w')) && archive_type == ARCHIVETYPE_AUTO){ // if read mode
 		m_archive_type = s_get_archive_type(arcfile);
@@ -212,7 +214,37 @@ bool CTar32::readdir_TAR(CTar32FileStatus &stat)
 		stat.filename = &longfilename[0];
 		stat.original_size		=	parseOctNum(tar_header.dbuf.size, COUNTOF(tar_header.dbuf.size));
 	}
-	
+
+	//charset conversion
+	if(m_archive_charset!=CHARSET_DONTCARE){
+		if(m_archive_charset==CHARSET_UNKNOWN){
+			//detect charset
+			m_archive_charset=detect_charset(stat.filename.c_str());
+		}
+
+		switch(m_archive_charset){
+		case CHARSET_EUCJP:
+			stat.filename=CConvertCharsetHelper::getInstance().eucjp_to_sjis(stat.filename.c_str(),stat.filename.size());
+			break;
+		case CHARSET_UTF8N:	//FALLTHROUGH
+		case CHARSET_UTF8:
+			stat.filename=CConvertCharsetHelper::getInstance().utf8_to_sjis(stat.filename.c_str(),stat.filename.size());
+			break;
+		case CHARSET_JIS:
+			//FALLTHROUGH
+			/*
+			 force to extract even if charset is not supported.
+			 */
+			//throw CTar32Exception("tar header charset error.",ERROR_NOT_SUPPORT);
+			//break;
+		case CHARSET_SJIS:	//FALLTHROUGH
+		default:
+			//nothing to do
+			break;
+		}
+	}
+
+
 	stat.mode		=   strtol(tar_header.dbuf.mode, NULL, 8);
 	stat.uid		=   strtol(tar_header.dbuf.uid , NULL, 8);
 	stat.gid		=   strtol(tar_header.dbuf.gid , NULL, 8);

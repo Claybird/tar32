@@ -74,6 +74,16 @@ OPTION:
 		inverse result value of ARCHIVERPROC.
 		default is 0.
 
+	--convert-charset=[none|auto|sjis|eucjp|utf8]
+		convert filename in archive from specified charset to Shift_JIS.
+		If this switch is used with auto or empty charset, charset is
+		detected automatically.
+		default is "auto".
+
+		NOTE: letters that cannot be expressed in Shift_JIS will be replaced
+		      with '_' at this version.
+		      Internet Explorer 5.5 or later is required for EUC-JP decoding.
+
 [Examples]
 
         tar -cvf foo.tar *.c *.h makefile

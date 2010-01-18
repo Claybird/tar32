@@ -19,6 +19,7 @@ EXPORTS
 	TarGetFileCount
 
 	TarOpenArchive
+	TarOpenArchive2
 	TarCloseArchive
 	TarFindFirst
 	TarFindNext

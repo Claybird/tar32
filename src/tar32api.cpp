@@ -32,10 +32,11 @@
 */
 #include "stdafx.h"
 #include "tar32api.h"
-#include "tarcmd.h"
 #include "tar32dll.h"
 #include "tar32.h"		// CTar32
 #include "tar32res.h"
+#include "util.h"
+#include "tarcmd.h"
 
 HINSTANCE dll_instance=NULL;	/* TAR32.DLL module handle */
 UINT wm_arcextract;	/* Window Message */
@@ -49,6 +50,9 @@ BOOL WINAPI DllMain(HINSTANCE hInst,ULONG ul_reason_for_call,LPVOID lpReserved)
 			wm_arcextract = ::RegisterWindowMessage(WM_ARCEXTRACT);
 
 			InitCommonControls();
+
+			//init charset convert helper
+			CConvertCharsetHelper::getInstance().init();
 			break;
         case DLL_THREAD_ATTACH:
             break;
@@ -57,7 +61,10 @@ BOOL WINAPI DllMain(HINSTANCE hInst,ULONG ul_reason_for_call,LPVOID lpReserved)
         case DLL_PROCESS_DETACH:
 			dll_instance = NULL;
 			Tar32LeaveCriticalSection();
-            break;
+
+			//init charset convert helper
+			CConvertCharsetHelper::getInstance().finish();
+			break;
     }
     return TRUE;
 }
@@ -178,8 +185,20 @@ CTar32 *HARC2PTAR32(HARC _harc)
 }
 extern "C" HARC WINAPI _export TarOpenArchive(const HWND _hwnd, LPCSTR _szFileName,const DWORD _dwMode)
 {
+	return TarOpenArchive2(_hwnd,_szFileName,_dwMode,"");
+}
+extern "C" HARC WINAPI _export TarOpenArchive2(const HWND _hwnd, LPCSTR _szFileName,const DWORD _dwMode,LPCSTR _szOption)
+{
+	CTar32CmdInfo cmdinfo(NULL, 0);
+	try{
+		tar_cmd_parser(_szOption,cmdinfo);
+	}catch(CTar32Exception &/*e*/){
+		//LPCSTR pMsg=e.m_str.c_str();
+		return NULL;
+	}
+
 	CTar32Find *pTar32Find = new CTar32Find;
-	bool bret = pTar32Find->tar32.open(_szFileName,"rb",-1,ARCHIVETYPE_AUTO);
+	bool bret = pTar32Find->tar32.open(_szFileName,"rb",-1,ARCHIVETYPE_AUTO,cmdinfo.archive_charset);
 	if(!bret){delete pTar32Find;return 0;}
 	return (HARC)pTar32Find;
 }
@@ -439,6 +458,7 @@ extern "C" BOOL WINAPI _export TarQueryFunctionList(const int _iFunction)
 	//case ISARC_GET_ARC_FILE_INFO: // どんぞ：コメントにした。
 
 	case ISARC_OPEN_ARCHIVE:
+	case ISARC_OPEN_ARCHIVE2:
 	case ISARC_CLOSE_ARCHIVE:
 	case ISARC_FIND_FIRST:
 	case ISARC_FIND_NEXT:
