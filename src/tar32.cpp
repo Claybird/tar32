@@ -84,6 +84,10 @@ int CTar32::s_get_archive_type(const char *arcfile)
 			archive_type = ARCHIVETYPE_TARZ;break;
 		case ARCHIVETYPE_BZ2:
 			archive_type = ARCHIVETYPE_TARBZ2;break;
+		case ARCHIVETYPE_LZMA:
+			archive_type = ARCHIVETYPE_TARLZMA;break;
+		case ARCHIVETYPE_XZ:
+			archive_type = ARCHIVETYPE_TARXZ;break;
 		}
 	}else if(ret >= sizeof(arc_header.cpio)
 		&& arc_header.cpio.magic_check()){
@@ -96,6 +100,10 @@ int CTar32::s_get_archive_type(const char *arcfile)
 			archive_type = ARCHIVETYPE_CPIOZ;break;
 		case ARCHIVETYPE_BZ2:
 			archive_type = ARCHIVETYPE_CPIOBZ2;break;
+		case ARCHIVETYPE_LZMA:
+			archive_type = ARCHIVETYPE_CPIOLZMA;break;
+		case ARCHIVETYPE_XZ:
+			archive_type = ARCHIVETYPE_CPIOXZ;break;
 		}
 	}else if(ret >= sizeof(arc_header.ar)
 		&& (memcmp(arc_header.ar.magic,"!<arch>\012",8) == 0  || memcmp(arc_header.ar.magic,"!<bout>\012",8) == 0)
@@ -109,6 +117,10 @@ int CTar32::s_get_archive_type(const char *arcfile)
 			archive_type = ARCHIVETYPE_ARZ;break;
 		case ARCHIVETYPE_BZ2:
 			archive_type = ARCHIVETYPE_ARBZ2;break;
+		case ARCHIVETYPE_LZMA:
+			archive_type = ARCHIVETYPE_ARLZMA;break;
+		case ARCHIVETYPE_XZ:
+			archive_type = ARCHIVETYPE_ARXZ;break;
 		}
 	}
 	return archive_type;
@@ -134,7 +146,9 @@ bool CTar32::close()
 		if(m_archive_type == ARCHIVETYPE_TAR 
 			|| m_archive_type == ARCHIVETYPE_TARGZ 
 			|| m_archive_type == ARCHIVETYPE_TARZ 
-			|| m_archive_type == ARCHIVETYPE_TARBZ2){
+			|| m_archive_type == ARCHIVETYPE_TARBZ2
+			|| m_archive_type == ARCHIVETYPE_TARLZMA
+			|| m_archive_type == ARCHIVETYPE_TARXZ){
 			// If success to create tar file, append 1024(512*2) byte null block to the end of file.
 			char buf[1024/*512 * 2*/]; memset(buf,0,sizeof(buf));
 			m_pfile->write(buf,sizeof(buf));
@@ -359,11 +373,12 @@ bool CTar32::readdir_AR(CTar32FileStatus &stat)
 		m_currentfile_status = stat;
 		if(!file.open(this)){throw CTar32Exception("can't read tar header",ERROR_HEADER_BROKEN);}
 		//longfilenames_buf = new char[stat.original_size]; // (char*)malloc(stat.original_size);
-		std::vector<char> fnamebuf((size_t)stat.original_size+1);	//TODO:size lost
-		size64 n = file.read(&fnamebuf[0],stat.original_size);
+		longfilenames_buf.resize((unsigned int)stat.original_size+1);	//TODO:size lost
+		size64 n = file.read(&longfilenames_buf[0],stat.original_size);
 		if(n!=stat.original_size){throw CTar32Exception("can't read tar header",ERROR_HEADER_BROKEN);}
 		file.close();
-		longfilenames_buf=&fnamebuf[0];
+
+		longfilenames_buf[(unsigned int)stat.original_size]='\0';
 		CTar32FileStatus nextstat;
 		bool bRet = readdir(&nextstat); m_filecount --;
 		stat = nextstat;
@@ -378,7 +393,7 @@ bool CTar32::readdir_AR(CTar32FileStatus &stat)
 		int n = sscanf(stat.filename.c_str(), "/%d%n", &bytes, &num);
 		int len = stat.filename.length();
 		if(n == 1 && num == len && !longfilenames_buf.empty()){
-			stat.filename = longfilenames_buf.c_str()+bytes;
+			stat.filename = &longfilenames_buf[0]+bytes;
 		}
 	}
 	return true;
@@ -391,17 +406,23 @@ bool CTar32::readdir(CTar32FileStatus *pstat)
 	if(m_archive_type == ARCHIVETYPE_TAR 
 		|| m_archive_type == ARCHIVETYPE_TARGZ 
 		|| m_archive_type == ARCHIVETYPE_TARZ 
-		|| m_archive_type == ARCHIVETYPE_TARBZ2){
+		|| m_archive_type == ARCHIVETYPE_TARBZ2
+		|| m_archive_type == ARCHIVETYPE_TARLZMA
+		|| m_archive_type == ARCHIVETYPE_TARXZ){
 		if(!readdir_TAR(stat))return false;
 	}else if(m_archive_type == ARCHIVETYPE_CPIO
 		|| m_archive_type == ARCHIVETYPE_CPIOGZ
 		|| m_archive_type == ARCHIVETYPE_CPIOZ
-		|| m_archive_type == ARCHIVETYPE_CPIOBZ2){
+		|| m_archive_type == ARCHIVETYPE_CPIOBZ2
+		|| m_archive_type == ARCHIVETYPE_CPIOLZMA
+		|| m_archive_type == ARCHIVETYPE_CPIOXZ){
 		if(!readdir_CPIO(stat))return false;
 	}else if(m_archive_type == ARCHIVETYPE_AR
 		|| m_archive_type == ARCHIVETYPE_ARGZ
 		|| m_archive_type == ARCHIVETYPE_ARZ
-		|| m_archive_type == ARCHIVETYPE_ARBZ2){
+		|| m_archive_type == ARCHIVETYPE_ARBZ2
+		|| m_archive_type == ARCHIVETYPE_ARLZMA
+		|| m_archive_type == ARCHIVETYPE_ARXZ){
 		if(!readdir_AR(stat))return false;
 	}else{
 		if(m_filecount != 0){return false;}
@@ -483,7 +504,9 @@ bool CTar32::addheader(const CTar32FileStatus &stat)
 	if(m_archive_type == ARCHIVETYPE_TAR 
 		|| m_archive_type == ARCHIVETYPE_TARGZ 
 		|| m_archive_type == ARCHIVETYPE_TARZ 
-		|| m_archive_type == ARCHIVETYPE_TARBZ2){
+		|| m_archive_type == ARCHIVETYPE_TARBZ2
+		|| m_archive_type == ARCHIVETYPE_TARLZMA
+		|| m_archive_type == ARCHIVETYPE_TARXZ){
 		blocksize = 512;
 		HEADER tar_header;
 		{
@@ -563,7 +586,9 @@ bool CTar32::addbody(const char *file)
 	if(m_archive_type == ARCHIVETYPE_TAR 
 		|| m_archive_type == ARCHIVETYPE_TARGZ 
 		|| m_archive_type == ARCHIVETYPE_TARZ 
-		|| m_archive_type == ARCHIVETYPE_TARBZ2){
+		|| m_archive_type == ARCHIVETYPE_TARBZ2
+		|| m_archive_type == ARCHIVETYPE_TARLZMA
+		|| m_archive_type == ARCHIVETYPE_TARXZ){
 		/* padding 512-byte block */
 		size64 writesize;
 		if(size%512 == 0){

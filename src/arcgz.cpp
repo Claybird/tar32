@@ -70,7 +70,11 @@ bool CTarArcFile_GZip::open(const char *arcfile, const char *mode, int compress_
 	}
 
 	f = gzdopen(fd, mode);
-	if(f==NULL){ return false;}
+	if(f==NULL){
+		_close(fd);
+		return false;
+	}
+	gzbuffer(f,1024*1024);
 	m_gzFile = f;
 
 	if(bReadMode){

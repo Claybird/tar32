@@ -116,7 +116,7 @@ private:
 
 	/* for ar(a.out) format */
 	//char *longfilenames_buf;
-	std::string longfilenames_buf;
+	std::vector<char> longfilenames_buf;
 
 	friend CTar32InternalFile; // use m_currentfile_status.size
 };

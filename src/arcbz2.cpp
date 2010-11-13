@@ -58,11 +58,11 @@ bool CTarArcFile_BZip2::open(const char *arcfile, const char *mode, int compress
 }
 size64 CTarArcFile_BZip2::read(void *buf, size64 size)
 {
-	return BZ2_bzread(m_pbzFile, buf, (size_t)size);	//TODO:size lost
+	return BZ2_bzread(m_pbzFile, buf, (int)size);	//TODO:size lost
 }
 size64 CTarArcFile_BZip2::write(void *buf, size64 size)
 {
-	return BZ2_bzwrite(m_pbzFile, buf, (size_t)size);	//TODO:size lost
+	return BZ2_bzwrite(m_pbzFile, buf, (int)size);	//TODO:size lost
 }
 void CTarArcFile_BZip2::close()
 {

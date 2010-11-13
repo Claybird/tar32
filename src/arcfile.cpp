@@ -36,6 +36,7 @@
 #include "normal.h" // CTarArcFile_Normal
 #include "arcgz.h"	// CTarArcFile_GZip
 #include "arcbz2.h"	// CTarArcFile_BZip2
+#include "arclzma.h"	// CTarArcFile_Lzma
 #include "arcz.h"	// CTarArcFile_Compress
 #include "tar32api.h"
 
@@ -92,6 +93,20 @@ ITarArcFile *ITarArcFile::s_open(const char *arcfile, const char *mode, int comp
 	case ARCHIVETYPE_ARBZ2:
 		pfile = new CTarArcFile_BZip2;
 		break;
+	case ARCHIVETYPE_LZMA:
+	case ARCHIVETYPE_TARLZMA:
+	case ARCHIVETYPE_CPIOLZMA:
+	case ARCHIVETYPE_ARLZMA:
+		pfile = new CTarArcFile_Lzma;
+		((CTarArcFile_Lzma *)pfile)->set_format(ARCHIVETYPE_LZMA);
+		break;
+	case ARCHIVETYPE_XZ:
+	case ARCHIVETYPE_TARXZ:
+	case ARCHIVETYPE_CPIOXZ:
+	case ARCHIVETYPE_ARXZ:
+		pfile = new CTarArcFile_Lzma;
+		((CTarArcFile_Lzma *)pfile)->set_format(ARCHIVETYPE_XZ);
+		break;
 	default:
 		return NULL;
 	}
@@ -116,6 +131,10 @@ int ITarArcFile::s_get_archive_type(const char *arcfile)
 		return ARCHIVETYPE_BZ2;
 	}else if(buf[0] == (unsigned char)'\037' && buf[1] == (unsigned char)'\235'){
 		return ARCHIVETYPE_Z;
+	}else if(n >= 6 && CTarArcFile_Lzma::check_head_format(buf,6,ARCHIVETYPE_XZ)){
+		return ARCHIVETYPE_XZ;
+	}else if(n >= 13 && CTarArcFile_Lzma::check_head_format(buf,13,ARCHIVETYPE_LZMA)){
+		return ARCHIVETYPE_LZMA;
 	}else{
 		return ARCHIVETYPE_NORMAL;
 	}

@@ -79,7 +79,8 @@ static void cmd_usage(CTar32CmdInfo &info)
 		<< "       PRINT:   -p <files.tgz> [files...] \n"
 		<< "    option: (default value)\n"
 		<< "       -z[N]     compress by gzip(.tar.gz) with level N(default:6)\n"
-		<< "       -B[N]     compress by bzip2(.tar.bz2) with level N(default:9)\n"
+		<< "       -B[N] -j[N]  compress by bzip2(.tar.bz2) with level N(default:9)\n"
+		<< "       -J[N]        compress by xz(.tar.xz) with level N(default:6)\n"
 		<< "       -G        not make tar archive.(.tar/.tar.gz/.tar.bz2)\n"
 		<< "                 make compress only archive.(.gz/.bz2)\n"
 		// << "       -Z[N]     compress by compress(LZW) (NOT IMPLEMENTED)\n"
@@ -88,7 +89,9 @@ static void cmd_usage(CTar32CmdInfo &info)
 		<< "       --display-dialog=[0|1](1)  display dialog box\n"
 		<< "       --message-loop=[0|1](1)  run message loop\n"
 		<< "       --inverse_procresult=[0|1](0)  inverse result value of ARCHIVERPROC\n"
-		<< "       --bzip2=[N]     compress by bzip2 with level N\n"
+		<< "       --bzip2=[N]     compress by bzip2 with level N(default:9)\n"
+		<< "       --lzma=[N]      compress by lzma with level N(default:6)\n"
+		<< "       --xz=[N]        compress by xz with level N(default:6)\n"
 		<< "       --confirm-overwrite=[0|1](0) ask for confirmation for\n"
 		<< "                                    overwriting existing file\n"
 		<< "       --convert-charset=[none|auto|sjis|eucjp|utf8](auto)\n"
@@ -160,10 +163,24 @@ void tar_cmd_parser(LPCSTR szCmdLine,CTar32CmdInfo &cmdinfo)
 					cmdinfo.b_inverse_procresult = ((val=="") ? true : (0!=atoi(val.c_str())));
 				}else if(key == "bzip2" || key == "bzip"){
 					cmdinfo.archive_type = ARCHIVETYPE_BZ2;
-					cmdinfo.compress_level = ((val=="") ? 9 : (0!=atoi(val.c_str())));
+					cmdinfo.compress_level = atoi(val.c_str());
+					if(cmdinfo.compress_level<1) cmdinfo.compress_level = 9;
+					if(cmdinfo.compress_level>9) cmdinfo.compress_level = 9;
 				}else if(key == "gzip"){
 					cmdinfo.archive_type = ARCHIVETYPE_GZ;
-					cmdinfo.compress_level = ((val=="") ? 5 : (0!=atoi(val.c_str())));
+					cmdinfo.compress_level = atoi(val.c_str());
+					if(cmdinfo.compress_level<1) cmdinfo.compress_level = 5;
+					if(cmdinfo.compress_level>9) cmdinfo.compress_level = 5;
+				}else if(key == "lzma"){
+					cmdinfo.archive_type = ARCHIVETYPE_LZMA;
+					cmdinfo.compress_level = atoi(val.c_str());
+					if(cmdinfo.compress_level<0) cmdinfo.compress_level = 6;
+					if(cmdinfo.compress_level>9) cmdinfo.compress_level = 6;
+				}else if(key == "xz"){
+					cmdinfo.archive_type = ARCHIVETYPE_XZ;
+					cmdinfo.compress_level = atoi(val.c_str());
+					if(cmdinfo.compress_level<0) cmdinfo.compress_level = 6;
+					if(cmdinfo.compress_level>9) cmdinfo.compress_level = 6;
 				}else if(key == "confirm-overwrite"){
 					cmdinfo.b_confirm_overwrite = ((val=="") ? true : (0!=atoi(val.c_str())));
 				}else if(key == "convert-charset"){
@@ -225,6 +242,15 @@ void tar_cmd_parser(LPCSTR szCmdLine,CTar32CmdInfo &cmdinfo)
 						cmdinfo.compress_level = ((char)*stri) - '0';
 					}else{
 						cmdinfo.compress_level = 9;
+					}
+					break;
+				case 'J':
+					cmdinfo.archive_type = ARCHIVETYPE_XZ;
+					if(isdigit(*(stri+1))){
+						stri++;
+						cmdinfo.compress_level = ((char)*stri) - '0';
+					}else{
+						cmdinfo.compress_level = 6;
 					}
 					break;
 				case 'Z':
@@ -324,6 +350,10 @@ static int tar_cmd_itr(const HWND hwnd, LPCSTR szCmdLine,LPSTR szOutput, const D
 			cmdinfo.archive_type = ARCHIVETYPE_TARZ;break;
 		case ARCHIVETYPE_BZ2:
 			cmdinfo.archive_type = ARCHIVETYPE_TARBZ2;break;
+		case ARCHIVETYPE_LZMA:
+			cmdinfo.archive_type = ARCHIVETYPE_TARLZMA;break;
+		case ARCHIVETYPE_XZ:
+			cmdinfo.archive_type = ARCHIVETYPE_TARXZ;break;
 		}
 	}
 	//string arcfile = *argi++;

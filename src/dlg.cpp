@@ -49,13 +49,13 @@ void _cdecl CTar32StatusDialog::ThreadFunc(LPVOID param)
 	//return 0;
 }
 
-BOOL CALLBACK CTar32StatusDialog::WindowFunc(HWND hWnd, UINT mes, WPARAM wParam, LPARAM lParam)
+INT_PTR CALLBACK CTar32StatusDialog::WindowFunc(HWND hWnd, UINT mes, WPARAM wParam, LPARAM lParam)
 {
 	extern UINT wm_arcextract;
-	CTar32StatusDialog *pDlg = (CTar32StatusDialog*)GetWindowLong(hWnd, GWL_USERDATA);
+	CTar32StatusDialog *pDlg = (CTar32StatusDialog*)GetWindowLongPtr(hWnd, GWLP_USERDATA);
 	switch(mes){
 	case WM_INITDIALOG:
-		SetWindowLong(hWnd,GWL_USERDATA,lParam);
+		SetWindowLongPtr(hWnd,GWLP_USERDATA,lParam);
 		::SendDlgItemMessage(hWnd,IDC_PROGRESS_FILE,PBM_SETRANGE32,0,100);
 		EnableMenuItem(GetSystemMenu(hWnd,FALSE),SC_CLOSE, MF_GRAYED);	//•Â‚¶‚éƒ{ƒ^ƒ“‚ð–³Œø‚É
 		return 1;
@@ -156,7 +156,7 @@ void CTar32StatusDialog::Destroy()
 
 
 //--------------
-BOOL CALLBACK Tar32ConfirmOverwriteDialogProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
+INT_PTR CALLBACK Tar32ConfirmOverwriteDialogProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	switch(msg){
 	case WM_INITDIALOG:

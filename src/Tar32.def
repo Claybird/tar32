@@ -1,4 +1,3 @@
-LIBRARY tar32
 EXPORTS
 	TarGetVersion
 

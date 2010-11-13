@@ -1,5 +1,5 @@
 =============================================================================
-	TAR32.DLL Ver2.xx command DESCRIPTION. (for Tar() API)
+    TAR32.DLL Ver2.xx command DESCRIPTION. (for Tar() API)
 
 =============================================================================
 TAR(1)                    WIN-32 user's manual                    TAR(1)
@@ -15,14 +15,14 @@ COMMAND LINE
               [[-f] ARCH] [-o PATH|PATH\] file...  @indirect-command-file
 
 DESCRIPTION
-	please use like tar command.
-	you can pack tar/tar.gz/gz/bz2 and unpack tar/tar.gz/tar.Z/tar.bz2/gz/Z/bz2.
-	unpacking tar/tar.gz/tar.Z is auto-detect.
+    please use like tar command.
+    you can pack tar/tar.gz/gz/bz2 and unpack tar/tar.gz/tar.Z/tar.bz2/gz/Z/bz2.
+    unpacking tar/tar.gz/tar.Z is auto-detect.
 
 COMMAND
-	-c create
-	-x extract
-	-t list
+    -c create
+    -x extract
+    -t list
 
 OPTION:
         A[A|H] pack file attribute.(A:Archive/H:Hidden)(currently ignore)
@@ -38,82 +38,86 @@ OPTION:
                   or
                     tar xvaf GCC242.TGZ c:\gnu\
                     
-	p	Output to output Buffer.(not File)
-		    tar -pxvf foo.tgz file.txt
+    p    Output to output Buffer.(not File)
+            tar -pxvf foo.tgz file.txt
 
-        v       (Verbose)
-      
-	G	Gzip or Compless only Pack/Unpack.(not tar)
+    v       (Verbose)
 
-        z[N]	gzip compression level.(1:fast-9:slow/small)
-	
-        B[N] | --bzip2=N
-		bzip2 compression level.(1:fast-9:slow/small)
+    G    Gzip or Compless only Pack/Unpack.(not tar)
 
-	--check-all-path=[0|1] (currently ignore)
-		check match to path.
-		if 1 *.* isn't match aa/ii.
-		default 0
+    z[N] | --gzip=N
+        gzip compression level.(1:fast-9:slow/small, default:6)
+    B[N] | --bzip2=N
+        bzip2 compression level.(1:fast-9:slow/small, default:9)
+    J[N] | --xz=N
+        xz compression level.(0:fast-9:small, default:6)
+    --lzma=N
+        lzma compression level.(0:fast-9:small, default:6)
 
-	--display-dialog=[0|1]
-		display dialog dualing pack/unpack.
-		default 1.
-	--use-directory=[0|1]
-		use directory structure.
-		default is 1.
+    --check-all-path=[0|1] (currently ignore)
+        check match to path.
+        if 1 *.* isn't match aa/ii.
+        default 0
 
-	--message-loop=[0|1]
-		run message loop in library.
-		default is 1.
+    --display-dialog=[0|1]
+        display dialog dualing pack/unpack.
+        default 1.
+    --use-directory=[0|1]
+        use directory structure.
+        default is 1.
 
-	--confirm-overwrite=[0|1]
-		ask for confirmation for overwriting existing file.
-		default is 0.
+    --message-loop=[0|1]
+        run message loop in library.
+        default is 1.
 
-	--inverse_procresult=[0|1]
-		inverse result value of ARCHIVERPROC.
-		default is 0.
+    --confirm-overwrite=[0|1]
+        ask for confirmation for overwriting existing file.
+        default is 0.
 
-	--convert-charset=[none|auto|sjis|eucjp|utf8]
-		convert filename in archive from specified charset to Shift_JIS.
-		If this switch is used with auto or empty charset, charset is
-		detected automatically.
-		default is "auto".
+    --inverse_procresult=[0|1]
+        inverse result value of ARCHIVERPROC.
+        default is 0.
 
-		NOTE: letters that cannot be expressed in Shift_JIS will be replaced
-		      with '_' at this version.
-		      Internet Explorer 5.5 or later is required for EUC-JP decoding.
+    --convert-charset=[none|auto|sjis|eucjp|utf8]
+        convert filename in archive from specified charset to Shift_JIS.
+        If this switch is used with auto or empty charset, charset is
+        detected automatically.
+        default is "auto".
+
+        NOTE: letters that cannot be expressed in Shift_JIS will be replaced
+              with '_' at this version.
+              Internet Explorer 5.5 or later is required for EUC-JP decoding.
 
 [Examples]
 
         tar -cvf foo.tar *.c *.h makefile
-        	archive *.c *.h makefile to foo.tar.
+            archive *.c *.h makefile to foo.tar.
 
         tar -cvfz foo.tgz *.c *.h makefile
-        	with gzip.
+            with gzip.
 
         tar -cvfB foo.tar.bz2 *.c *.h makefile
-        	with bzip2.
+            with bzip2.
 
         tar -cvfz9 foo.tgz *.c *.h makefile
-        	gzip level 9.(most)
+            gzip level 9.(most)
 
         tar -cvfZ foo.tgz *.c *.h makefile
 
         tar -cvfz foo.000 *.c *.h makefile
 
-	tar -cvfGz foo.gz foo
-		GZIP Compression.
+    tar -cvfGz foo.gz foo
+        GZIP Compression.
 
         tar -xvf bar.taz
-        	unpack all file stored in bar.taz
+            unpack all file stored in bar.taz
 
-	tar -pxvf foo.tgz file.txt
-		Output file.txt in foo.tgz to buffer specified in TAR API.
+    tar -pxvf foo.tgz file.txt
+        Output file.txt in foo.tgz to buffer specified in TAR API.
 
         tar -xvf bar.taz -o a:/foo
         tar -xvf bar.taz a:/foo/
-        	unpack to a:/foo
+            unpack to a:/foo
 
 
         tar -xvf bar.tgz @bar.lst

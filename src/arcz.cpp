@@ -31,6 +31,7 @@ bool CTarArcFile_Compress::open(const char *arcfile, const char *mode, int /*com
 	/* only decompress implemented */
 	if(strchr(mode,'w')){return false;}
 	m_pFile = fopen(arcfile, "rb");
+	if(m_pFile)setvbuf(m_pFile,NULL,_IOFBF,1024*1024);
 
 	m_insize = m_rsize = 0;
 

@@ -41,6 +41,7 @@ public:
 	bool open(const char *arcfile, const char *mode, int /*compress_level*/){
 		m_arcfile = arcfile;
 		m_fp = fopen(arcfile,mode);
+		if(m_fp)setvbuf(m_fp,NULL,_IOFBF,1024*1024);
 		return m_fp!=NULL;
 	};
 	size64 read(void *buf, size64 size){

@@ -9,7 +9,7 @@
 
 ●コマンドラインの形式
 
-　 -<command> [-<option>...] <archive_file_name.{tar,tar.gz,tar.bz2}> [<directory_name>\] [<filenames>...]
+　 -<command> [-<option>...] <archive_file_name.{tar,tar.gz,tar.bz2,tar.xz,tar.lzma}> [<directory_name>\] [<filenames>...]
 
 ●コマンド
 
@@ -45,6 +45,13 @@
 
 　-Z[N]
 　　　　　compress相当の圧縮を行います。(未実装)
+
+
+　-J[N] (--xz=[N])
+　　　　　xz相当の圧縮を行います。圧縮レベルNは0～9で、デフォルトは6です。
+
+　--lzma=[N]
+　　　　　lzma相当の圧縮を行います。圧縮レベルNは0～9で、デフォルトは6です。
 
 　--use-directory=[0|1](1)
 　　　　　effective directory name

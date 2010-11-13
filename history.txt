@@ -329,3 +329,21 @@
 	・TarOpenArchive2() APIを追加
 	Special Thanks to 鬼束さん
 	by Claybird(claybird.without.wing@gmail.com)
+
+2010/11/4
+	・XZ Utils 対応パッチの取り込み(oopsさん及びSilkyさんによる)
+	    -J,--lzma,--xzオプションの追加
+	    xzおよびlzmaの圧縮と展開に対応
+	・setvbuf()/gzbuffer()によりファイル入出力バッファを拡大
+	・zlibを1.2.5に更新
+	・bzip2を1.0.6に更新
+
+	Special Thanks to oopsさん、Siklyさん
+	by Claybird(claybird.without.wing@gmail.com)
+
+2010/11/6 Ver.2.35
+	・ar形式アーカイブにてファイル名取得に失敗していた問題を修正
+
+	by Claybird(claybird.without.wing@gmail.com)
+
+

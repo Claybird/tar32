@@ -12,6 +12,9 @@
    32bitで扱えるサイズ以下であると仮定しているなので、size64をintにキャストしてしまっている
 
    by claybird. 2009/06/13
+
+   入出力が遅いので、setvbuf()によりバッファを拡大する
+   by claybird. 2010/11/3
 */
 
 #ifndef __FAST_OFSTREAM_H
@@ -38,6 +41,7 @@ public:
 	void open(const char *fname, int mode){
 		if(mode & std::ios::out){m_bwrite=true;}
 		m_fp = fopen(fname, (m_bwrite ? "wb" : "rb"));
+		if(m_fp)setvbuf(m_fp,NULL,_IOFBF,1024*1024);
 		m_berror = (m_fp == NULL);
 	};
 	bool fail(){
