@@ -346,4 +346,9 @@
 
 	by Claybird(claybird.without.wing@gmail.com)
 
+2011/ 1/19 Ver.2.36
+	・互換性のため、一部のプログラムで生成される誤ったチェックサム
+	  (signed charで計算されたもの)を受け入れるようにした
+
+	by Claybird(claybird.without.wing@gmail.com)
 

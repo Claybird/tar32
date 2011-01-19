@@ -74,7 +74,7 @@ int CTar32::s_get_archive_type(const char *arcfile)
 	archive_header arc_header;
 	size64 ret = pfile->read(&arc_header,sizeof(arc_header));
 	if(ret >= sizeof(arc_header.tar)
-		&& arc_header.tar.compsum() == strtol(arc_header.tar.dbuf.chksum, NULL, 8)){
+		&& (arc_header.tar.compsum() == strtol(arc_header.tar.dbuf.chksum, NULL, 8) || arc_header.tar.compsum_oldtar() == strtol(arc_header.tar.dbuf.chksum, NULL, 8))){
 		switch(archive_type){
 		case ARCHIVETYPE_NORMAL:
 			archive_type = ARCHIVETYPE_TAR;break;
@@ -177,7 +177,8 @@ bool CTar32::readdir_TAR(CTar32FileStatus &stat)
 		if(memcmp(&tar_header,&zero_header,sizeof(tar_header)) == 0){
 			return false;
 		}
-		if((unsigned long)tar_header.compsum() != (unsigned long)parseOctNum(tar_header.dbuf.chksum , COUNTOF(tar_header.dbuf.chksum))){
+		int checksum=(int)parseOctNum(tar_header.dbuf.chksum , COUNTOF(tar_header.dbuf.chksum));
+		if(tar_header.compsum() != checksum && tar_header.compsum_oldtar() != checksum){
 			throw CTar32Exception("tar header checksum error.",ERROR_HEADER_CRC);
 		}
 	}
@@ -221,7 +222,8 @@ bool CTar32::readdir_TAR(CTar32FileStatus &stat)
 			if(memcmp(&tar_header,&zero_header,sizeof(tar_header)) == 0){
 				return false;
 			}
-			if((unsigned long)tar_header.compsum() != (unsigned long)parseOctNum(tar_header.dbuf.chksum , COUNTOF(tar_header.dbuf.chksum))){
+			int checksum=(int)parseOctNum(tar_header.dbuf.chksum , COUNTOF(tar_header.dbuf.chksum));
+			if(tar_header.compsum() != checksum && tar_header.compsum_oldtar() != checksum){
 				throw CTar32Exception("tar header checksum error.(LongLink)",ERROR_HEADER_CRC);
 			}
 		}

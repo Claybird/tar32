@@ -102,6 +102,20 @@ typedef	union	hblock	{
 		}
 		return sum;
 	}
+	//added by claybird(2011.01.13)
+	int compsum_oldtar(){	
+		unsigned int sum = 0;
+		int i;
+		for(i=0;i<TBLOCK;i++){
+			sum += (signed char)dummy[i];	//different way to compute like old unix
+		}
+		/* calc without checksum field */
+		for(i=0;i<sizeof(dbuf.chksum);i++){
+			sum -= dbuf.chksum[i];
+			sum += ' ';
+		}
+		return sum;
+	}
 	int getFormat()const{
 		if(dbuf.magic[5]==TOMAGIC[5]){
 			return TAR_FORMAT_GNU;
