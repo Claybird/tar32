@@ -39,6 +39,7 @@
 #include "arclzma.h"	// CTarArcFile_Lzma
 #include "arcz.h"	// CTarArcFile_Compress
 #include "tar32api.h"
+#include "rpm.h"
 
 
 size64 ITarArcFile::seek(size64 offset, int origin)
@@ -120,12 +121,17 @@ int ITarArcFile::s_get_archive_type(const char *arcfile)
 	if(fp==NULL){return -1;} // Ç«ÇÒÇºÅFí«â¡
 	unsigned char buf[100]; memset(buf, 0, sizeof(buf));
 	int n = fread(buf, 1, sizeof(buf), fp);
+	if(buf[0] == 0xed && buf[1] == 0xab && buf[2] == 0xee && buf[3] == 0xdb){
+		/* RPM */
+		size64 rpmlen = rpm_getheadersize(arcfile);
+		if(rpmlen == -1){rpmlen = 0;}
+		_fseeki64(fp, rpmlen, SEEK_SET);
+		n = fread(buf, 1, sizeof(buf), fp);
+	}
 	fclose(fp);
 
 	if(buf[0] == 0x1f && buf[1] == 0x8b){
 		return ARCHIVETYPE_GZ;
-	}else if(buf[0] == 0xed && buf[1] == 0xab && buf[2] == 0xee && buf[3] == 0xdb){
-		return ARCHIVETYPE_GZ; /* RPM */
 	}else if(buf[0] == 'B' && buf[1] == 'Z' && buf[2] == 'h'
 		&& buf[4]==0x31 && buf[5]==0x41 && buf[6]==0x59 && buf[7]==0x26 && buf[8]==0x53 && buf[9]==0x59){
 		return ARCHIVETYPE_BZ2;

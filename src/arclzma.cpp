@@ -3,6 +3,7 @@
 #include "lzma.h"
 #include "arclzma.h"
 #include "tar32dll.h"
+#include "rpm.h"
 
 CTarArcFile_Lzma::CTarArcFile_Lzma()
 {
@@ -27,6 +28,16 @@ bool CTarArcFile_Lzma::open(const char *arcfile, const char *mode, int compress_
 	set_demand_callback(file_demand_callback,NULL);
 	m_arcfile = arcfile;
 	m_fp = fopen(arcfile,mode);
+
+	// rpm.
+	size64 rpmlen = 0;
+	bool bReadMode=(NULL!=strchr(mode,'r'));
+	if(bReadMode){
+		rpmlen = rpm_getheadersize(arcfile);
+		if(rpmlen == -1){rpmlen = 0;}
+		_fseeki64(m_fp, rpmlen, SEEK_CUR);
+	}
+
 	if(m_fp)setvbuf(m_fp,NULL,_IOFBF,1024*1024);
 	m_mode = CM_NOTHING;
 	m_compress_level = compress_level;

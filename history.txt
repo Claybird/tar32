@@ -352,3 +352,10 @@
 
 	by Claybird(claybird.without.wing@gmail.com)
 
+2011/04/02 Ver.2.37
+	・cpio.xz形式のRPMアーカイブの展開に対応
+	・XZ Utilsを5.0.2に更新
+	Special Thanks to Silkyさん
+
+	commit by Claybird
+

@@ -130,7 +130,7 @@ bool GetARCMethod(int archive_type, char *buf, int buf_len)
 	case ARCHIVETYPE_CPIOLZMA:
 		strncpy(buf, "cpiolzm",buf_len);break;
 	case ARCHIVETYPE_CPIOXZ:
-		strncpy(buf, "cpioxz",buf_len);break;
+		strncpy(buf, "cpio.xz",buf_len);break;
 
 	case ARCHIVETYPE_AR:
 		strncpy(buf, "ar",buf_len);break;
