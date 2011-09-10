@@ -359,3 +359,10 @@
 
 	commit by Claybird
 
+2011/08/13 Ver.2.38
+	・展開後ファイルサイズが取得できない場合に異常終了することがある
+	  問題を修正
+	・展開後ファイルサイズが取得できない場合は進捗をマーキー表示する
+	  ようにした
+
+	by Claybird(claybird.without.wing@gmail.com)

@@ -82,20 +82,41 @@ INT_PTR CALLBACK CTar32StatusDialog::WindowFunc(HWND hWnd, UINT mes, WPARAM wPar
 			switch(wParam){
 			case ARCEXTRACT_BEGIN:		//該当ファイルの処理の開始
 				::SetDlgItemText(hWnd, IDC_STATIC_FILENAME, pExtractingInfoEx64->szDestFileName);
+				{
+					size64 size=pExtractingInfoEx64->llFileSize;
+					HWND hProg=::GetDlgItem(hWnd,IDC_PROGRESS_FILE);
+					LONG_PTR style=::GetWindowLongPtr(hProg,GWL_STYLE);
+					if(size==(size64)-1){	//filesize unknown
+						//プログレスバーをmarqueeスタイルに
+						::SetWindowLongPtr(hProg,GWL_STYLE,style|PBS_MARQUEE);
+						::SendMessage(hProg,PBM_SETMARQUEE,TRUE,30);
+					}else{
+						//プログレスバーを通常スタイルに
+						::SetWindowLongPtr(hProg,GWL_STYLE,style&(~PBS_MARQUEE));
+					}
+				}
 				break;
 			case ARCEXTRACT_INPROCESS:	//該当ファイルの展開中
 				//展開状況の設定
 				{
-					char buf[256];
 					size64 size=pExtractingInfoEx64->llFileSize;
 					size64 wrote=pExtractingInfoEx64->llWriteSize;
-					DWORD percent=(DWORD)(wrote*100/size);
+					if(size==(size64)-1){	//filesize unknown
+						std::string strwrote=fsizeToString(wrote);
+						char buf[256];
+						_snprintf(buf,COUNTOF(buf),"wrote %s",strwrote.c_str());
+						::SetDlgItemText(hWnd, IDC_STATIC_PROGRESS, buf);
+						//::SendDlgItemMessage(hWnd,IDC_PROGRESS_FILE,PBM_SETPOS,10,0);
+					}else{
+						DWORD percent=(DWORD)(wrote*100/size);
 
-					std::string strwrote=fsizeToString(wrote);
-					std::string strsize=fsizeToString(size);
-					_snprintf(buf,COUNTOF(buf),"%d%% (%s / %s)",percent,strwrote.c_str(),strsize.c_str());
-					::SetDlgItemText(hWnd, IDC_STATIC_PROGRESS, buf);
-					::SendDlgItemMessage(hWnd,IDC_PROGRESS_FILE,PBM_SETPOS,percent,0);
+						char buf[256];
+						std::string strwrote=fsizeToString(wrote);
+						std::string strsize=fsizeToString(size);
+						_snprintf(buf,COUNTOF(buf),"%d%% (%s / %s)",percent,strwrote.c_str(),strsize.c_str());
+						::SetDlgItemText(hWnd, IDC_STATIC_PROGRESS, buf);
+						::SendDlgItemMessage(hWnd,IDC_PROGRESS_FILE,PBM_SETPOS,percent,0);
+					}
 				}
 				break;
 			case ARCEXTRACT_END:		//処理終了、関連メモリを開放

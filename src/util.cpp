@@ -281,6 +281,8 @@ void UnixTimeToFileTime(time_t t, FILETIME &ft)
 
 std::string fsizeToString(size64 fsize)
 {
+	if(fsize==size64(-1))return "---";
+
 	const char* units[]={
 		"Byte",
 		"KB",
@@ -290,12 +292,12 @@ std::string fsizeToString(size64 fsize)
 	};
 
 	int level;
-	for(level=0;level<COUNTOF(units);level++){
+	for(level=0;level<COUNTOF(units)-1;level++){
 		if(fsize<1024*16)break;
 		fsize/=1024;
 	}
 
-	char buf[16];
+	char buf[64];
 	sprintf(buf,"%I64u %s",fsize,units[level]);
 	return std::string(buf);
 }
