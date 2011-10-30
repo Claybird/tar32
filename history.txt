@@ -366,3 +366,15 @@
 	  ようにした
 
 	by Claybird(claybird.without.wing@gmail.com)
+
+2011/09/26
+	・2GBを超える.gzファイルが展開できなかった問題を修正
+
+	by Claybird(claybird.without.wing@gmail.com)
+
+2011/10/12 Ver.2.39
+	・オリジナルが4GBを超える.gzファイルが展開できなかった問題を修正
+
+	by Claybird(claybird.without.wing@gmail.com)
+
+

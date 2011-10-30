@@ -124,13 +124,18 @@ bool CTarArcFile_GZip::open(const char *arcfile, const char *mode, int compress_
 			}
 			m_gzip_comment = comment;
 		}
+
+		/*
 		fs_r.seekg(-4, std::ios_base::end);
 		size64 size;
-		size = fs_r.get();
-		size |= fs_r.get()<<8;
-		size |= fs_r.get()<<16;
-		size |= fs_r.get()<<24;
-		m_orig_filesize = size;
+		size = ((unsigned __int64)fs_r.get());
+		size |= ((unsigned __int64)fs_r.get())<<8;
+		size |= ((unsigned __int64)fs_r.get())<<16;
+		size |= ((unsigned __int64)fs_r.get())<<24;
+
+		//ファイルサイズの下位32bitのみが格納されているため、4GB以上のファイルサイズを正しく復元できない
+		m_orig_filesize = size;*/
+		m_orig_filesize=-1;
 	}
 	return true;
 	//return (f != NULL);
@@ -145,7 +150,7 @@ size64 CTarArcFile_GZip::write(void *buf, size64 size)
 }
 size64 CTarArcFile_GZip::seek(size64 offset, int origin)
 {
-	return gzseek(m_gzFile, (size_t)offset, origin);	//TODO:size lost
+	return gzseek(m_gzFile, offset, origin);
 }
 void CTarArcFile_GZip::close()
 {

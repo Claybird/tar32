@@ -487,11 +487,17 @@ bool CTar32::extract(const char *fname_extract_to)
 	//	return false;
 	//}
 	size64 readsize = 0;
-	while(readsize<filesize){
-		size64 nextreadsize = min(filesize-readsize,buf_size);
+	while(filesize==-1 || readsize<filesize){
+		size64 nextreadsize = (filesize==-1) ? buf_size : min(filesize-readsize,buf_size);
 		size64 n = file.read(buf,nextreadsize);
 		fs_w.write(buf,nextreadsize);
-		if(fs_w.fail()){return false;}
+		if(fs_w.fail()){
+			if(filesize==-1){
+				return true;
+			}else{
+				return false;
+			}
+		}
 		//fwrite(buf,1,ret,fp_w);
 		readsize += n;
 		if(n != nextreadsize){/*fclose(fp_w);*/return false;}
