@@ -27,6 +27,8 @@ public:
 	bool b_message_loop;
 	bool b_inverse_procresult;
 	bool b_print;
+	bool b_sort_by_path;
+	bool b_sort_by_ext;
 
 	bool b_confirm_overwrite;	//ã‘‚«Šm”F(‰ğ“€)
 

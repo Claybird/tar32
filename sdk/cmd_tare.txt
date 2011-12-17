@@ -88,6 +88,12 @@ OPTION:
               with '_' at this version.
               Internet Explorer 5.5 or later is required for EUC-JP decoding.
 
+    --sort-by-ext=[0|1]
+        sort files by extension while making an archive.
+
+    --sort-by-path=[0|1](0)
+        sort files by path while making an archive.
+
 [Examples]
 
         tar -cvf foo.tar *.c *.h makefile

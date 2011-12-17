@@ -35,7 +35,7 @@ void convert_yen_to_slash(std::string &pathname);
 void convert_slash_to_backslash(std::string &pathname);
 void get_full_path(const char *pPath,std::string &full);
 bool is_regexp_match_dbcs(const char *regexp, const char *str);
-void find_files(const char *regexp, std::list<std::string> &files);
+void find_files(const char *regexp, std::vector<std::string> &files);
 __int64 parseOctNum(const char *oct,int length);
 void UnixTimeToFileTime(time_t t, FILETIME &ft);
 std::string fsizeToString(size64 fsize);
@@ -82,3 +82,5 @@ public:
 
 int detect_charset(const char *buf);
 
+//parses PAX extended header
+bool parsePaxExtHeader(const char* lpContent,size_t length,std::string &strFileName,size64 &filesize,time_t &atime,time_t &ctime,time_t &mtime);

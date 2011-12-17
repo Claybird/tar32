@@ -184,7 +184,7 @@ INT_PTR CALLBACK Tar32ConfirmOverwriteDialogProc(HWND hWnd, UINT msg, WPARAM wPa
 		{
 			LPCTSTR pMsg=(LPCTSTR)lParam;
 			if(pMsg){
-				SetDlgItemText(hWnd,IDC_STATIC_STATUS,pMsg);
+				SetWindowText(GetDlgItem(hWnd,IDC_EDIT_STATUS),pMsg);
 			}
 		}
 		return FALSE;
@@ -193,9 +193,13 @@ INT_PTR CALLBACK Tar32ConfirmOverwriteDialogProc(HWND hWnd, UINT msg, WPARAM wPa
 		case IDOK:
 			//nothing to do
 			break;
-		default:
+		case IDC_BUTTON_OVERWRITE:
+		case IDC_BUTTON_OVERWRITE_ALL:
+		case IDCANCEL:
 			EndDialog(hWnd, LOWORD(wParam));
 			break;
+		default:
+			return FALSE;
 		}
 	default:
 		return FALSE;

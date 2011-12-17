@@ -97,6 +97,7 @@ public:
 	bool open(const char *arcfile, const char*mode,int compress_level, int archive_type/* = ARCHIVETYPE_AUTO*/,int archive_charset);
 	bool close();
 
+	bool readTarHeader(HEADER &tar_header);
 	bool readdir(CTar32FileStatus *stat);
 	bool readskip();	// service function(not neccesary)
 	bool extract(const char *file=NULL);		// service function(not neccesary)

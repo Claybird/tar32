@@ -221,7 +221,7 @@ void get_full_path(const char *pPath,std::string &full)
 	full=buf;
 }
 
-void find_files(const char *regexp, std::list<std::string> &files)
+void find_files(const char *regexp, std::vector<std::string> &files)
 {
 	//WIN32_FIND_DATA finddata;
 	//HANDLE hFindFile;
@@ -476,10 +476,11 @@ bool CConvertCharsetHelper::utf8_to_utf16(std::wstring &strRet,const char* lpcBy
 {
 	if(lpcByte[0]==0xEF && lpcByte[1]==0xBB && lpcByte[2]==0xBF){	//BOM check
 		lpcByte+=3;
+		length-=3;
 	}
-	std::vector<wchar_t> buf(::MultiByteToWideChar(CP_UTF8,0,(LPCSTR)lpcByte,-1,NULL,0)+1);	//バッファ確保
+	std::vector<wchar_t> buf(::MultiByteToWideChar(CP_UTF8,0,(LPCSTR)lpcByte,length,NULL,0)+1);	//バッファ確保
 	//変換
-	if(!::MultiByteToWideChar(CP_UTF8,0,(LPCSTR)lpcByte,-1,&buf[0],buf.size())){
+	if(!::MultiByteToWideChar(CP_UTF8,0,(LPCSTR)lpcByte,length,&buf[0],buf.size())){
 		return false;
 	}
 	strRet=(LPCWSTR)&buf[0];
@@ -525,4 +526,70 @@ std::string CConvertCharsetHelper::eucjp_to_sjis(const char* lpcByte,size_t leng
 	std::string strRet;
 	if(!eucjp_to_sjis(strRet,lpcByte,length))strRet=lpcByte;	//文字化け覚悟で元の文字列を返す
 	return strRet;
+}
+
+//----
+//parses PAX extended header
+//pax file type flags are: 'x' and 'g'
+//wideFileName contains the original file name in UTF16 if available, otherwise empty
+//filesize contains original file size in bytes if available, otherwise -1
+bool parsePaxExtHeader(const char* lpContent,size_t length,std::string &strFileName,size64 &filesize,time_t &atime,time_t &ctime,time_t &mtime)
+{
+	if(!lpContent)return false;
+	//pax metadata format:
+	//<length of the line in bytes> <key>=<value>\n
+	//example:
+	//25 ctime=1084839148.1212\n
+	strFileName.clear();
+	filesize=-1;
+	atime=0;
+	ctime=0;
+	mtime=0;
+
+	const char* lpEnd=lpContent+length;
+
+	for(;lpContent!=lpEnd && *lpContent;){
+		int ll=atoi(lpContent);
+		if(ll<=0){
+			//unformatted data:empty line or invalid length
+			return false;
+		}
+		//looking for first space
+		int fs=0;
+		for(;fs<ll;fs++){
+			if(' '==lpContent[fs])break;
+		}
+		//looking for '='
+		int li=fs+1;
+		for(;li<ll;li++){
+			if('='==lpContent[li])break;
+		}
+		if(li==ll){
+			//unformatted data:value not found
+			return false;
+		}
+		//retrieve data
+		std::string strKey;
+		strKey.assign(lpContent+fs+1,lpContent+li);
+		const char* lpValue;
+		lpValue=lpContent+li+1;
+
+		if("path"==strKey){
+			//convert strValue from UTF8 to SJIS
+			CConvertCharsetHelper::getInstance().utf8_to_sjis(strFileName,lpValue,ll-li-2);
+		}else if("size"==strKey){
+			filesize=_atoi64(lpValue);
+		}else if("atime"==strKey){
+			atime=(time_t)atof(lpValue);
+		}else if("ctime"==strKey){
+			ctime=(time_t)atof(lpValue);
+		}else if("mtime"==strKey){
+			mtime=(time_t)atof(lpValue);
+		}
+
+		//skip to next line
+		lpContent+=ll;
+	}
+
+	return true;
 }

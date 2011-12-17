@@ -76,7 +76,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="comctl32.lib zlib/zlibstatd.lib bzip2/libbz2.lib lzma/liblzma.lib"
+				AdditionalDependencies="comctl32.lib zlib/zlibstatd.lib bzip2/libbz2.lib lzma/liblzma.lib shlwapi.lib"
 				OutputFile="$(OutDir)\tar32.dll"
 				LinkIncremental="2"
 				SuppressStartupBanner="true"
@@ -271,7 +271,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="comctl32.lib zlib/zlibstat.lib bzip2/libbz2.lib lzma/liblzma.lib"
+				AdditionalDependencies="comctl32.lib zlib/zlibstat.lib bzip2/libbz2.lib lzma/liblzma.lib shlwapi.lib"
 				OutputFile="$(OutDir)\tar32.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"

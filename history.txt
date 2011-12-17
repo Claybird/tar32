@@ -377,4 +377,11 @@
 
 	by Claybird(claybird.without.wing@gmail.com)
 
+2011/12/02 Ver.2.40
+	・PAX Interchange Formatで作成されたtarアーカイブの展開に対応
+	・アーカイブ作成時に、拡張子およびパスによるソート(--sort-by-ext/--sort-by-path)を実装
+	・展開時、ディレクトリ作成についても上書き確認が行われていた問題を修正
+	・展開時、上書き確認ダイアログ上で長いファイル名の表示が途中で切れていた問題を修正
+
+	by Claybird(claybird.without.wing@gmail.com)
 

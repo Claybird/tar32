@@ -163,33 +163,40 @@ bool CTar32::close()
 	return true;
 }
 
+bool CTar32::readTarHeader(HEADER &tar_header)
+{
+	size64 ret = m_pfile->read(&tar_header,sizeof(tar_header));
+	if(ret == 0){return false;}
+	if(ret != sizeof(tar_header)){
+		throw CTar32Exception("can't read tar header",ERROR_HEADER_BROKEN);
+	}
+	{	//is zero header?
+		int nIdx;
+		for(nIdx=0;nIdx<sizeof(tar_header);nIdx++){
+			if(((const char*)&tar_header)[nIdx]!=0)break;
+		}
+		if(nIdx==sizeof(tar_header))return false;	//EOF
+	}
+	int checksum=(int)parseOctNum(tar_header.dbuf.chksum , COUNTOF(tar_header.dbuf.chksum));
+	if(tar_header.compsum() != checksum && tar_header.compsum_oldtar() != checksum){
+		throw CTar32Exception("tar header checksum error.",ERROR_HEADER_CRC);
+	}
+
+	return true;
+}
+
 bool CTar32::readdir_TAR(CTar32FileStatus &stat)
 {
 	HEADER tar_header;
-	{
-		size64 ret = m_pfile->read(&tar_header,sizeof(tar_header));
-		if(ret == 0){return false;}
-		if(ret != sizeof(tar_header)){
-			throw CTar32Exception("can't read tar header",ERROR_HEADER_BROKEN);
-		}
-		HEADER zero_header;
-		memset(&zero_header,0,sizeof(zero_header));
-		if(memcmp(&tar_header,&zero_header,sizeof(tar_header)) == 0){
-			return false;
-		}
-		int checksum=(int)parseOctNum(tar_header.dbuf.chksum , COUNTOF(tar_header.dbuf.chksum));
-		if(tar_header.compsum() != checksum && tar_header.compsum_oldtar() != checksum){
-			throw CTar32Exception("tar header checksum error.",ERROR_HEADER_CRC);
-		}
-	}
+	if(!readTarHeader(tar_header))return false;
 
 	//get tar format : GNU or POSIX
 	int tar_format=tar_header.getFormat();
 
 	// HP-UX's tar command create 100chars filename part. fixed on 2003.12.19
-	char tmp_name[sizeof(tar_header.dbuf.name)+1];
-	strncpy(tmp_name, tar_header.dbuf.name, sizeof(tar_header.dbuf.name));
-	tmp_name[sizeof(tar_header.dbuf.name)] = '\0';
+	char tmp_name[COUNTOF(tar_header.dbuf.name)+1];
+	strncpy(tmp_name, tar_header.dbuf.name, COUNTOF(tar_header.dbuf.name));
+	tmp_name[COUNTOF(tar_header.dbuf.name)] = '\0';
 	stat.filename	=	tmp_name; /* tar_header.dbuf.name; */
 
 	stat.original_size = parseOctNum(tar_header.dbuf.size,COUNTOF(tar_header.dbuf.size));
@@ -211,28 +218,54 @@ bool CTar32::readdir_TAR(CTar32FileStatus &stat)
 			throw CTar32Exception("can't get filename(LongLink)",ERROR_HEADER_BROKEN);
 		}
 		longfilename[(size_t)stat.original_size]='\0';	//TODO:size lost
-		{
-			ret = m_pfile->read(&tar_header,sizeof(tar_header));
-			if(ret == 0){return false;}
-			if(ret != sizeof(tar_header)){
-				throw CTar32Exception("can't read tar header(LongLink)",ERROR_HEADER_BROKEN);
-			}
-			HEADER zero_header;
-			memset(&zero_header,0,sizeof(zero_header));
-			if(memcmp(&tar_header,&zero_header,sizeof(tar_header)) == 0){
-				return false;
-			}
-			int checksum=(int)parseOctNum(tar_header.dbuf.chksum , COUNTOF(tar_header.dbuf.chksum));
-			if(tar_header.compsum() != checksum && tar_header.compsum_oldtar() != checksum){
-				throw CTar32Exception("tar header checksum error.(LongLink)",ERROR_HEADER_CRC);
-			}
-		}
+		if(!readTarHeader(tar_header))return false;
 		stat.filename = &longfilename[0];
 		stat.original_size		=	parseOctNum(tar_header.dbuf.size, COUNTOF(tar_header.dbuf.size));
 	}
 
+	bool bPaxFilenameSupplied=false;
+	time_t pax_atime=0,pax_ctime=0,pax_mtime=0;
+	if(tar_header.dbuf.typeflag == PAX_GLOBAL || tar_header.dbuf.typeflag == PAX_ENTRTY){
+		std::vector<char> content;
+		size64 readsize = (size_t(stat.original_size-1)/512+1)*512;
+		content.resize((size_t)readsize+1);	//TODO:size lost
+		size64 ret = m_pfile->read(&content[0], readsize);
+		if(ret == 0){
+			throw CTar32Exception("can't get PAX Extended Global Header",ERROR_HEADER_BROKEN);
+		}
+		content[(size_t)stat.original_size]='\0';	//TODO:size lost
+		if(!readTarHeader(tar_header))return false;
+		stat.original_size		=	parseOctNum(tar_header.dbuf.size, COUNTOF(tar_header.dbuf.size));
+		strncpy(tmp_name, tar_header.dbuf.name, COUNTOF(tar_header.dbuf.name));
+		tmp_name[COUNTOF(tar_header.dbuf.name)] = '\0';
+		stat.filename	=	tmp_name; /* tar_header.dbuf.name; */
+
+		std::string extFilename;
+		size64 filesize;
+		if(!parsePaxExtHeader(&content[0],content.size(),extFilename,filesize,pax_atime,pax_ctime,pax_mtime)){
+			if(tar_header.dbuf.typeflag == PAX_GLOBAL){
+				throw CTar32Exception("Broken PAX Extended Global Header",ERROR_HEADER_BROKEN);
+			}else{
+				throw CTar32Exception("Broken PAX Extended Header",ERROR_HEADER_BROKEN);
+			}
+		}
+		if(tar_header.dbuf.typeflag == PAX_GLOBAL){
+			//global header
+			//TODO:need test
+			//if(filesize!=-1)m_currentfile_status.original_size=filesize;
+		}else{
+			//entry header
+			//TODO:need test
+			//if(filesize!=-1)stat.original_size=filesize;
+			if(!extFilename.empty()){
+				bPaxFilenameSupplied=true;
+				stat.filename=extFilename;
+			}
+		}
+	}
+
 	//charset conversion
-	if(m_archive_charset!=CHARSET_DONTCARE){
+	if(m_archive_charset!=CHARSET_DONTCARE && !bPaxFilenameSupplied){
 		if(m_archive_charset==CHARSET_UNKNOWN){
 			//detect charset
 			m_archive_charset=detect_charset(stat.filename.c_str());
@@ -285,6 +318,11 @@ bool CTar32::readdir_TAR(CTar32FileStatus &stat)
 			stat.filename= prefix + '/' + stat.filename;
 		}
 	}
+
+	if(pax_atime!=0)stat.atime=pax_atime;
+	if(pax_ctime!=0)stat.ctime=pax_ctime;
+	if(pax_mtime!=0)stat.mtime=pax_mtime;
+
 	if(stat.typeflag == DIRTYPE){
 		stat.mode &= ~_S_IFMT;
 		stat.mode |= _S_IFDIR;

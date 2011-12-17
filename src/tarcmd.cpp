@@ -51,6 +51,8 @@ CTar32CmdInfo::CTar32CmdInfo(char *s, int len) : output(s,len), exception("",0){
 	b_inverse_procresult = false;
 	b_print = false;
 	b_confirm_overwrite = false;
+	b_sort_by_path=false;
+	b_sort_by_ext=false;
 
 	b_archive_tar = true;
 	archive_type = ARCHIVETYPE_NORMAL;
@@ -97,6 +99,8 @@ static void cmd_usage(CTar32CmdInfo &info)
 		<< "       --convert-charset=[none|auto|sjis|eucjp|utf8](auto)\n"
 		<< "                       convert charset of filename. If charset is not specified,\n"
 		<< "                       charset is detected automatically.\n"
+		<< "       --sort-by-ext=[0|1](0)  sort files by extension while making an archive.\n"
+		<< "       --sort-by-path=[0|1](0)  sort files by path while making an archive.\n"
 		<< "    ignore option,command: a,v,V,I,i,f,e,g,S,A,b,N,U,--xxxx=xxx\n"
 		;
 }
@@ -191,6 +195,10 @@ void tar_cmd_parser(LPCSTR szCmdLine,CTar32CmdInfo &cmdinfo)
 					else if(stricmp(val.c_str(),"eucjp")==0)cmdinfo.archive_charset = CHARSET_EUCJP;
 					else if(stricmp(val.c_str(),"utf8")==0)cmdinfo.archive_charset  = CHARSET_UTF8;
 					else cmdinfo.archive_charset = CHARSET_DONTCARE;
+				}else if(key == "sort-by-ext"){
+					cmdinfo.b_sort_by_ext = ((val=="") ? true : (0!=atoi(val.c_str())));
+				}else if(key == "sort-by-path"){
+					cmdinfo.b_sort_by_path = ((val=="") ? true : (0!=atoi(val.c_str())));
 				}else{
 					/* igonore */;
 				}
@@ -485,7 +493,7 @@ int ConfirmOverwrite(const CTar32CmdInfo &cmdinfo,EXTRACTINGINFOEX64 &Extracting
 	convert_slash_to_backslash(path);
 
 	//‘¶ÝŠm”F
-	if(_access(path.c_str(),0)==0){
+	if(PathFileExists(path.c_str()) && !PathIsDirectory(path.c_str())){
 		HWND hWnd=NULL;
 		if(cmdinfo.hTar32StatusDialog){
 			hWnd=cmdinfo.hTar32StatusDialog;
@@ -496,7 +504,7 @@ int ConfirmOverwrite(const CTar32CmdInfo &cmdinfo,EXTRACTINGINFOEX64 &Extracting
 		get_full_path(path.c_str(),path);
 
 		std::stringstream msg;
-		msg << "File " << path << " already exists.\n"
+		msg << "File " << path << " already exists.\r\n"
 			<< "Do you want to overwrite?";
 		int ret=::DialogBoxParam(dll_instance,MAKEINTRESOURCE(IDD_CONFIRM_OVERWRITE),hWnd,Tar32ConfirmOverwriteDialogProc,(LPARAM)(const char*)(msg.str().c_str()));
 		switch(ret){
@@ -777,6 +785,11 @@ static bool add_file(CTar32CmdInfo &cmdinfo, CTar32 *pTarfile, const char *fname
 	return true;
 }
 
+struct FILE_TO_ADD{
+	std::string fullPath;
+	std::string relativePath;
+};
+
 static void cmd_create(CTar32CmdInfo &cmdinfo)
 {
 	{
@@ -792,7 +805,7 @@ static void cmd_create(CTar32CmdInfo &cmdinfo)
 		int ret = SendArcMessage(cmdinfo, ARCEXTRACT_OPEN, &extractinfo,&exinfo64);
 		if(ret){throw CTar32Exception("Cancel button was pushed.",ERROR_USER_CANCEL);}
 	}
-	
+
 	CTar32 tarfile;
 	int ret;
 	bool bret;
@@ -810,43 +823,83 @@ static void cmd_create(CTar32CmdInfo &cmdinfo)
 	// const list<string> &files = cmdinfo.files;
 	const std::list<CTar32CmdInfo::CArgs> &args = cmdinfo.argfiles;
 	std::list<CTar32CmdInfo::CArgs>::const_iterator filei;
-	for(filei = args.begin();filei!=args.end();filei++){
-		std::string file_internal = (*filei).file;
-		std::string file_external = make_pathname((*filei).current_dir.c_str(), (*filei).file.c_str());
 
-		//list<string> files_internal2 = find_files(file_external.c_str());
-		std::list<std::string> files_internal2;
-		find_files(file_external.c_str(),files_internal2);
-		if(_mbsrchr((const unsigned char*)file_external.c_str(),'*')==0 && files_internal2.empty()){
-			// fixed by tsuneo. 2001.05.15
-			throw CTar32Exception((std::string("can't find file [") + file_external + "]").c_str(), ERROR_FILE_OPEN);
-		}
-		std::list<std::string>::iterator files2i;
-		for(files2i = files_internal2.begin(); files2i != files_internal2.end(); files2i++){
-			std::string file_external2 = *files2i;
-			std::string file_internal2 = file_external2.substr((*filei).current_dir.length());
-			if(!cmdinfo.b_use_directory){
-				file_internal2 = get_filename(file_internal2.c_str());
+	//enumerate files
+	std::vector<FILE_TO_ADD> files_to_add;
+	for(filei = args.begin();filei!=args.end();filei++){
+		std::vector<std::string> files_enumed;
+		{
+			std::string file_internal = (*filei).file;
+			std::string file_external = make_pathname((*filei).current_dir.c_str(), (*filei).file.c_str());
+
+			find_files(file_external.c_str(),files_enumed);
+			if(_mbsrchr((const unsigned char*)file_external.c_str(),'*')==0 && files_enumed.empty()){
+				// fixed by tsuneo. 2001.05.15
+				throw CTar32Exception((std::string("can't find file [") + file_external + "]").c_str(), ERROR_FILE_OPEN);
 			}
+		}
+		for(std::vector<std::string>::iterator files2i = files_enumed.begin(); files2i != files_enumed.end(); files2i++){
+			std::string file_path = *files2i;
+			std::string file_relative;
+			if(cmdinfo.b_use_directory){
+				file_relative = file_path.substr((*filei).current_dir.length());
+			}else{
+				file_relative = get_filename(file_relative.c_str());
+			}
+			//
+			FILE_TO_ADD file_entry;
+			file_entry.fullPath=file_path;
+			file_entry.relativePath=file_relative;
+			files_to_add.push_back(file_entry);
+		}
+	}
+	//sort? : by filepath or by extension
+	if(cmdinfo.b_sort_by_ext){
+		struct SORTER_BY_EXT{
+			bool operator()(const FILE_TO_ADD& a,const FILE_TO_ADD& b){
+				//sort by ext
+				int ret=stricmp(PathFindExtension(a.relativePath.c_str()),PathFindExtension(b.relativePath.c_str()));
+				if(ret==0){
+					//sort by path if ext is same
+					return stricmp(a.relativePath.c_str(),b.relativePath.c_str())<0;
+				}else{
+					return ret<0;
+				}
+			}
+		};
+		std::sort(files_to_add.begin(),files_to_add.end(),SORTER_BY_EXT());
+	}else if(cmdinfo.b_sort_by_path){
+		struct SORTER_BY_PATH{
+			bool operator()(const FILE_TO_ADD& a,const FILE_TO_ADD& b){
+				return stricmp(a.relativePath.c_str(),b.relativePath.c_str())<0;
+			}
+		};
+		std::sort(files_to_add.begin(),files_to_add.end(),SORTER_BY_PATH());
+	}
+	//compression
+	{
+		for(std::vector<FILE_TO_ADD>::const_iterator ite=files_to_add.begin();ite!=files_to_add.end();++ite){
+			const FILE_TO_ADD &file_entry=*ite;
 			CTar32FileStatus stat;
-			if(!stat.SetFromFile(file_external2.c_str())){
+			if(!stat.SetFromFile(file_entry.fullPath.c_str())){
 				continue;
 			}
-			convert_yen_to_slash(file_internal2);
+			std::string filepath_to_store=file_entry.relativePath;
+			convert_yen_to_slash(filepath_to_store);
 			{
 				// if file is directory, add '/' to the tail of filename.
 				struct _stat st;
-				if(_stat(file_external2.c_str(), &st)!=-1 && st.st_mode & _S_IFDIR){
-					char const*f = file_internal2.c_str();
+				if(_stat(file_entry.fullPath.c_str(), &st)!=-1 && st.st_mode & _S_IFDIR){
+					char const*f = filepath_to_store.c_str();
 					if((char*)max(_mbsrchr((unsigned char*)f, '/'), _mbsrchr((unsigned char*)f,'\\')) != f+strlen(f)-1){
-						file_internal2.append(1,'/');
+						filepath_to_store.append(1,'/');
 					}
 				}
 			}
-			stat.filename = file_internal2;
+			stat.filename = filepath_to_store;
 			bret = tarfile.addheader(stat);
 			// bret = tarfile.addbody(file_external2.c_str());
-			bool bret2 = add_file(cmdinfo,&tarfile,file_external2.c_str(),buffer);
+			bool bret2 = add_file(cmdinfo,&tarfile,file_entry.fullPath.c_str(),buffer);
 			filenum ++;
 		}
 	}
@@ -861,7 +914,7 @@ static void cmd_create(CTar32CmdInfo &cmdinfo)
 		int ret = SendArcMessage(cmdinfo, ARCEXTRACT_END, &extractinfo,&exinfo64);
 		if(ret){throw CTar32Exception("Cancel button was pushed.",ERROR_USER_CANCEL);}
 	}
-	
+
 	if(filenum == 0){
 		// fixed by tsuneo. 2001.05.14
 		throw CTar32Exception("There is no file to archive. ", ERROR_FILE_OPEN);

@@ -27,8 +27,8 @@ LANGUAGE LANG_JAPANESE, SUBLANG_DEFAULT
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 2,39,0,1
- PRODUCTVERSION 2,39,0,1
+ FILEVERSION 2,40,0,1
+ PRODUCTVERSION 2,40,0,1
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -45,12 +45,12 @@ BEGIN
         BEGIN
             VALUE "CompanyName", " "
             VALUE "FileDescription", "tar32"
-            VALUE "FileVersion", "2, 39, 0, 1"
+            VALUE "FileVersion", "2, 40, 0, 1"
             VALUE "InternalName", "tar32"
             VALUE "LegalCopyright", "Copyright (C) 1999 Yoshioka Tsuneo URL: http://openlab.ring.gr.jp/tsuneo/tar32/"
             VALUE "OriginalFilename", "tar32.dll"
             VALUE "ProductName", "  tar32"
-            VALUE "ProductVersion", "2, 39, 0, 1"
+            VALUE "ProductVersion", "2, 40, 0, 1"
         END
     END
     BLOCK "VarFileInfo"
@@ -114,15 +114,15 @@ BEGIN
     LTEXT           "progress in percentage",IDC_STATIC_PROGRESS,38,23,190,8,SS_PATHELLIPSIS
 END
 
-IDD_CONFIRM_OVERWRITE DIALOGEX 0, 0, 194, 94
+IDD_CONFIRM_OVERWRITE DIALOGEX 0, 0, 233, 94
 STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION
 CAPTION "Overwrite confirmation"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
     PUSHBUTTON      "&Yes",IDC_BUTTON_OVERWRITE,7,73,50,14
-    PUSHBUTTON      "Yes to &all",IDC_BUTTON_OVERWRITE_ALL,72,73,50,14
-    PUSHBUTTON      "&Cancel",IDCANCEL,137,73,50,14
-    LTEXT           "Message Area",IDC_STATIC_STATUS,7,7,180,51
+    PUSHBUTTON      "Yes to &all",IDC_BUTTON_OVERWRITE_ALL,91,73,50,14
+    PUSHBUTTON      "&Cancel",IDCANCEL,176,73,50,14
+    EDITTEXT        IDC_EDIT_STATUS,7,7,219,61,ES_MULTILINE | ES_AUTOVSCROLL | ES_READONLY | NOT WS_BORDER
 END
 
 
@@ -154,7 +154,7 @@ BEGIN
     IDD_CONFIRM_OVERWRITE, DIALOG
     BEGIN
         LEFTMARGIN, 7
-        RIGHTMARGIN, 187
+        RIGHTMARGIN, 226
         TOPMARGIN, 7
         BOTTOMMARGIN, 87
     END
