@@ -54,7 +54,7 @@
 　　　　　lzma相当の圧縮を行います。圧縮レベルNは0～9で、デフォルトは6です。
 
 　--use-directory=[0|1](1)
-　　　　　effective directory name
+　　　　　ディレクトリ構造を格納します。
 
 　--display-dialog=[0|1](1)
 　　　　　圧縮/展開中に状況表示ダイアログを表示します。

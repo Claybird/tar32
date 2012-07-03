@@ -844,7 +844,7 @@ static void cmd_create(CTar32CmdInfo &cmdinfo)
 			if(cmdinfo.b_use_directory){
 				file_relative = file_path.substr((*filei).current_dir.length());
 			}else{
-				file_relative = get_filename(file_relative.c_str());
+				file_relative = get_filename(file_path.c_str());
 			}
 			//
 			FILE_TO_ADD file_entry;

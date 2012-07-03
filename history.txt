@@ -385,3 +385,8 @@
 
 	by Claybird(claybird.without.wing@gmail.com)
 
+2012/07/03 Ver.2.41
+	・ディレクトリ構造を無視してアーカイブを作成する際ファイル名が空白になる問題を修正
+
+	by Claybird(claybird.without.wing@gmail.com)
+
