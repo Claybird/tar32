@@ -90,7 +90,7 @@ static void cmd_usage(CTar32CmdInfo &info)
 		<< "       --absolute-paths=[0|1](0)  extract absolute paths(/, .., xx:)\n"
 		<< "       --display-dialog=[0|1](1)  display dialog box\n"
 		<< "       --message-loop=[0|1](1)  run message loop\n"
-		<< "       --inverse_procresult=[0|1](0)  inverse result value of ARCHIVERPROC\n"
+		<< "       --inverse-procresult=[0|1](0)  inverse result value of ARCHIVERPROC\n"
 		<< "       --bzip2=[N]     compress by bzip2 with level N(default:9)\n"
 		<< "       --lzma=[N]      compress by lzma with level N(default:6)\n"
 		<< "       --xz=[N]        compress by xz with level N(default:6)\n"

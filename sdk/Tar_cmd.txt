@@ -65,7 +65,7 @@
 　--confirm-overwrite=[0|1](0)
 　　　　　展開時、既にファイルが存在すれば上書きするかを確認します。
 
-　--inverse_procresult=[0|1](0)
+　--inverse-procresult=[0|1](0)
 　　　　　指定するとARCHIVERPROCの返し値を反転します。
 
 　--convert-charset=[none|auto|sjis|eucjp|utf8](auto)

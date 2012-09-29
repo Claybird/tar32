@@ -390,3 +390,9 @@
 
 	by Claybird(claybird.without.wing@gmail.com)
 
+2012/09/29 Ver.2.42
+	・文字コード自動検出が正しく動作しないことがあった問題を修正
+	・ドキュメントの誤表記"--inverse_procresult"を"--inverse-procresult"に訂正
+
+	by Claybird(claybird.without.wing@gmail.com)
+

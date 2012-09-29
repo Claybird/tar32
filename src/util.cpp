@@ -376,7 +376,8 @@ int detect_charset(const char *buf)
 		goto other_char;
 
 	if (len==col)
-		return CHARSET_SJIS;
+		//return CHARSET_SJIS;
+		return CHARSET_UNKNOWN;	//Šm’è‚Å‚«‚¸
 	else if (len>col+1)
 		return CHARSET_UTF8N;
 
