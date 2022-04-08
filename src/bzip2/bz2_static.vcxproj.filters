@@ -1,0 +1,23 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="16.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="$(ProjectDir)\bzip2\blocksort.c" />
+    <ClCompile Include="$(ProjectDir)\bzip2\huffman.c" />
+    <ClCompile Include="$(ProjectDir)\bzip2\crctable.c" />
+    <ClCompile Include="$(ProjectDir)\bzip2\randtable.c" />
+    <ClCompile Include="$(ProjectDir)\bzip2\compress.c" />
+    <ClCompile Include="$(ProjectDir)\bzip2\decompress.c" />
+    <ClCompile Include="$(ProjectDir)\bzip2\bzlib.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="$(ProjectDir)\bzip2\bzlib_private.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{FCF7C5FC-5296-3A4C-8977-74D1FE4D8E68}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{7A80D7FB-D2EF-373E-BD45-313D83457A8E}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>
