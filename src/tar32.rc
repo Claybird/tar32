@@ -13,13 +13,11 @@
 #undef APSTUDIO_READONLY_SYMBOLS
 
 /////////////////////////////////////////////////////////////////////////////
-// 日本語 resources
+// 日本語 (日本) resources
 
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_JPN)
-#ifdef _WIN32
 LANGUAGE LANG_JAPANESE, SUBLANG_DEFAULT
 #pragma code_page(932)
-#endif //_WIN32
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -27,8 +25,8 @@ LANGUAGE LANG_JAPANESE, SUBLANG_DEFAULT
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 2,42,0,1
- PRODUCTVERSION 2,42,0,1
+ FILEVERSION 2,43,0,1
+ PRODUCTVERSION 2,43,0,1
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -45,12 +43,12 @@ BEGIN
         BEGIN
             VALUE "CompanyName", " "
             VALUE "FileDescription", "tar32"
-            VALUE "FileVersion", "2, 42, 0, 1"
+            VALUE "FileVersion", "2.43.0.1"
             VALUE "InternalName", "tar32"
             VALUE "LegalCopyright", "Copyright (C) 1999 Yoshioka Tsuneo URL: http://openlab.ring.gr.jp/tsuneo/tar32/"
             VALUE "OriginalFilename", "tar32.dll"
             VALUE "ProductName", "  tar32"
-            VALUE "ProductVersion", "2, 42, 0, 1"
+            VALUE "ProductVersion", "2.43.0.1"
         END
     END
     BLOCK "VarFileInfo"
@@ -73,7 +71,7 @@ END
 
 2 TEXTINCLUDE 
 BEGIN
-    "#include ""afxres.h""\r\n"
+    "#include ""winres.h""\r\n"
     "\0"
 END
 
@@ -91,7 +89,7 @@ END
 // Dialog
 //
 
-IDD_CONFIG DIALOG  0, 0, 187, 95
+IDD_CONFIG DIALOG 0, 0, 187, 95
 STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "TAR32.DLL Config Dialog"
 FONT 9, "ＭＳ Ｐゴシック"
@@ -132,7 +130,7 @@ END
 //
 
 #ifdef APSTUDIO_INVOKED
-GUIDELINES DESIGNINFO 
+GUIDELINES DESIGNINFO
 BEGIN
     IDD_CONFIG, DIALOG
     BEGIN
@@ -161,7 +159,7 @@ BEGIN
 END
 #endif    // APSTUDIO_INVOKED
 
-#endif    // 日本語 resources
+#endif    // 日本語 (日本) resources
 /////////////////////////////////////////////////////////////////////////////
 
 

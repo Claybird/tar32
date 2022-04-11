@@ -396,3 +396,10 @@
 
 	by Claybird(claybird.without.wing@gmail.com)
 
+2022/04/11 Ver.2.43
+	・zlibを1.2.12に更新
+	・bzip2を1.0.7(bf905ea2251191ff9911ae7ec0cfc35d41f9f7f6)に更新
+	・xzutilsをv5.2.5に更新
+
+	by Claybird(claybird.without.wing@gmail.com)
+
