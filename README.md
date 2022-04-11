@@ -39,7 +39,10 @@ Windows 10以降で動作を確認しています。それ以前のOSでも動�
 ### アプリケーション開発者
 
  - 基本的なAPIの使い方はUNLHA32.DLLとほぼ同じです。UNLHA32.DLLのドキュメントを参考にしてください。
- - tar32.dllを使用した新規アプリケーションの開発はお勧めしません。
 
 # 開発について
+
 このレポジトリは http://openlab.ring.gr.jp/tsuneo/tar32/ から派生したものです。gitのsubmodule機能を使用してライブラリ更新を容易にするため、github上にforkさせました。
+
+# License
+Public Domain
