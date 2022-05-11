@@ -6,3 +6,7 @@
 	path = src/lzma/xzutils
 	url = https://git.tukaani.org/xz.git
 	branch = v5.2
+[submodule "src/bzip2/bzip2"]
+	path = src/bzip2/bzip2
+	url = git://sourceware.org/git/bzip2.git
+	branch = master
