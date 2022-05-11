@@ -2,10 +2,6 @@
 	path = src/zlib/zlib
 	url = https://github.com/madler/zlib.git
 	branch = master
-[submodule "src/bzip2/bzip2"]
-	path = src/bzip2/bzip2
-	url = https://gitlab.com/federicomenaquintero/bzip2.git
-	branch = master
 [submodule "src/lzma/xzutils"]
 	path = src/lzma/xzutils
 	url = https://git.tukaani.org/xz.git
