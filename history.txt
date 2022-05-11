@@ -403,3 +403,8 @@
 
 	by Claybird(claybird.without.wing@gmail.com)
 
+2022/05/11 Ver.2.44
+	・bzip2の作成/展開に失敗していた問題を修正
+	・bzip2を1.0.8に更新
+
+	by Claybird(claybird.without.wing@gmail.com)
