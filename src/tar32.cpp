@@ -544,7 +544,7 @@ bool CTar32::extract(const char *fname_extract_to)
 	return true;
 }
 
-bool CTar32::addheader(const CTar32FileStatus &stat)
+bool CTar32::addheader(const CTar32FileStatus &stat, bool store_in_utf8)
 {
 	int blocksize = 1;
 	if(m_archive_type == ARCHIVETYPE_TAR 
@@ -560,13 +560,16 @@ bool CTar32::addheader(const CTar32FileStatus &stat)
 			memset(pblock, 0, sizeof(*pblock));
 			const CTar32FileStatus *p = &stat;
 			std::string fname = p->filename;
+			if (store_in_utf8) {
+				fname = CConvertCharsetHelper::getInstance().sjis_to_utf8(p->filename);	//UTF-8
+			}
 
 			if(fname.length() >= sizeof(pblock->dbuf.name)/*100*/){
 				CTar32FileStatus tmpstat = stat;
 				tmpstat.filename = "././@LongLink";
 				tmpstat.typeflag = LONGLINK;
 				tmpstat.original_size = fname.length();
-				bool bret = addheader(tmpstat);
+				bool bret = addheader(tmpstat, false);	//"././@LongLink" is compatible with utf-8
 				char filename[2000];
 				strcpy(filename, fname.c_str());
 				size64 writesize = ((fname.length() - 1)/512+1)*512;

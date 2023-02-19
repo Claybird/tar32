@@ -53,6 +53,7 @@ CTar32CmdInfo::CTar32CmdInfo(char *s, int len) : output(s,len), exception("",0){
 	b_confirm_overwrite = false;
 	b_sort_by_path=false;
 	b_sort_by_ext=false;
+	b_store_in_utf8 = true;
 
 	b_archive_tar = true;
 	archive_type = ARCHIVETYPE_NORMAL;
@@ -101,6 +102,7 @@ static void cmd_usage(CTar32CmdInfo &info)
 		<< "                       charset is detected automatically.\n"
 		<< "       --sort-by-ext=[0|1](0)  sort files by extension while making an archive.\n"
 		<< "       --sort-by-path=[0|1](0)  sort files by path while making an archive.\n"
+		<< "       --store-in-utf8=[0|1](1) store filename in utf-8 while making an archive.\n"
 		<< "    ignore option,command: a,v,V,I,i,f,e,g,S,A,b,N,U,--xxxx=xxx\n"
 		;
 }
@@ -197,8 +199,10 @@ void tar_cmd_parser(LPCSTR szCmdLine,CTar32CmdInfo &cmdinfo)
 					else cmdinfo.archive_charset = CHARSET_DONTCARE;
 				}else if(key == "sort-by-ext"){
 					cmdinfo.b_sort_by_ext = ((val=="") ? true : (0!=atoi(val.c_str())));
-				}else if(key == "sort-by-path"){
-					cmdinfo.b_sort_by_path = ((val=="") ? true : (0!=atoi(val.c_str())));
+				} else if (key == "sort-by-path") {
+					cmdinfo.b_sort_by_path = ((val == "") ? true : (0 != atoi(val.c_str())));
+				} else if (key == "store-in-utf8") {
+					cmdinfo.b_store_in_utf8 = ((val == "") ? true : (0 != atoi(val.c_str())));
 				}else{
 					/* igonore */;
 				}
@@ -897,7 +901,7 @@ static void cmd_create(CTar32CmdInfo &cmdinfo)
 				}
 			}
 			stat.filename = filepath_to_store;
-			bret = tarfile.addheader(stat);
+			bret = tarfile.addheader(stat, cmdinfo.b_store_in_utf8);
 			// bret = tarfile.addbody(file_external2.c_str());
 			bool bret2 = add_file(cmdinfo,&tarfile,file_entry.fullPath.c_str(),buffer);
 			filenum ++;

@@ -102,7 +102,7 @@ public:
 	bool readskip();	// service function(not neccesary)
 	bool extract(const char *file=NULL);		// service function(not neccesary)
 
-	bool addheader(const CTar32FileStatus &stat);
+	bool addheader(const CTar32FileStatus &stat, bool store_in_utf8);
 	bool addbody(const char *file);	// survice function(not neccesary)
 
 	CTar32FileStatus m_currentfile_status;

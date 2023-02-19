@@ -529,6 +529,39 @@ std::string CConvertCharsetHelper::eucjp_to_sjis(const char* lpcByte,size_t leng
 	return strRet;
 }
 
+
+std::string CConvertCharsetHelper::sjis_to_utf8(const std::string& sjis)
+{
+	std::wstring utf16str;
+	sjis_to_utf16(utf16str, sjis.c_str(), sjis.length());
+	std::string strRet;
+	utf16_to_utf8(strRet, utf16str.c_str());
+	return strRet;
+}
+
+bool CConvertCharsetHelper::sjis_to_utf16(std::wstring& strRet, const char* lpcByte, size_t length)
+{
+	std::vector<wchar_t> buf(::MultiByteToWideChar(CP_ACP, 0, (LPCSTR)lpcByte, length, NULL, 0) + 1);	//バッファ確保
+	//変換
+	if (!::MultiByteToWideChar(CP_ACP, 0, (LPCSTR)lpcByte, length, &buf[0], buf.size())) {
+		return false;
+	}
+	strRet = (LPCWSTR)&buf[0];
+	return true;
+}
+
+bool CConvertCharsetHelper::utf16_to_utf8(std::string& strRet, LPCWSTR lpcStr)
+{
+	DWORD dwFlags = WC_DISCARDNS | WC_COMPOSITECHECK | WC_DEFAULTCHAR | WC_NO_BEST_FIT_CHARS;
+	std::vector<char> buf(::WideCharToMultiByte(CP_UTF8, dwFlags, lpcStr, -1, NULL, 0, "_", NULL) + 1);	//バッファ確保
+	//変換
+	if (!::WideCharToMultiByte(CP_UTF8, dwFlags, lpcStr, -1, &buf[0], buf.size(), "_", NULL)) {
+		return false;
+	}
+	strRet = &buf[0];
+	return true;
+}
+
 //----
 //parses PAX extended header
 //pax file type flags are: 'x' and 'g'

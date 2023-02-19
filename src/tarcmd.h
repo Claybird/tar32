@@ -29,6 +29,7 @@ public:
 	bool b_print;
 	bool b_sort_by_path;
 	bool b_sort_by_ext;
+	bool b_store_in_utf8;
 
 	bool b_confirm_overwrite;	//ã‘‚«Šm”F(‰ğ“€)
 

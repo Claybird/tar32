@@ -64,6 +64,10 @@ public:
 	bool eucjp_to_utf16(std::wstring &strRet,const char* lpcByte,size_t length);
 	bool eucjp_to_sjis(std::string &strRet,const char* lpcByte,size_t length);
 	std::string eucjp_to_sjis(const char* lpcByte,size_t length);
+
+	std::string sjis_to_utf8(const std::string &sjis);
+	bool sjis_to_utf16(std::wstring& strRet, const char* lpcByte, size_t length);
+	bool utf16_to_utf8(std::string& strRet, LPCWSTR lpcStr);
 };
 
 #ifndef CP_EUCJP
