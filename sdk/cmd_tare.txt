@@ -94,6 +94,9 @@ OPTION:
     --sort-by-path=[0|1](0)
         sort files by path while making an archive.
 
+    --store-in-utf8=[0|1](1)
+        store filename in utf-8 while making an archive. Note that this DLL is not yet fully UNICODE capable.
+
 [Examples]
 
         tar -cvf foo.tar *.c *.h makefile
