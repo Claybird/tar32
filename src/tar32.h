@@ -78,6 +78,7 @@ struct CTar32FileStatus{
 		original_size = st.st_size;
 		if((st.st_mode & _S_IFMT) == _S_IFDIR){
 			typeflag = DIRTYPE;
+			original_size = 0;
 		}
 
 		return true;
