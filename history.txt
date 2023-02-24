@@ -409,9 +409,13 @@
 
 	by Claybird(claybird.without.wing@gmail.com)
 
-2023/02/19 Ver.2.45
+2023/02/24 Ver.2.45
 	・アーカイブ作成時のデフォルト文字コードをUTF-8にした
 	  →"--store-in-utf8=0"で従来動作に変更可能
 	  →内部的にはCP932のままなので、限定的な機能向上
+	・フォルダを含むアーカイブの作成に失敗していた問題を修正
 
 	by Claybird(claybird.without.wing@gmail.com)
+
+
+ 
