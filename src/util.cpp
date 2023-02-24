@@ -83,7 +83,7 @@ std::string get_filename(const char *pathname)
 bool is_absolute_pathname(const char *fname)
 {
 	if(*fname == '\\'){return true;}
-	if(isalpha(*fname) && fname[1] == ':' && fname[2] == '\\'){return true;}
+	if(isalpha((unsigned char)*fname) && fname[1] == ':' && fname[2] == '\\'){return true;}
 	return false;
 }
 std::string make_pathname(const char *dirname_, const char *filename_)
