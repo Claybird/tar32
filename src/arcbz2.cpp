@@ -38,6 +38,8 @@
 CTarArcFile_BZip2::CTarArcFile_BZip2()
 {
 	m_pbzFile = NULL;
+	m_file = NULL;
+	isWriteMode = false;
 }
 CTarArcFile_BZip2::~CTarArcFile_BZip2()
 {
@@ -45,31 +47,96 @@ CTarArcFile_BZip2::~CTarArcFile_BZip2()
 }
 bool CTarArcFile_BZip2::open(const char *arcfile, const char *mode, int compress_level)
 {
+	close();
 	m_arcfile = arcfile;
-	char buf[16];
 	bool bReadMode=(NULL!=strchr(mode,'r'));
-	if(!bReadMode){
-		_snprintf(buf,COUNTOF(buf),"%s%d",mode,compress_level);
-		mode=buf;	//ÉÇÅ[ÉhÇÃï∂éöóÒÇÇ∑ÇËë÷Ç¶
+	int error = BZ_OK;
+	if (bReadMode) {
+		m_file = fopen(arcfile, "rb");
+		if (m_file) {
+			m_pbzFile = BZ2_bzReadOpen(&error, m_file, 0, 0, NULL, 0);
+		}
+		isWriteMode = false;
+	}else{
+		m_file = fopen(arcfile, "wb");
+		if (m_file) {
+			int workFactor = 30;
+			m_pbzFile = BZ2_bzWriteOpen(&error, m_file, compress_level, 0, workFactor);
+		}
+		isWriteMode = true;
 	}
-	BZFILE * f = BZ2_bzopen(arcfile, mode);
-	m_pbzFile = f;
-	return (f != NULL);
+	return (m_pbzFile != NULL);
 }
+
+static bool myfeof(FILE* f)
+{
+	int c = fgetc(f);
+	if (c == EOF) return true;
+	ungetc(c, f);
+	return false;
+}
+
 size64 CTarArcFile_BZip2::read(void *buf, size64 size)
 {
-	return BZ2_bzread(m_pbzFile, buf, (int)size);	//TODO:size lost
+	size64 read = 0;
+	while (true) {
+		int error = BZ_OK;
+		read += BZ2_bzRead(&error, m_pbzFile, ((unsigned char*)buf)+read, (int)(size-read));
+		if (error == BZ_OK) {
+			return read;
+		} else if (error == BZ_STREAM_END) {
+			if (ferror(m_file))return read;	//error
+
+			void* unusedTmpV;
+			int nUnused;
+			BZ2_bzReadGetUnused(&error, m_pbzFile, &unusedTmpV, &nUnused);
+			if (error != BZ_OK) return read;	//error
+			unsigned char* unusedTmp = (unsigned char*)unusedTmpV;
+			unsigned char unused[BZ_MAX_UNUSED];
+			for (int i = 0; i < nUnused; i++) unused[i] = unusedTmp[i];
+
+			BZ2_bzReadClose(&error, m_pbzFile);
+			if (error != BZ_OK) return read;	//error
+
+			if (nUnused == 0 && myfeof(m_file)) return read;
+
+			m_pbzFile = BZ2_bzReadOpen(&error, m_file, 0, 0, unused, nUnused);
+			if (error != BZ_OK) return read;	//error
+
+			if (read >= size) {
+				return read;
+			}
+		} else {
+			//error
+			return read;
+		}
+	}
 }
 size64 CTarArcFile_BZip2::write(void *buf, size64 size)
 {
-	return BZ2_bzwrite(m_pbzFile, buf, (int)size);	//TODO:size lost
+	int error = BZ_OK;
+	BZ2_bzWrite(&error, m_pbzFile, buf, (int)size);
+	return size;
 }
 void CTarArcFile_BZip2::close()
 {
 	if(m_pbzFile){
-		BZ2_bzclose(m_pbzFile);
+		int error = BZ_OK;
+		if (isWriteMode) {
+			BZ2_bzWriteClose(&error, m_pbzFile, 0, NULL, NULL);
+			if (error != BZ_OK) {
+				BZ2_bzWriteClose(&error, m_pbzFile, 1, NULL, NULL);
+			}
+		} else {
+			BZ2_bzReadClose(&error, m_pbzFile);
+		}
 		m_pbzFile = NULL;
 	}
+	if (m_file) {
+		fclose(m_file);
+		m_file = NULL;
+	}
+	isWriteMode = false;
 }
 std::string CTarArcFile_BZip2::get_orig_filename(){
 	if(! m_orig_filename.empty()){return m_orig_filename;}

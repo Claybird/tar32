@@ -47,4 +47,6 @@ public:
 	virtual std::string get_orig_filename();
 private:
 	BZFILE *m_pbzFile;
+	FILE *m_file;
+	bool isWriteMode;
 };
