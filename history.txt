@@ -417,5 +417,9 @@
 
 	by Claybird(claybird.without.wing@gmail.com)
 
+2023/05/17 Ver.2.46RC
+	・pbzip2等で生成されるマルチストリームbzip2アーカイブに対応
+
+	by Claybird(claybird.without.wing@gmail.com)
 
  
