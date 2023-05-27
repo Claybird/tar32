@@ -96,6 +96,7 @@ size64 CTarArcFile_BZip2::read(void *buf, size64 size)
 			for (int i = 0; i < nUnused; i++) unused[i] = unusedTmp[i];
 
 			BZ2_bzReadClose(&error, m_pbzFile);
+			m_pbzFile = NULL;
 			if (error != BZ_OK) return read;	//error
 
 			if (nUnused == 0 && myfeof(m_file)) return read;
