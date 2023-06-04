@@ -422,7 +422,7 @@
 
 	by Claybird(claybird.without.wing@gmail.com)
 
-2023/05/27 Ver.2.47
+2023/06/04 Ver.2.47
 	・ファイルハンドルを二重に閉じて異常終了することがある問題を修正
 
 	by Claybird(claybird.without.wing@gmail.com)
