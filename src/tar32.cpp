@@ -721,3 +721,82 @@ bool CTar32InternalFile::close(){
 	m_pfile = NULL;
 	return bret;
 }
+
+
+#ifdef UNIT_TEST
+TEST(CTar32, list_tar)
+{
+	CTar32 tarfile;
+	bool bret;
+	bret = tarfile.open((PROJECT_DIR()+"/test/test_2099.tar").c_str(), "rb", -1, ARCHIVETYPE_AUTO, CHARSET_DONTCARE);
+	EXPECT_TRUE(bret);
+	CTar32FileStatus stat;
+
+	while (1) {
+		bret = tarfile.readdir(&stat);
+		if (!bret) { break; }
+		bret = tarfile.readskip();
+		if (!bret) { break; }
+		if ((stat.mode & _S_IFMT) == _S_IFDIR) {
+			EXPECT_EQ("test_2099/", stat.filename);
+		} else {
+			if (stat.filename.find("pch.txt") != std::string::npos) {
+				EXPECT_EQ(48, stat.original_size);
+			} else {
+				EXPECT_EQ(44,stat.original_size);
+			}
+		}
+	}
+}
+
+TEST(CTar32, list_tar_gz)
+{
+	CTar32 tarfile;
+	bool bret;
+	bret = tarfile.open((PROJECT_DIR() + "/test/test_2099.tgz").c_str(), "rb", -1, ARCHIVETYPE_AUTO, CHARSET_DONTCARE);
+	EXPECT_TRUE(bret);
+	CTar32FileStatus stat;
+
+	while (1) {
+		bret = tarfile.readdir(&stat);
+		if (!bret) { break; }
+		bret = tarfile.readskip();
+		if (!bret) { break; }
+		if ((stat.mode & _S_IFMT) == _S_IFDIR) {
+			EXPECT_EQ("test_2099/", stat.filename);
+		} else {
+			if (stat.filename.find("pch.txt") != std::string::npos) {
+				EXPECT_EQ(48, stat.original_size);
+			} else {
+				EXPECT_EQ(44, stat.original_size);
+			}
+		}
+	}
+}
+
+TEST(CTar32, list_tar_bz)
+{
+	CTar32 tarfile;
+	bool bret;
+	bret = tarfile.open((PROJECT_DIR() + "/test/test_2099.tbz").c_str(), "rb", -1, ARCHIVETYPE_AUTO, CHARSET_DONTCARE);
+	EXPECT_TRUE(bret);
+	CTar32FileStatus stat;
+
+	while (1) {
+		bret = tarfile.readdir(&stat);
+		if (!bret) { break; }
+		bret = tarfile.readskip();
+		if (!bret) { break; }
+		if ((stat.mode & _S_IFMT) == _S_IFDIR) {
+			EXPECT_EQ("test_2099/", stat.filename);
+		} else {
+			if (stat.filename.find("pch.txt") != std::string::npos) {
+				EXPECT_EQ(48, stat.original_size);
+			} else {
+				EXPECT_EQ(44, stat.original_size);
+			}
+		}
+	}
+}
+#endif
+

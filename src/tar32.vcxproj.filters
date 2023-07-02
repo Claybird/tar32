@@ -145,6 +145,7 @@
     <None Include="Tar32.def">
       <Filter>Resource Files</Filter>
     </None>
+    <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="tar32.rc">

@@ -151,3 +151,10 @@ bool GetARCMethod(int archive_type, char *buf, int buf_len)
 	}
 	return true;
 }
+
+#ifdef UNIT_TEST
+int wmain(int argc, wchar_t* argv[], wchar_t* envp[]) {
+	::testing::InitGoogleTest(&argc, argv);
+	return RUN_ALL_TESTS();
+}
+#endif
