@@ -6,6 +6,18 @@ TEST(dll, version)
 	ASSERT_EQ(247, TarGetVersion());
 }
 
+TEST(dll, TarGetFileCount)
+{
+	EXPECT_EQ(2099 + 1, TarGetFileCount((PROJECT_DIR() + "/test_2099.tar").c_str()));
+}
+
+TEST(dll, TarGetArchiveType)
+{
+	EXPECT_EQ(ARCHIVETYPE_TAR, TarGetArchiveType((PROJECT_DIR() + "/test_2099.tar").c_str()));
+	EXPECT_EQ(ARCHIVETYPE_TARGZ, TarGetArchiveType((PROJECT_DIR() + "/test_2099.tgz").c_str()));
+	EXPECT_EQ(ARCHIVETYPE_TARBZ2, TarGetArchiveType((PROJECT_DIR() + "/test_2099.tbz").c_str()));
+}
+
 TEST(dll, list_tar)
 {
 	HARC hArc = TarOpenArchive(nullptr, (PROJECT_DIR() + "/test_2099.tar").c_str(), 0);
@@ -88,4 +100,30 @@ TEST(dll, list_tar_bz)
 	EXPECT_EQ(2099 + 1, count);
 
 	TarCloseArchive(hArc);
+}
+
+TEST(dll, list_multistream_bz)
+{
+	auto tempDir = std::filesystem::temp_directory_path() / "tar_unit_test";
+	std::filesystem::create_directories(tempDir);
+	char cwd[_MAX_PATH] = {};
+	_getcwd(cwd, _MAX_PATH);
+	{
+		_chdir(tempDir.string().c_str());
+		std::string cmd = "x " + (PROJECT_DIR() + "/multistream.txt.bz2");
+		char output[256];
+		int ret = Tar(nullptr, cmd.c_str(), output, 256);
+		ASSERT_EQ(0, ret);
+
+		FILE* fp = fopen("multistream.txt", "r");
+		ASSERT_NE(nullptr, fp);
+		char content[256];
+		fgets(content, 256, fp);
+		fclose(fp);
+		EXPECT_STREQ("helloworld", content);
+	}
+	_chdir(cwd);
+
+	std::filesystem::remove_all(tempDir);
+	EXPECT_FALSE(std::filesystem::exists(tempDir));
 }
