@@ -47,15 +47,4 @@
 typedef __int64 size64;
 #endif//size64
 
-#ifdef UNIT_TEST
-#include <gtest/gtest.h>
-inline std::string PROJECT_DIR() {
-	char path[_MAX_PATH] = {};
-	strncpy(path, __FILE__, _MAX_PATH);
-	PathRemoveFileSpec(path);
-	return path;
-}
-
-#endif
-
 #endif
