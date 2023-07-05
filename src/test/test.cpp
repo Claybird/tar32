@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 #include "tar32api.h"
 
 TEST(dll, version)
@@ -182,4 +182,22 @@ TEST(dll, list_multistream_bz)
 
 	std::filesystem::remove_all(tempDir);
 	EXPECT_FALSE(std::filesystem::exists(tempDir));
+}
+
+
+TEST(dll, list_tar_utf8)
+{
+	HARC hArc = TarOpenArchive(nullptr, (PROJECT_DIR() + "/utf8.tar").c_str(), 0);
+	ASSERT_NE((HARC)0, hArc);
+
+	INDIVIDUALINFO info = {};
+	int ret = TarFindFirst(hArc, "*.*", &info);
+	EXPECT_EQ(0, ret);
+	for (; ret == 0; ret = TarFindNext(hArc, &info)) {
+		int attrib = TarGetAttribute(hArc);
+		EXPECT_FALSE(attrib & FA_DIREC);
+		EXPECT_STREQ("日本語.txt", info.szFileName);
+	}
+
+	TarCloseArchive(hArc);
 }
