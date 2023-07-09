@@ -2,6 +2,8 @@
 	tar32.cpp
 		TAR32.DLL API Implementation
 		by Yoshioka Tsuneo(QWF00133@nifty.ne.jp)
+
+		Modified by ICHIMARU Takeshi(ayakawa.m@gmail.com)
 */
 /*	
 	このファイルの利用条件：
@@ -98,7 +100,9 @@ BOOL WINAPI _export TarSetCursorInterval(const WORD _Interval){s_CursorInterval;
 
 extern "C" int WINAPI _export Tar(const HWND _hwnd, LPCSTR _szCmdLine,LPSTR _szOutput, const DWORD _dwSize){
 	int ret;
+#ifdef _DEBUG
 	_CrtMemState memstate;
+#endif
 	_CrtMemCheckpoint(&memstate);
 
 	ret = tar_cmd(_hwnd,_szCmdLine,_szOutput,_dwSize);
@@ -149,12 +153,20 @@ extern "C" BOOL WINAPI _export TarConfigDialog(const HWND _hwnd, LPSTR _lpszComB
 	strftime(tistr,128,"%Y/%m/%d %H:%M:%S",localtime(&ti));
 
 	char msg[1024];
+#ifdef _WIN64
+	sprintf(msg, "TAR64.DLL Configuration.\n"
+#else
 	sprintf(msg, "TAR32.DLL Configuration.\n"
+#endif
 			"ModuleFileName: %s\n"
 			"TarGetVersion(): %d.%02d\n"
 			"IMAGE_FILE_HEADER/TimeStamp: %d(%s)\n"
-			, fname, ver/100,ver%100, ti, tistr);
+			, fname, ver/100,ver%100, (int)ti, tistr);
+#ifdef _WIN64
+	MessageBox(_hwnd, msg, "TAR64.DLL Configuration", 0);
+#else
 	MessageBox(_hwnd, msg, "TAR32.DLL Configuration",0);
+#endif
 	// MessageBox(_hwnd, "There is no configuration item now.", "TAR32.DLL Configuration",0);
 	return FALSE;
 }
@@ -198,7 +210,7 @@ extern "C" HARC WINAPI _export TarOpenArchive2(const HWND _hwnd, LPCSTR _szFileN
 	}
 
 	CTar32Find *pTar32Find = new CTar32Find;
-	bool bret = pTar32Find->tar32.open(_szFileName,"rb",-1,ARCHIVETYPE_AUTO,cmdinfo.archive_charset);
+	bool bret = pTar32Find->tar32.open(_szFileName,"rb",-1,ARCHIVETYPE_AUTO,cmdinfo.archive_charset,cmdinfo.zstd_c_thread_num);
 	if(!bret){delete pTar32Find;return 0;}
 	return (HARC)pTar32Find;
 }
@@ -360,19 +372,85 @@ extern "C" DWORD WINAPI _export TarGetWriteTime(HARC _harc)
 {
 	CTar32 *pTar32 = HARC2PTAR32(_harc);
 	CTar32FileStatus *pstat = &(pTar32->m_currentfile_status);
-	return pstat->mtime;
+	return (DWORD)pstat->mtime;
+}
+extern "C" BOOL WINAPI _export TarGetWriteTime64(HARC _harc, __int64* _lpllLastWriteTime)
+{
+	if (_lpllLastWriteTime) {
+		CTar32* pTar32 = HARC2PTAR32(_harc);
+		CTar32FileStatus* pstat = &(pTar32->m_currentfile_status);
+		*_lpllLastWriteTime= pstat->mtime;
+		return TRUE;
+	}
+	else
+		return FALSE;
+}
+extern "C" BOOL WINAPI _export TarGetWriteTimeEx(HARC _harc, FILETIME * _lpllLastWriteTime)
+{
+	if (_lpllLastWriteTime) {
+		__int64 t;
+		TarGetWriteTime64(_harc, &t);
+		TimetToFileTime((time_t)t, _lpllLastWriteTime);
+		return TRUE;
+	}
+	else
+		return FALSE;
 }
 extern "C" DWORD WINAPI _export TarGetAccessTime(HARC _harc)
 {
 	CTar32 *pTar32 = HARC2PTAR32(_harc);
 	CTar32FileStatus *pstat = &(pTar32->m_currentfile_status);
-	return pstat->atime;
+	return (DWORD)pstat->atime;
+}
+extern "C" BOOL WINAPI _export TarGetAccessTime64(HARC _harc, __int64* _lpllAccessTime)
+{
+	if (_lpllAccessTime) {
+		CTar32* pTar32 = HARC2PTAR32(_harc);
+		CTar32FileStatus* pstat = &(pTar32->m_currentfile_status);
+		*_lpllAccessTime = pstat->atime;
+		return TRUE;
+	}
+	else
+		return FALSE;
+}
+extern "C" BOOL WINAPI _export TarGetAccessTimeEx(HARC _harc, FILETIME * _lpllAccessTime)
+{
+	if (_lpllAccessTime) {
+		__int64 t;
+		TarGetAccessTime64(_harc, &t);
+		TimetToFileTime((time_t)t, _lpllAccessTime);
+		return TRUE;
+	}
+	else
+		return FALSE;
 }
 extern "C" DWORD WINAPI _export TarGetCreateTime(HARC _harc)
 {
 	CTar32 *pTar32 = HARC2PTAR32(_harc);
 	CTar32FileStatus *pstat = &(pTar32->m_currentfile_status);
-	return pstat->ctime;
+	return (DWORD)pstat->ctime;
+}
+extern "C" BOOL WINAPI _export TarGetCreateTime64(HARC _harc, __int64* _lpllCreateTime)
+{
+	if (_lpllCreateTime) {
+		CTar32* pTar32 = HARC2PTAR32(_harc);
+		CTar32FileStatus* pstat = &(pTar32->m_currentfile_status);
+		*_lpllCreateTime = pstat->ctime;
+		return TRUE;
+	}
+	else
+		return FALSE;
+}
+extern "C" BOOL WINAPI _export TarGetCreateTimeEx(HARC _harc, FILETIME * _lpllCreateTime)
+{
+	if (_lpllCreateTime) {
+		__int64 t;
+		TarGetCreateTime64(_harc, &t);
+		TimetToFileTime((time_t)t, _lpllCreateTime);
+		return TRUE;
+	}
+	else
+		return FALSE;
 }
 
 extern "C" DWORD WINAPI _export TarGetCRC(HARC _harc)
@@ -427,7 +505,9 @@ extern "C" BOOL WINAPI _export TarKillOwnerWindowEx(HWND _hwnd)
 extern "C" int WINAPI _export TarGetArchiveType(LPCSTR _szFileName)
 {
 	int ret;
+#ifdef _DEBUG
 	_CrtMemState memstate;
+#endif
 	_CrtMemCheckpoint(&memstate);
 
 	ret =  CTar32::s_get_archive_type(_szFileName);
@@ -493,9 +573,16 @@ extern "C" BOOL WINAPI _export TarQueryFunctionList(const int _iFunction)
 	case ISARC_GET_WRITE_TIME:
 	case ISARC_GET_CREATE_TIME:
 	case ISARC_GET_ACCESS_TIME:
+	case ISARC_GET_WRITE_TIME_EX:
+	case ISARC_GET_CREATE_TIME_EX:
+	case ISARC_GET_ACCESS_TIME_EX:
 
 	case ISARC_GET_ORIGINAL_SIZE_EX:
 	case ISARC_GET_COMPRESSED_SIZE_EX:
+
+	case ISARC_GET_WRITE_TIME_64:
+	case ISARC_GET_CREATE_TIME_64:
+	case ISARC_GET_ACCESS_TIME_64:
 
 		return TRUE;
 	default:

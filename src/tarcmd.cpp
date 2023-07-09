@@ -2,6 +2,8 @@
 	tarcmd.cpp
 		Tar() API implementation class.
 		by Yoshioka Tsuneo(QWF00133@nifty.ne.jp)
+
+		Modified by ICHIMARU Takeshi(ayakawa.m@gmail.com)
 */
 /*	
 	このファイルの利用条件：
@@ -42,6 +44,13 @@
 #include "fast_stl.h"
 #include "tarcmd.h"
 
+#include "zstd.h"
+#include "arczstd.h"
+
+// Zstandardで別スレッドを使用しての圧縮を有効にします。但し、速度はほぼ変わらず＆メモリ大量消費
+// なのでお勧めはしません
+//#define USE_OTHER_THREADS_WITH_ZSTD
+
 CTar32CmdInfo::CTar32CmdInfo(char *s, int len) : output(s,len), exception("",0){
 	hTar32StatusDialog = NULL;
 	b_use_directory = true;
@@ -59,6 +68,9 @@ CTar32CmdInfo::CTar32CmdInfo(char *s, int len) : output(s,len), exception("",0){
 	archive_type = ARCHIVETYPE_NORMAL;
 	compress_level = 0;
 	
+	b_zstd_ultra = false;
+	zstd_c_thread_num = ZSTD_DEFAULT_THREADS_NUM;
+
 	wm_main_thread_end = 0;
 	hParentWnd = NULL;
 	idMessageThread = 0;
@@ -74,7 +86,11 @@ static void cmd_list(CTar32CmdInfo &cmdinfo);
 static void cmd_usage(CTar32CmdInfo &info)
 {
 	info.output 
+#ifdef _WIN64
+		<< "usage: TAR64.DLL <command> <option> archive.{tar,tar.gz,tar.bz2} filenames...\n"
+#else
 		<< "usage: TAR32.DLL <command> <option> archive.{tar,tar.gz,tar.bz2} filenames...\n"
+#endif
 		<< "    command:\n"
 		<< "       EXTRACT: -x <files.tgz> [files...] \n"
 		<< "       CREATE:  -c <files.tgz> [files...] \n"
@@ -84,8 +100,8 @@ static void cmd_usage(CTar32CmdInfo &info)
 		<< "       -z[N]     compress by gzip(.tar.gz) with level N(default:6)\n"
 		<< "       -B[N] -j[N]  compress by bzip2(.tar.bz2) with level N(default:9)\n"
 		<< "       -J[N]        compress by xz(.tar.xz) with level N(default:6)\n"
-		<< "       -G        not make tar archive.(.tar/.tar.gz/.tar.bz2)\n"
-		<< "                 make compress only archive.(.gz/.bz2)\n"
+		<< "       -G        not make tar archive.(.tar/.tar.gz/.tar.bz2/.tar.zstd)\n"
+		<< "                 make compress only archive.(.gz/.bz2/.zstd)\n"
 		// << "       -Z[N]     compress by compress(LZW) (NOT IMPLEMENTED)\n"
 		<< "       --use-directory=[0|1](1)  effective directory name\n"
 		<< "       --absolute-paths=[0|1](0)  extract absolute paths(/, .., xx:)\n"
@@ -95,6 +111,11 @@ static void cmd_usage(CTar32CmdInfo &info)
 		<< "       --bzip2=[N]     compress by bzip2 with level N(default:9)\n"
 		<< "       --lzma=[N]      compress by lzma with level N(default:6)\n"
 		<< "       --xz=[N]        compress by xz with level N(default:6)\n"
+		<< "       --zstd=[N]      compress by Zstandard with level N(default:3)\n"
+		<< "       --zstd-ultra    enabled level from 20 to 22 for compressing with Zstd\n"
+#ifdef USE_OTHER_THREADS_WITH_ZSTD
+		<< "       --zstd-threads=[N](0)  number of other threads when compressing with Zstd\n"
+#endif
 		<< "       --confirm-overwrite=[0|1](0) ask for confirmation for\n"
 		<< "                                    overwriting existing file\n"
 		<< "       --convert-charset=[none|auto|sjis|eucjp|utf8](auto)\n"
@@ -116,13 +137,18 @@ int tar_cmd(const HWND hwnd, LPCSTR szCmdLine,LPSTR szOutput, const DWORD dwSize
 		tar_cmd_parser(szCmdLine,cmdinfo);
 		ret =  tar_cmd_itr(hwnd, szCmdLine,szOutput,dwSize,cmdinfo);
 	}catch(CTar32Exception &e){
+#ifdef _WIN64
+		cmdinfo.output << "TAR64 Error(0x" << std::hex << e.m_code << "): " << e.m_str << "\n";
+		cmdinfo.output << "Tar((HWND)" << (unsigned __int64)hwnd << ",(LPCSTR)" << szCmdLine << ",,(DWORD)" << (unsigned)dwSize << ")\n";
+#else
 		cmdinfo.output << "TAR32 Error(0x" << std::hex << e.m_code << "): " << e.m_str << "\n";
 		cmdinfo.output << "Tar((HWND)" << (unsigned)hwnd << ",(LPCSTR)" << szCmdLine << ",,(DWORD)" << (unsigned)dwSize << ")\n";
+#endif
 		ret =  e.m_code;
 		cmd_usage(cmdinfo);
 	}
 	// int len = strlen(cmdinfo.output.str());
-	int len = cmdinfo.output.rdbuf()->pcount();
+	int len = (int)cmdinfo.output.rdbuf()->pcount();
 	if(dwSize>0)szOutput[len] = '\0';
 	if(pWriteSize){*pWriteSize = len;}
 	return ret;
@@ -140,6 +166,7 @@ void tar_cmd_parser(LPCSTR szCmdLine,CTar32CmdInfo &cmdinfo)
 	std::vector<std::string>::iterator argi = args.begin();
 	bool option_end = false;
 
+	int tmp_zstd_level = -1;
 	while(argi != args.end()){
 		//string::iterator stri = (*argi).begin();
 		const char *stri = (*argi).c_str();
@@ -147,46 +174,81 @@ void tar_cmd_parser(LPCSTR szCmdLine,CTar32CmdInfo &cmdinfo)
 			if(*stri == '-'){
 				stri++;
 			}
-			if(*stri == '-' && *(stri+1) != '\0'){
+			if (*stri == '-' && *(stri + 1) != '\0') {
 				stri++;
 				const std::string long_option = (*argi).substr(stri - (*argi).c_str());
 				std::string key = long_option;
 				std::string val;
-				int len;
-				if((len = long_option.find('=')) != std::string::npos){
+				std::string::size_type len;
+				if ((len = long_option.find('=')) != std::string::npos) {
 					key = long_option.substr(0, len);
 					val = long_option.substr(len + 1);
 				}
-				if(key == "use-directory"){
-					cmdinfo.b_use_directory = ((val=="") ? true : (0!=atoi(val.c_str())));
-				}else if(key == "absolute-paths"){
-					cmdinfo.b_absolute_paths = ((val=="") ? true : (0!=atoi(val.c_str())));
-				}else if(key == "display-dialog"){
-					cmdinfo.b_display_dialog = ((val=="") ? true : (0!=atoi(val.c_str())));
-				}else if(key == "message-loop"){
-					cmdinfo.b_message_loop = ((val=="") ? true : (0!=atoi(val.c_str())));
-				}else if(key == "inverse-procresult"){
-					cmdinfo.b_inverse_procresult = ((val=="") ? true : (0!=atoi(val.c_str())));
-				}else if(key == "bzip2" || key == "bzip"){
+				if (key == "use-directory") {
+					cmdinfo.b_use_directory = ((val == "") ? true : (0 != atoi(val.c_str())));
+				}
+				else if (key == "absolute-paths") {
+					cmdinfo.b_absolute_paths = ((val == "") ? true : (0 != atoi(val.c_str())));
+				}
+				else if (key == "display-dialog") {
+					cmdinfo.b_display_dialog = ((val == "") ? true : (0 != atoi(val.c_str())));
+				}
+				else if (key == "message-loop") {
+					cmdinfo.b_message_loop = ((val == "") ? true : (0 != atoi(val.c_str())));
+				}
+				else if (key == "inverse-procresult") {
+					cmdinfo.b_inverse_procresult = ((val == "") ? true : (0 != atoi(val.c_str())));
+				}
+				else if (key == "bzip2" || key == "bzip") {
 					cmdinfo.archive_type = ARCHIVETYPE_BZ2;
 					cmdinfo.compress_level = atoi(val.c_str());
-					if(cmdinfo.compress_level<1) cmdinfo.compress_level = 9;
-					if(cmdinfo.compress_level>9) cmdinfo.compress_level = 9;
-				}else if(key == "gzip"){
+					if (cmdinfo.compress_level < 1) cmdinfo.compress_level = 9;
+					if (cmdinfo.compress_level > 9) cmdinfo.compress_level = 9;
+				}
+				else if (key == "gzip") {
 					cmdinfo.archive_type = ARCHIVETYPE_GZ;
 					cmdinfo.compress_level = atoi(val.c_str());
-					if(cmdinfo.compress_level<1) cmdinfo.compress_level = 5;
-					if(cmdinfo.compress_level>9) cmdinfo.compress_level = 5;
-				}else if(key == "lzma"){
+					if (cmdinfo.compress_level < 1) cmdinfo.compress_level = 5;
+					if (cmdinfo.compress_level > 9) cmdinfo.compress_level = 5;
+				}
+				else if (key == "lzma") {
 					cmdinfo.archive_type = ARCHIVETYPE_LZMA;
 					cmdinfo.compress_level = atoi(val.c_str());
-					if(cmdinfo.compress_level<0) cmdinfo.compress_level = 6;
-					if(cmdinfo.compress_level>9) cmdinfo.compress_level = 6;
-				}else if(key == "xz"){
+					if (cmdinfo.compress_level < 0) cmdinfo.compress_level = 6;
+					if (cmdinfo.compress_level > 9) cmdinfo.compress_level = 6;
+				}
+				else if (key == "xz") {
 					cmdinfo.archive_type = ARCHIVETYPE_XZ;
 					cmdinfo.compress_level = atoi(val.c_str());
-					if(cmdinfo.compress_level<0) cmdinfo.compress_level = 6;
-					if(cmdinfo.compress_level>9) cmdinfo.compress_level = 6;
+					if (cmdinfo.compress_level < 0) cmdinfo.compress_level = 6;
+					if (cmdinfo.compress_level > 9) cmdinfo.compress_level = 6;
+				}
+				else if (key == "zstd") {
+					cmdinfo.archive_type = ARCHIVETYPE_ZSTD;
+					cmdinfo.compress_level = atoi(val.c_str());
+					tmp_zstd_level = -1;
+					if (cmdinfo.compress_level == 0) cmdinfo.compress_level = ZSTD_defaultCLevel();
+					if (cmdinfo.compress_level < ZSTD_minCLevel()) cmdinfo.compress_level = ZSTD_defaultCLevel();
+					if (cmdinfo.b_zstd_ultra) {
+						if (cmdinfo.compress_level > ZSTD_maxCLevel()) cmdinfo.compress_level = ZSTD_defaultCLevel();
+					}
+					else {
+						if (ZSTD_NORMAL_MAX_LEVEL < cmdinfo.compress_level && cmdinfo.compress_level <= ZSTD_maxCLevel())
+							tmp_zstd_level = cmdinfo.compress_level;
+						if (cmdinfo.compress_level > ZSTD_NORMAL_MAX_LEVEL) cmdinfo.compress_level = ZSTD_defaultCLevel();
+					}
+				}
+				else if (key == "zstd-ultra") {
+					cmdinfo.b_zstd_ultra = true;
+					if (cmdinfo.archive_type == ARCHIVETYPE_ZSTD && ZSTD_NORMAL_MAX_LEVEL < tmp_zstd_level && tmp_zstd_level <= ZSTD_maxCLevel()) {
+						cmdinfo.compress_level = tmp_zstd_level;
+						tmp_zstd_level = -1;
+					}
+#ifdef USE_OTHER_THREADS_WITH_ZSTD
+				}else if (key == "zstd-threads") {
+					cmdinfo.zstd_c_thread_num = atoi(val.c_str());
+					if (cmdinfo.zstd_c_thread_num < 0) cmdinfo.zstd_c_thread_num = ZSTD_DEFAULT_THREADS_NUM;
+#endif
 				}else if(key == "confirm-overwrite"){
 					cmdinfo.b_confirm_overwrite = ((val=="") ? true : (0!=atoi(val.c_str())));
 				}else if(key == "convert-charset"){
@@ -366,6 +428,8 @@ static int tar_cmd_itr(const HWND hwnd, LPCSTR szCmdLine,LPSTR szOutput, const D
 			cmdinfo.archive_type = ARCHIVETYPE_TARLZMA;break;
 		case ARCHIVETYPE_XZ:
 			cmdinfo.archive_type = ARCHIVETYPE_TARXZ;break;
+		case ARCHIVETYPE_ZSTD:
+			cmdinfo.archive_type = ARCHIVETYPE_TARZSTD; break;
 		}
 	}
 	//string arcfile = *argi++;
@@ -474,10 +538,10 @@ int SendArcMessage(CTar32CmdInfo &cmdinfo, int arcmode, EXTRACTINGINFOEX *pExtra
 	if(cmdinfo.hTar32StatusDialog){
 		//ret1 = ::SendMessage(cmdinfo.hTar32StatusDialog, wm_arcextract, arcmode, (long)pExtractingInfoEx);
 		//EXTRACTINGINFOEX64 : internal use only
-		ret1 = ::SendMessage(cmdinfo.hTar32StatusDialog, wm_arcextract, arcmode, (long)pExtractingInfoEx64);
+		ret1 = (int)::SendMessage(cmdinfo.hTar32StatusDialog, wm_arcextract, arcmode, (LPARAM)pExtractingInfoEx64);
 	}
 	if(g_hwndOwnerWindow){
-		ret2 = ::SendMessage(g_hwndOwnerWindow,wm_arcextract, arcmode,(long)pExtractingInfoEx);
+		ret2 = (int)::SendMessage(g_hwndOwnerWindow,wm_arcextract, arcmode,(LPARAM)pExtractingInfoEx);
 	}
 	if(g_pArcProc){
 		ret3 = (*g_pArcProc)(g_hwndOwnerWindow, wm_arcextract, arcmode, pExtractingInfoEx);
@@ -510,7 +574,7 @@ int ConfirmOverwrite(const CTar32CmdInfo &cmdinfo,EXTRACTINGINFOEX64 &Extracting
 		std::stringstream msg;
 		msg << "File " << path << " already exists.\r\n"
 			<< "Do you want to overwrite?";
-		int ret=::DialogBoxParam(dll_instance,MAKEINTRESOURCE(IDD_CONFIRM_OVERWRITE),hWnd,Tar32ConfirmOverwriteDialogProc,(LPARAM)(const char*)(msg.str().c_str()));
+		INT_PTR ret=::DialogBoxParam(dll_instance,MAKEINTRESOURCE(IDD_CONFIRM_OVERWRITE),hWnd,Tar32ConfirmOverwriteDialogProc,(LPARAM)(const char*)(msg.str().c_str()));
 		switch(ret){
 		case IDCANCEL:
 			return -1;
@@ -689,7 +753,7 @@ static void cmd_extract(CTar32CmdInfo &cmdinfo)
 
 	CTar32 tarfile;
 	int ret;
-	ret = tarfile.open(cmdinfo.arcfile.c_str(), "rb",-1,ARCHIVETYPE_AUTO,cmdinfo.archive_charset);
+	ret = tarfile.open(cmdinfo.arcfile.c_str(), "rb",-1,ARCHIVETYPE_AUTO,cmdinfo.archive_charset,cmdinfo.zstd_c_thread_num);
 	if(!ret){
 		throw CTar32Exception("can't open archive file", ERROR_ARC_FILE_OPEN);
 	}
@@ -817,7 +881,7 @@ static void cmd_create(CTar32CmdInfo &cmdinfo)
 	//char mode[10];
 
 	//sprintf(mode, "wb%d", cmdinfo.compress_level);
-	ret = tarfile.open(cmdinfo.arcfile.c_str(), "wb",cmdinfo.compress_level, cmdinfo.archive_type,cmdinfo.archive_charset);
+	ret = tarfile.open(cmdinfo.arcfile.c_str(), "wb",cmdinfo.compress_level, cmdinfo.archive_type,cmdinfo.archive_charset,cmdinfo.zstd_c_thread_num);
 	if(!ret){
 		throw CTar32Exception("can't open archive file", ERROR_ARC_FILE_OPEN);
 	}
@@ -928,7 +992,7 @@ static void cmd_list(CTar32CmdInfo &cmdinfo)
 {
 	CTar32 tarfile;
 	bool bret;
-	bret = tarfile.open(cmdinfo.arcfile.c_str(), "rb",-1,ARCHIVETYPE_AUTO,cmdinfo.archive_charset);
+	bret = tarfile.open(cmdinfo.arcfile.c_str(), "rb",-1,ARCHIVETYPE_AUTO,cmdinfo.archive_charset,cmdinfo.zstd_c_thread_num);
 	if(!bret){
 		throw CTar32Exception("can't open archive file", ERROR_ARC_FILE_OPEN);
 	}

@@ -201,6 +201,14 @@ BOOL WINAPI _export TarKillOwnerWindowEx(HWND _hwnd);
 
 int WINAPI _export TarGetArchiveType(LPCSTR _szFileName);
 
+BOOL WINAPI _export TarGetWriteTimeEx(HARC _harc, FILETIME *_lpllLastWriteTime);
+BOOL WINAPI _export TarGetAccessTimeEx(HARC _harc, FILETIME *_lpllAccessTime);
+BOOL WINAPI _export TarGetCreateTimeEx(HARC _harc, FILETIME *_lpllCreateTime);
+
+BOOL WINAPI _export TarGetWriteTime64(HARC _harc, __int64 *_lpllLastWriteTime);
+BOOL WINAPI _export TarGetAccessTime64(HARC _harc, __int64 *_lpllAccessTime);
+BOOL WINAPI _export TarGetCreateTime64(HARC _harc, __int64 *_lpllCreateTime);
+
 #ifdef __cplusplus
 }
 #endif
@@ -295,12 +303,20 @@ int WINAPI _export TarGetArchiveType(LPCSTR _szFileName);
 #define ISARC_GET_CREATE_TIME			68
 #define ISARC_GET_ACCESS_TIME			69
 
+#define ISARC_GET_WRITE_TIME_EX			70
+#define ISARC_GET_CREATE_TIME_EX		71
+#define ISARC_GET_ACCESS_TIME_EX		72
+
 #define ISARC_GET_ORIGINAL_SIZE_EX		85	/* UnlhaGetOriginalSizeEx */
 #define ISARC_GET_COMPRESSED_SIZE_EX	86	/* UnlhaGetCompressedSizeEx */
 
 #define ISARC_OPEN_ARCHIVE2				91	/* UnlhaOpenArchive2 */
 
-#define ISARC_FUNCTION_END				100
+#define ISARC_GET_WRITE_TIME_64			111
+#define ISARC_GET_CREATE_TIME_64		112
+#define ISARC_GET_ACCESS_TIME_64		113
+
+#define ISARC_FUNCTION_END				113
 #endif	/* ISARC_FUNCTION_START */
 
 #ifndef FA_RDONLY
@@ -395,6 +411,8 @@ int WINAPI _export TarGetArchiveType(LPCSTR _szFileName);
 #define ARCHIVETYPE_TARXZ	9
 #define ARCHIVETYPE_LZMA 10
 #define ARCHIVETYPE_XZ	11
+#define ARCHIVETYPE_TARZSTD	12
+#define ARCHIVETYPE_ZSTD	13
 
 #define ARCHIVETYPE_CPIO	32
 #define ARCHIVETYPE_CPIOGZ	32+4
@@ -402,6 +420,7 @@ int WINAPI _export TarGetArchiveType(LPCSTR _szFileName);
 #define ARCHIVETYPE_CPIOBZ2	32+7
 #define ARCHIVETYPE_CPIOLZMA	32+10
 #define ARCHIVETYPE_CPIOXZ	32+11
+#define ARCHIVETYPE_CPIOZSTD	32+13
 
 #define ARCHIVETYPE_AR		48
 #define ARCHIVETYPE_ARGZ	48+4
@@ -409,6 +428,7 @@ int WINAPI _export TarGetArchiveType(LPCSTR _szFileName);
 #define ARCHIVETYPE_ARBZ2	48+7
 #define ARCHIVETYPE_ARLZMA	48+10
 #define ARCHIVETYPE_ARXZ	48+11
+#define ARCHIVETYPE_ARZSTD	48+13
 
 #endif // TAR32API_H
 

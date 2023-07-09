@@ -117,6 +117,10 @@ bool GetARCMethod(int archive_type, char *buf, int buf_len)
 		strncpy(buf, "-txz-",buf_len);break;
 	case ARCHIVETYPE_XZ:
 		strncpy(buf, "- xz-",buf_len);break;
+	case ARCHIVETYPE_TARZSTD:
+		strncpy(buf, "tzstd", buf_len); break;
+	case ARCHIVETYPE_ZSTD:
+		strncpy(buf, "-zst-", buf_len); break;
 
 
 	case ARCHIVETYPE_CPIO:
@@ -131,6 +135,8 @@ bool GetARCMethod(int archive_type, char *buf, int buf_len)
 		strncpy(buf, "cpiolzm",buf_len);break;
 	case ARCHIVETYPE_CPIOXZ:
 		strncpy(buf, "cpio.xz",buf_len);break;
+	case ARCHIVETYPE_CPIOZSTD:
+		strncpy(buf, "cpiozst", buf_len); break;
 
 	case ARCHIVETYPE_AR:
 		strncpy(buf, "ar",buf_len);break;
@@ -144,12 +150,22 @@ bool GetARCMethod(int archive_type, char *buf, int buf_len)
 		strncpy(buf, "ar.lzma",buf_len);break;
 	case ARCHIVETYPE_ARXZ:
 		strncpy(buf, "ar.xz",buf_len);break;
+	case ARCHIVETYPE_ARZSTD:
+		strncpy(buf, "ar.zstd", buf_len); break;
 
 		
 	default:
 		strncpy(buf, "-err-",buf_len);break;
 	}
 	return true;
+}
+
+void TimetToFileTime(time_t t, LPFILETIME pft)
+{
+	ULARGE_INTEGER time_value;
+	time_value.QuadPart = (t * 10000000LL) + 116444736000000000LL;
+	pft->dwLowDateTime = time_value.LowPart;
+	pft->dwHighDateTime = time_value.HighPart;
 }
 
 #ifdef UNIT_TEST

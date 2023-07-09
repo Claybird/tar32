@@ -3,6 +3,10 @@
   TAR32.DLL version.2.xx
   Susie 32bit Plug-in Spec Rev4 Interface.
 */
+/*
+  TAR64.DLLの.sph対応(但しW系APIは非対応) - TORO氏のiftwicのソースを参照( http://toro.d.dooo.jp/ )
+    ICHIMARU Takeshi ( ayakawa.m@gmail.com )
+*/
 #include "stdafx.h"
 
 #include "tar32api.h"
@@ -12,17 +16,21 @@
 	 Susie Plug-In APIs 
 **********************************************************/
 
+typedef ULONG_PTR susie_time_t;
 #pragma pack(push,1)
 typedef struct
 {
-	unsigned char method[8];	/*圧縮法の種類*/
-	unsigned long position;		/*ファイル上での位置*/
-	unsigned long compsize;		/*圧縮されたサイズ*/
-	unsigned long filesize;		/*元のファイルサイズ*/
-	time_t timestamp;		/*ファイルの更新日時*/
-	char path[200];			/*相対パス*/
-	char filename[200];		/*ファイルネーム*/
-	unsigned long crc;		/*CRC*/
+	unsigned char	method[8];		/*圧縮法の種類*/
+	ULONG_PTR		position;		/*ファイル上での位置*/
+	ULONG_PTR		compsize;		/*圧縮されたサイズ*/
+	ULONG_PTR		filesize;		/*元のファイルサイズ*/
+	susie_time_t	timestamp;		/*ファイルの更新日時*/
+	char			path[200];		/*相対パス*/
+	char			filename[200];	/*ファイルネーム*/
+	unsigned long	crc;			/*CRC*/
+#ifdef _WIN64
+	char			dummy[4];
+#endif
 } fileInfo;
 #pragma pack(pop)
 
@@ -33,11 +41,15 @@ extern "C" int WINAPI _export GetPluginInfo(int infono, LPSTR buf,int buflen)
 	if(0==infono) {
 		memcpy(buf,"00AM",nRet=min(buflen,5));
 	} else if(1==infono) {
+#ifdef _WIN64
+		const char* pPluginName = "Tar64.DLL by Yoshioka Tsuneo(QWF00133@nifty.ne.jp) & ICHIMARU Takeshi(ayakawa.m@gmail.com)";
+#else
 		const char *pPluginName="Tar32.DLL by Yoshioka Tsuneo(QWF00133@nifty.ne.jp)";
+#endif
 		memcpy(buf,pPluginName,nRet=min((unsigned int)buflen,strlen(pPluginName)+1));
 	} else {
-		const char *ppExtNames[]={"*.tar;*.tgz;*.tbz;*.gz;*.bz2;*.Z;"};
-		const char *ppFmtNames[]={"tar/gz/bz2/Z format"};
+		const char *ppExtNames[]={"*.tar;*.tgz;*.tbz;*.txz;*.tlz;*.tzst;*.gz;*.bz2;*.xz;*.lz;*.lzma;*.Z;*.zst;*.zstd"};
+		const char *ppFmtNames[]={"tar/gz/bz2/Z/xz/lzma/zstd format"};
 		int nExtNum=sizeof(ppExtNames)/sizeof(ppExtNames[0]);
 		infono-=2;
 		if(infono>=nExtNum*2) {
@@ -53,12 +65,25 @@ extern "C" int WINAPI _export GetPluginInfo(int infono, LPSTR buf,int buflen)
 	return nRet;
 }
 
-extern "C" int WINAPI _export IsSupported(LPSTR filename,DWORD dw)
+
+extern "C" int WINAPI _export IsSupported(LPSTR filename, VOID * dw)
 {
 	char szBuf[2000];
 	int nRet;
 
 	nRet=1;
+#ifdef _WIN64
+	if ((DWORD_PTR)dw & ~(DWORD_PTR)0xffff) {
+		// 2K メモリイメージ
+		memcpy(szBuf, (void*)dw, 2000);
+	}
+	else {
+		DWORD size;
+		if (ReadFile(reinterpret_cast<HANDLE>(dw), szBuf, sizeof(szBuf), &size, NULL) == FALSE) {
+			nRet=0; // 読み込み失敗
+		}
+	}
+#else
 	if(0==(HIWORD(dw))) {
 		DWORD n;
 		if(!ReadFile((HANDLE)dw,szBuf,sizeof(szBuf),&n,NULL)) {
@@ -67,6 +92,7 @@ extern "C" int WINAPI _export IsSupported(LPSTR filename,DWORD dw)
 	} else {
 		memcpy(szBuf,(void*)dw,2000);
 	}
+#endif
 
 	if(1==nRet) {
 		HANDLE hFile;
@@ -87,13 +113,16 @@ extern "C" int WINAPI _export IsSupported(LPSTR filename,DWORD dw)
 	return nRet;
 }
 
-extern "C" int WINAPI _export GetArchiveInfo(LPSTR buf,long len, unsigned int flag,HLOCAL *lphInf)
+extern "C" int WINAPI _export GetArchiveInfo(LPSTR buf,LONG_PTR len, unsigned int flag,HLOCAL *lphInf)
 {
 	int nCnt,nPos,nStatus;
 	HARC hArc;
 	fileInfo *pInf;
 	HLOCAL hInf;
 	INDIVIDUALINFO iInfo;
+#ifdef _WIN64
+	__int64 t;
+#endif
 
 	if(0!=(flag&0x0007)) {
 		// FileImage Pointer not supported.
@@ -123,6 +152,9 @@ extern "C" int WINAPI _export GetArchiveInfo(LPSTR buf,long len, unsigned int fl
 		pInf->compsize=iInfo.dwCompressedSize;
 		pInf->filesize=iInfo.dwOriginalSize;
 		pInf->timestamp=0; //iinfo.wData + iinfo.wTime;
+#ifdef _WIN64
+		if (TarGetWriteTime64(hArc, &t)) pInf->timestamp = (time_t)t;
+#endif
 		memcpy(pInf->filename,iInfo.szFileName,200);
 		pInf->crc=iInfo.dwCRC;
 		pInf++;
@@ -134,7 +166,7 @@ extern "C" int WINAPI _export GetArchiveInfo(LPSTR buf,long len, unsigned int fl
 
 	return 0;
 }
-extern "C" int WINAPI _export GetFileInfo(LPSTR buf,long len, LPSTR filename, unsigned int flag,fileInfo *lpInfo)
+extern "C" int WINAPI _export GetFileInfo(LPSTR buf,LONG_PTR len, LPSTR filename, unsigned int flag,fileInfo *lpInfo)
 {
 	int nRet;
 	HANDLE hInf;
@@ -160,7 +192,7 @@ extern "C" int WINAPI _export GetFileInfo(LPSTR buf,long len, LPSTR filename, un
 	return nRet;
 }
 
-extern "C" int WINAPI _export GetFile(LPSTR src,long len, LPSTR dest,unsigned int flag, FARPROC prgressCallback,long lData)
+extern "C" int WINAPI _export GetFile(LPSTR src,LONG_PTR len, LPSTR dest,unsigned int flag, FARPROC prgressCallback,LONG_PTR lData)
 {
 	int nRet;
 	HANDLE hInf;
@@ -172,6 +204,8 @@ extern "C" int WINAPI _export GetFile(LPSTR src,long len, LPSTR dest,unsigned in
 		return -1;						// input must be file
 	}
 
+
+	nRet = -1;
 	GetArchiveInfo(src,0,flag,&hInf);
 	pInf=(fileInfo*)GlobalLock(hInf);
 	while('\0'!=pInf->method[0]) {

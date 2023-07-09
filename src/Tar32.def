@@ -42,6 +42,9 @@ EXPORTS
 	TarGetWriteTime
 	TarGetAccessTime
 	TarGetCreateTime
+	TarGetWriteTimeEx
+	TarGetAccessTimeEx
+	TarGetCreateTimeEx
 	TarGetCRC
 	TarGetAttribute
 	TarGetOSType
@@ -54,6 +57,10 @@ EXPORTS
 	TarKillOwnerWindowEx
 	
 	TarGetArchiveType
+
+	TarGetWriteTime64
+	TarGetAccessTime64
+	TarGetCreateTime64
 
 ;rundll32 interface
 ;  command line: rundll32.exe tar32.dll,TarCommandLine -xvf foo.tar.gz

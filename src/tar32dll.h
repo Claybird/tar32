@@ -53,3 +53,6 @@ WORD GetARCTime(time_t ti);
 DWORD GetARCAttribute(int st_mode);
 void GetARCAttribute(int st_mode, char *buf, int buflen);
 bool GetARCMethod(int archive_type, char *buf, int buf_len);
+
+// convert time_t(64bit) to FILETIME
+void TimetToFileTime(time_t t, LPFILETIME pft);

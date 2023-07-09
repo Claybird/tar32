@@ -39,6 +39,9 @@ public:
 	int archive_type;
 	int compress_level;
 
+	bool b_zstd_ultra;       // Zstandard 圧縮率20以上の許可フラグ
+	int  zstd_c_thread_num;  // Zstandard 圧縮時に使用するスレッド数
+
 	std::string current_directory;
 
 	UINT wm_main_thread_end;

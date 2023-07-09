@@ -3,6 +3,8 @@
 	tar32.dll test program
 	by Yoshioka Tsuneo(QWF00133@nifty.ne.jp)
 	Copy,Edit,Re-distribute FREE!
+
+	Modified by ICHIMARU Takeshi(ayakawa.m@gmail.com)
 */
 #include <windows.h>
 #include <stdio.h>
@@ -23,16 +25,25 @@ typedef struct {
 	char			szMode[8];
 }	INDIVIDUALINFO;
 
-WORD (WINAPI *TarGetVersion)(VOID);
-int (WINAPI *Tar)(HWND hwnd,char *cmd,char *buff,int buflen);
-int (WINAPI *TarCheckArchive)(char *fname,int mode);
-HANDLE (WINAPI *TarOpenArchive)(HANDLE hwnd,char *fname,int mode);
-int	(WINAPI *TarCloseArchive)(HANDLE harc);
-int (WINAPI *TarFindFirst)(HANDLE hwnd,char *fname,INDIVIDUALINFO *pinfo);
-int (WINAPI *TarFindNext)(HANDLE hwnd,INDIVIDUALINFO *pinfo);
-int (WINAPI *TarGetFileCount)(LPCSTR _szArcFile);
-BOOL (WINAPI *TarConfigDialog)(const HWND _hwnd, LPSTR _lpszComBuffer,const int _iMode);
-int (WINAPI *TarGetFileCount)(LPCSTR _szArcFile);
+typedef WORD(WINAPI* fncTarGetVersion)(VOID);
+typedef int (WINAPI* fncTar)(HWND hwnd, char* cmd, char* buff, int buflen);
+typedef int (WINAPI* fncTarCheckArchive)(char* fname, int mode);
+typedef HANDLE(WINAPI* fncTarOpenArchive)(HANDLE hwnd, char* fname, int mode);
+typedef int	(WINAPI* fncTarCloseArchive)(HANDLE harc);
+typedef int (WINAPI* fncTarFindFirst)(HANDLE hwnd, char* fname, INDIVIDUALINFO* pinfo);
+typedef int (WINAPI* fncTarFindNext)(HANDLE hwnd, INDIVIDUALINFO* pinfo);
+typedef BOOL(WINAPI* fncTarConfigDialog)(const HWND _hwnd, LPSTR _lpszComBuffer, const int _iMode);
+typedef int (WINAPI* fncTarGetFileCount)(LPCSTR _szArcFile);
+
+fncTarGetVersion TarGetVersion;
+fncTar Tar;
+fncTarCheckArchive TarCheckArchive;
+fncTarOpenArchive TarOpenArchive;
+fncTarCloseArchive TarCloseArchive;
+fncTarFindFirst TarFindFirst;
+fncTarFindNext TarFindNext;
+fncTarConfigDialog TarConfigDialog;
+fncTarGetFileCount TarGetFileCount;
 
 
 void SelfTest()

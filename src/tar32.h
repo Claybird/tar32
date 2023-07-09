@@ -2,6 +2,8 @@
 	tar32.h
 		tar/tgz/tbz/bz/gz archive manipulation class.
 		by Yoshioka Tsuneo(QWF00133@nifty.ne.jp)
+
+		Modified by ICHIMARU Takeshi(ayakawa.m@gmail.com)
 */
 /*	
 	このファイルの利用条件：
@@ -95,7 +97,7 @@ public:
 	CTar32();
 	virtual ~CTar32();
 	static int s_get_archive_type(const char *arcfile);
-	bool open(const char *arcfile, const char*mode,int compress_level, int archive_type/* = ARCHIVETYPE_AUTO*/,int archive_charset);
+	bool open(const char *arcfile, const char*mode,int compress_level, int archive_type/* = ARCHIVETYPE_AUTO*/,int archive_charset, int threads_num);
 	bool close();
 
 	bool readTarHeader(HEADER &tar_header);

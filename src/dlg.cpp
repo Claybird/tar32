@@ -1,3 +1,7 @@
+/*
+ *	Modified by ICHIMARU Takeshi(ayakawa.m@gmail.com)
+ */
+
 #include "stdafx.h"
 #include "dlg.h"
 #include "tar32res.h"
@@ -29,7 +33,7 @@ void _cdecl CTar32StatusDialog::ThreadFunc(LPVOID param)
 {
 	CTar32StatusDialog *pDlg = (CTar32StatusDialog *)param;
 	extern HINSTANCE dll_instance;
-	HWND hWnd = CreateDialogParam(dll_instance, MAKEINTRESOURCE(IDD_DIALOG_STATUS),pDlg->m_hParentWnd, WindowFunc, (long)pDlg);
+	HWND hWnd = CreateDialogParam(dll_instance, MAKEINTRESOURCE(IDD_DIALOG_STATUS),pDlg->m_hParentWnd, WindowFunc, (LPARAM)pDlg);
 	//HWND hWnd = CreateDialogParam(dll_instance, MAKEINTRESOURCE(IDD_DIALOG_STATUS),NULL, WindowFunc, (long)pDlg);
 	int ret;
 	ret = ShowWindow(hWnd, SW_SHOW);
@@ -157,7 +161,7 @@ INT_PTR CALLBACK CTar32StatusDialog::WindowFunc(HWND hWnd, UINT mes, WPARAM wPar
 void CTar32StatusDialog::Destroy()
 {
 	if(m_hThread == NULL){return;}
-	int ret;
+	LRESULT ret;
 
 	// WM_DESTROYÇÃïœÇÌÇËÇ…DestroyWindowÇåƒÇ—èoÇ≥Ç»Ç¢Ç∆Ç¢ÇØÇ»Ç¢ÅB
 	//ret = SendMessage(m_hWnd, WM_DESTROY, 0, 0);

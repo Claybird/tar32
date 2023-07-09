@@ -2,6 +2,8 @@
 	arcgz.cpp
 		gzip archive input/output class.
 		by Yoshioka Tsuneo(QWF00133@nifty.ne.jp)
+
+		Modified by ICHIMARU Takeshi ( ayakawa.m@gmail.com )
 */
 /*	
 	このファイルの利用条件：
@@ -142,15 +144,25 @@ bool CTarArcFile_GZip::open(const char *arcfile, const char *mode, int compress_
 }
 size64 CTarArcFile_GZip::read(void *buf, size64 size)
 {
-	return gzread(m_gzFile, buf, (unsigned int)size);
+	// sizeがINT_MAX以下ならそのまま → INT_MAXより大きいとgzreadがエラーを返す
+	if (0 <= size && size <= INT_MAX)
+		return gzread(m_gzFile, buf, (unsigned int)size);
+	else
+		return -1;
+	//return gzread(m_gzFile, buf, (unsigned int)size);
 }
 size64 CTarArcFile_GZip::write(void *buf, size64 size)
 {
-	return gzwrite(m_gzFile, buf, (size_t)size);	//TODO:size lost
+	// sizeがINT_MAX以下ならば従来通り → UINT_MAXじゃ無いのはgzwriteの戻り値がintなので……
+	if (0 <= size && size <= INT_MAX)
+		return gzwrite(m_gzFile, buf, (unsigned int)size);
+	else
+		return 0;
+	//return gzwrite(m_gzFile, buf, (size_t)size);	//TODO:size lost
 }
 size64 CTarArcFile_GZip::seek(size64 offset, int origin)
 {
-	return gzseek(m_gzFile, offset, origin);
+	return gzseek64(m_gzFile, (long)offset, origin);
 }
 void CTarArcFile_GZip::close()
 {

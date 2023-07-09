@@ -1,6 +1,8 @@
 /*
 	Utility functions, classes for Tar32.dll
 		by Yoshioka Tsuneo(QWF00133@nifty.ne.jp)
+
+	Modified by ICHIMARU Takeshi ( ayakawa.m@gmail.com )
 */
 /*	
 	このファイルの利用条件：
@@ -35,7 +37,7 @@
 int mkdir_recursive(const char *dirname_)
 {
 	std::string dirname = dirname_;
-	int pos = 0;
+	std::string::size_type pos = 0;
 	int ret;
 	
 	while(1){
@@ -119,8 +121,8 @@ std::string escape_absolute_paths(const char *pathname_)
 
 	std::string esc_path;
 	std::string pathname = pathname_;
-	int oldpos=0;
-	unsigned int pos = 0;
+	std::string::size_type oldpos=0,
+							pos = 0;
 	
 	while(pos < pathname.length()){
 		std::string fname;
@@ -195,7 +197,7 @@ bool is_regexp_match_dbcs(const char *regexp, const char *str)
 }
 void convert_yen_to_slash(std::string &pathname)
 {
-	for(unsigned int i=0;i<pathname.length();){
+	for(std::string::size_type i=0;i<pathname.length();){
 		if(pathname[i] == '\\'){
 			pathname[i] = '/';
 		}
@@ -205,7 +207,7 @@ void convert_yen_to_slash(std::string &pathname)
 
 void convert_slash_to_backslash(std::string &pathname)
 {
-	for(unsigned int i=0;i<pathname.length();){
+	for(std::string::size_type i=0;i<pathname.length();){
 		if(pathname[i] == '/'){
 			pathname[i] = '\\';
 		}
@@ -225,7 +227,11 @@ void find_files(const char *regexp, std::vector<std::string> &files)
 {
 	//WIN32_FIND_DATA finddata;
 	//HANDLE hFindFile;
+#ifdef _WIN64
+	intptr_t handle;
+#else
 	long handle;
+#endif
 	struct _finddata_t finddata;
 	std::string dirname = get_dirname(regexp);
 
@@ -466,7 +472,7 @@ bool CConvertCharsetHelper::utf16_to_sjis(std::string &strRet,LPCWSTR lpcStr)
 	DWORD dwFlags=WC_DISCARDNS|WC_COMPOSITECHECK|WC_DEFAULTCHAR|WC_NO_BEST_FIT_CHARS;
 	std::vector<char> buf(::WideCharToMultiByte(CP_ACP,dwFlags,lpcStr,-1,NULL,0,"_",NULL)+1);	//バッファ確保
 	//変換
-	if(!::WideCharToMultiByte(CP_ACP,dwFlags,lpcStr,-1,&buf[0],buf.size(),"_",NULL)){
+	if(!::WideCharToMultiByte(CP_ACP,dwFlags,lpcStr,-1,&buf[0],(int)buf.size(),"_",NULL)){
 		return false;
 	}
 	strRet=&buf[0];
@@ -481,7 +487,7 @@ bool CConvertCharsetHelper::utf8_to_utf16(std::wstring &strRet,const char* lpcBy
 	}
 	std::vector<wchar_t> buf(::MultiByteToWideChar(CP_UTF8,0,(LPCSTR)lpcByte,length,NULL,0)+1);	//バッファ確保
 	//変換
-	if(!::MultiByteToWideChar(CP_UTF8,0,(LPCSTR)lpcByte,length,&buf[0],buf.size())){
+	if(!::MultiByteToWideChar(CP_UTF8,0,(LPCSTR)lpcByte,length,&buf[0],(int)buf.size())){
 		return false;
 	}
 	strRet=(LPCWSTR)&buf[0];
@@ -508,7 +514,7 @@ bool CConvertCharsetHelper::eucjp_to_utf16(std::wstring &strRet,const char* lpcB
 	//手抜き
 	std::vector<wchar_t> buf(length+1);
 	DWORD dwMode=0;
-	int nWideCharCount=buf.size();
+	int nWideCharCount=(int)buf.size();
 	if(FAILED(m_lpfnConvertINetMultiByteToUnicode(&dwMode,CP_EUCJP,(LPCSTR)lpcByte,NULL,&buf[0],&nWideCharCount)))return false;
 
 	strRet.assign(&buf[0],&buf[0]+nWideCharCount);

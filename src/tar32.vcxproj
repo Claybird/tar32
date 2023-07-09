@@ -102,8 +102,8 @@
     </Midl>
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>zlib;zlib\zlib;bzip2\bzip2;lzma\xzutils\src\liblzma\api;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;TAR32_EXPORTS;_CRT_SECURE_NO_WARNINGS;_USE_32BIT_TIME_T;STRICT;LZMA_API_STATIC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>zlib;zlib\zlib;bzip2\bzip2;lzma\xzutils\src\liblzma\api;zstd\source\lib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_LFS64_LARGEFILE;_LARGEFILE64_SOURCE;WIN32;_DEBUG;_WINDOWS;_USRDLL;TAR32_EXPORTS;_CRT_SECURE_NO_WARNINGS;_USE_32BIT_TIME_T;STRICT;LZMA_API_STATIC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <PrecompiledHeader>Create</PrecompiledHeader>
@@ -119,7 +119,7 @@
       <Culture>0x0411</Culture>
     </ResourceCompile>
     <Link>
-      <AdditionalDependencies>comctl32.lib;zlib\x86\ZlibStat$(Configuration)\zlibstat.lib;bzip2\Debug\bz2_static.lib;shlwapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>comctl32.lib;zlib\x86\ZlibStat$(Configuration)\zlibstat.lib;bzip2\Debug\bz2_static.lib;shlwapi.lib;zstd\x86\$(Configuration)\lib\libzstd_static.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>$(OutDir)tar32.dll</OutputFile>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <ModuleDefinitionFile>.\Tar32.def</ModuleDefinitionFile>
@@ -145,7 +145,7 @@
     <ClCompile>
       <Optimization>Disabled</Optimization>
       <AdditionalIncludeDirectories>zlib;bzip2;lzma;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;TAR32_EXPORTS;_CRT_SECURE_NO_WARNINGS;STRICT;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_LFS64_LARGEFILE;_LARGEFILE64_SOURCE;WIN32;_DEBUG;_WINDOWS;_USRDLL;TAR32_EXPORTS;_CRT_SECURE_NO_WARNINGS;STRICT;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <PrecompiledHeader>Create</PrecompiledHeader>
@@ -162,7 +162,7 @@
       <Culture>0x0411</Culture>
     </ResourceCompile>
     <Link>
-      <AdditionalDependencies>comctl32.lib;zlib/zlib64.lib;bzip2/libbz2_64.lib;lzma/liblzma64.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>comctl32.lib;zlib/zlib64.lib;bzip2/libbz2_64.lib;lzma/liblzma64.lib;zstd\x64\$(Configuration)\lib\libzstd_static.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>$(OutDir)tar32_64.dll</OutputFile>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <ModuleDefinitionFile>.\Tar32.def</ModuleDefinitionFile>
@@ -188,8 +188,8 @@
     <ClCompile>
       <Optimization>MaxSpeed</Optimization>
       <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
-      <AdditionalIncludeDirectories>zlib;zlib\zlib;bzip2\bzip2;lzma\xzutils\src\liblzma\api;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;TAR32_EXPORTS;_USE_32BIT_TIME_T;STRICT;LZMA_API_STATIC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>zlib;zlib\zlib;bzip2\bzip2;lzma\xzutils\src\liblzma\api;zstd\source\lib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_LFS64_LARGEFILE;_LARGEFILE64_SOURCE;WIN32;NDEBUG;_WINDOWS;_USRDLL;TAR32_EXPORTS;_USE_32BIT_TIME_T;STRICT;LZMA_API_STATIC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <FunctionLevelLinking>true</FunctionLevelLinking>
@@ -204,7 +204,7 @@
       <Culture>0x0411</Culture>
     </ResourceCompile>
     <Link>
-      <AdditionalDependencies>comctl32.lib;zlib\x86\ZlibStatReleaseWithoutAsm\zlibstat.lib;bzip2\Release\bz2_static.lib;shlwapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>comctl32.lib;zlib\x86\ZlibStatReleaseWithoutAsm\zlibstat.lib;bzip2\Release\bz2_static.lib;shlwapi.lib;zstd\x86\$(Configuration)\lib\libzstd_static.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>$(OutDir)tar32.dll</OutputFile>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <ModuleDefinitionFile>.\Tar32.def</ModuleDefinitionFile>
@@ -232,7 +232,7 @@
       <Optimization>MaxSpeed</Optimization>
       <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
       <AdditionalIncludeDirectories>zlib;bzip2;lzma;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;TAR32_EXPORTS;STRICT;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_LFS64_LARGEFILE;_LARGEFILE64_SOURCE;WIN32;NDEBUG;_WINDOWS;_USRDLL;TAR32_EXPORTS;STRICT;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <FunctionLevelLinking>true</FunctionLevelLinking>
@@ -247,7 +247,7 @@
       <Culture>0x0411</Culture>
     </ResourceCompile>
     <Link>
-      <AdditionalDependencies>comctl32.lib;zlib/zlib64.lib;bzip2/libbz2_64.lib;lzma/liblzma64.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>comctl32.lib;zlib/zlib64.lib;bzip2/libbz2_64.lib;lzma/liblzma64.lib;zstd\x64\$(Configuration)\lib\libzstd_static.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>$(OutDir)tar32_64.dll</OutputFile>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <ModuleDefinitionFile>.\Tar32.def</ModuleDefinitionFile>
@@ -279,6 +279,7 @@
     <ClCompile Include="arcgz.cpp" />
     <ClCompile Include="arclzma.cpp" />
     <ClCompile Include="arcz.cpp" />
+    <ClCompile Include="arczstd.cpp" />
     <ClCompile Include="Cmdline.cpp" />
     <ClCompile Include="dlg.cpp" />
     <ClCompile Include="normal.cpp" />
@@ -301,6 +302,7 @@
     <ClInclude Include="arcgz.h" />
     <ClInclude Include="arclzma.h" />
     <ClInclude Include="arcz.h" />
+    <ClInclude Include="arczstd.h" />
     <ClInclude Include="bzip2\bzlib.h" />
     <ClInclude Include="Cmdline.h" />
     <ClInclude Include="config.h" />

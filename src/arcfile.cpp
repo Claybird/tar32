@@ -2,6 +2,8 @@
 	arcfile.cpp
 		archive file input/output virtual class.
 		by Yoshioka Tsuneo(QWF00133@nifty.ne.jp)
+
+		Modified by ICHIMARU Takeshi(ayakawa.m@gmail.com)
 */
 /*	
 	このファイルの利用条件：
@@ -38,6 +40,7 @@
 #include "arcbz2.h"	// CTarArcFile_BZip2
 #include "arclzma.h"	// CTarArcFile_Lzma
 #include "arcz.h"	// CTarArcFile_Compress
+#include "arczstd.h"	// CTarArcFile_Zstd
 #include "tar32api.h"
 #include "rpm.h"
 
@@ -59,7 +62,7 @@ size64 ITarArcFile::seek(size64 offset, int origin)
 	return 0;
 }
 /*static*/
-ITarArcFile *ITarArcFile::s_open(const char *arcfile, const char *mode, int compress_level, int type)
+ITarArcFile *ITarArcFile::s_open(const char *arcfile, const char *mode, int compress_level, int type, int threads_num)
 {
 	ITarArcFile *pfile = NULL;
 	int ret = 0;
@@ -108,6 +111,13 @@ ITarArcFile *ITarArcFile::s_open(const char *arcfile, const char *mode, int comp
 		pfile = new CTarArcFile_Lzma;
 		((CTarArcFile_Lzma *)pfile)->set_format(ARCHIVETYPE_XZ);
 		break;
+	case ARCHIVETYPE_ZSTD:
+	case ARCHIVETYPE_TARZSTD:
+	case ARCHIVETYPE_CPIOZSTD:
+	case ARCHIVETYPE_ARZSTD:
+		pfile = new CTarArcFile_Zstd;
+		if (strchr(mode, 'w') != 0) ((CTarArcFile_Zstd*)pfile)->set_threads_num(threads_num); // write mode only
+			break;
 	default:
 		return NULL;
 	}
@@ -120,7 +130,7 @@ int ITarArcFile::s_get_archive_type(const char *arcfile)
 	FILE *fp = fopen(arcfile, "rb");
 	if(fp==NULL){return -1;} // どんぞ：追加
 	unsigned char buf[100]; memset(buf, 0, sizeof(buf));
-	int n = fread(buf, 1, sizeof(buf), fp);
+	size_t n = fread(buf, 1, sizeof(buf), fp);
 	if(buf[0] == 0xed && buf[1] == 0xab && buf[2] == 0xee && buf[3] == 0xdb){
 		/* RPM */
 		size64 rpmlen = rpm_getheadersize(arcfile);
@@ -141,6 +151,8 @@ int ITarArcFile::s_get_archive_type(const char *arcfile)
 		return ARCHIVETYPE_XZ;
 	}else if(n >= 13 && CTarArcFile_Lzma::check_head_format(buf,13,ARCHIVETYPE_LZMA)){
 		return ARCHIVETYPE_LZMA;
+	}else if (n >= 4 && CTarArcFile_Zstd::check_head_format(buf, 4)) {
+		return ARCHIVETYPE_ZSTD;
 	}else{
 		return ARCHIVETYPE_NORMAL;
 	}

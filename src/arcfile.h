@@ -12,7 +12,7 @@
  #define interface struct
 #endif*/
 struct/*interface*/ ITarArcFile{
-	static ITarArcFile *s_open(const char *arcfile, const char *mode, int compress_level,int type);
+	static ITarArcFile *s_open(const char *arcfile, const char *mode, int compress_level,int type, int threads_num);
 	static int s_get_archive_type(const char *arcfile);
 	virtual bool open(const char *arcfile, const char *mode, int compress_level) = 0;
 	virtual size64 read(void *buf, size64 size) = 0;

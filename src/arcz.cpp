@@ -1,3 +1,7 @@
+/*
+ *	Modified by ICHIMARU Takeshi(ayakawa.m@gmail.com)
+ */
+
 #include "stdafx.h"
 #include "arcz.h"
 #include "util.h"
@@ -35,7 +39,7 @@ bool CTarArcFile_Compress::open(const char *arcfile, const char *mode, int /*com
 
 	m_insize = m_rsize = 0;
 
-	m_insize = m_rsize = fread(m_inbuf, 1, BUFSIZ, m_pFile);
+	m_insize = m_rsize = (int)fread(m_inbuf, 1, BUFSIZ, m_pFile);
 
 	char magic[2];
 	memcpy(magic, m_inbuf, 2);
@@ -103,7 +107,7 @@ resetbuf:
 	m_posbits = 0;
 
 	if(m_insize < sizeof(m_inbuf) - BUFSIZ){
-		m_rsize = fread(m_inbuf + m_insize, 1, BUFSIZ, m_pFile);
+		m_rsize = (int)fread(m_inbuf + m_insize, 1, BUFSIZ, m_pFile);
 		m_insize += m_rsize;
 	}
 	int inbits;

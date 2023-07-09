@@ -2,6 +2,8 @@
 	tar32.cpp
 		tar/tgz/tbz/bz/gz archive manipulation class.
 		by Yoshioka Tsuneo(QWF00133@nifty.ne.jp)
+
+		Modified by ICHIMARU Takeshi(ayakawa.m@gmail.com)
 */
 /*	
 	このファイルの利用条件：
@@ -56,7 +58,7 @@ CTar32::~CTar32()
 }
 int CTar32::s_get_archive_type(const char *arcfile)
 {
-	std::auto_ptr<ITarArcFile> pfile(ITarArcFile::s_open(arcfile,"rb",-1,ARCHIVETYPE_AUTO));
+	std::auto_ptr<ITarArcFile> pfile(ITarArcFile::s_open(arcfile,"rb",-1,ARCHIVETYPE_AUTO,0));
 	if(pfile.get()==NULL){return -1;}
 
 	//int archive_type = ITarArcFile::s_get_archive_type();
@@ -88,6 +90,8 @@ int CTar32::s_get_archive_type(const char *arcfile)
 			archive_type = ARCHIVETYPE_TARLZMA;break;
 		case ARCHIVETYPE_XZ:
 			archive_type = ARCHIVETYPE_TARXZ;break;
+		case ARCHIVETYPE_ZSTD:
+			archive_type = ARCHIVETYPE_TARZSTD; break;
 		}
 	}else if(ret >= sizeof(arc_header.cpio)
 		&& arc_header.cpio.magic_check()){
@@ -104,6 +108,8 @@ int CTar32::s_get_archive_type(const char *arcfile)
 			archive_type = ARCHIVETYPE_CPIOLZMA;break;
 		case ARCHIVETYPE_XZ:
 			archive_type = ARCHIVETYPE_CPIOXZ;break;
+		case ARCHIVETYPE_ZSTD:
+			archive_type = ARCHIVETYPE_CPIOZSTD; break;
 		}
 	}else if(ret >= sizeof(arc_header.ar)
 		&& (memcmp(arc_header.ar.magic,"!<arch>\012",8) == 0  || memcmp(arc_header.ar.magic,"!<bout>\012",8) == 0)
@@ -121,11 +127,13 @@ int CTar32::s_get_archive_type(const char *arcfile)
 			archive_type = ARCHIVETYPE_ARLZMA;break;
 		case ARCHIVETYPE_XZ:
 			archive_type = ARCHIVETYPE_ARXZ;break;
+		case ARCHIVETYPE_ZSTD:
+			archive_type = ARCHIVETYPE_ARZSTD; break;
 		}
 	}
 	return archive_type;
 }
-bool CTar32::open(const char *arcfile,const char *mode,int compress_level,int archive_type /*= ARCHIVETYPE_AUTO*/,int archive_charset)
+bool CTar32::open(const char *arcfile,const char *mode,int compress_level,int archive_type /*= ARCHIVETYPE_AUTO*/,int archive_charset,int threads_num)
 {
 	m_archive_type = archive_type;
 	m_archive_charset = archive_charset;
@@ -136,7 +144,7 @@ bool CTar32::open(const char *arcfile,const char *mode,int compress_level,int ar
 			return false;
 		}
 	}
-	m_pfile = ITarArcFile::s_open(arcfile,mode,compress_level,m_archive_type);
+	m_pfile = ITarArcFile::s_open(arcfile,mode,compress_level,m_archive_type,threads_num);
 	if(!m_pfile){return false;}
 	return true;
 }
@@ -148,7 +156,8 @@ bool CTar32::close()
 			|| m_archive_type == ARCHIVETYPE_TARZ 
 			|| m_archive_type == ARCHIVETYPE_TARBZ2
 			|| m_archive_type == ARCHIVETYPE_TARLZMA
-			|| m_archive_type == ARCHIVETYPE_TARXZ){
+			|| m_archive_type == ARCHIVETYPE_TARXZ
+			|| m_archive_type == ARCHIVETYPE_TARZSTD) {
 			// If success to create tar file, append 1024(512*2) byte null block to the end of file.
 			char buf[1024/*512 * 2*/]; memset(buf,0,sizeof(buf));
 			m_pfile->write(buf,sizeof(buf));
@@ -311,7 +320,7 @@ bool CTar32::readdir_TAR(CTar32FileStatus &stat)
 		stat.ctime		=   strtol(tar_header.dbuf.exthead.gnu.ctime , NULL, 8);
 		stat.offset		=   parseOctNum(tar_header.dbuf.exthead.gnu.offset , COUNTOF(tar_header.dbuf.exthead.gnu.offset));
 	}else{	//POSIX
-		int length=min(COUNTOF(tar_header.dbuf.exthead.posix.prefix),strlen(tar_header.dbuf.exthead.posix.prefix));
+		int length=min((int)COUNTOF(tar_header.dbuf.exthead.posix.prefix), (int)strlen(tar_header.dbuf.exthead.posix.prefix));
 		if(length>0){
 			std::string prefix(tar_header.dbuf.exthead.posix.prefix,tar_header.dbuf.exthead.posix.prefix+length);
 
@@ -351,6 +360,7 @@ bool CTar32::readdir_CPIO(CTar32FileStatus &stat)
 	}
 	int fnamelen;
 	int dum;
+
 	int nret = sscanf(((char*)&cpio_header)+6, "%8lx%8lx%8lx%8lx%8lx%8lx%8lx%8lx%8lx%8lx%8lx%8lx%8lx"
 		,&dum, &stat.mode, &stat.uid, &stat.gid, &dum, &stat.mtime
 		,&stat.original_size,&stat.devmajor, &stat.devminor, &dum, &dum
@@ -431,7 +441,7 @@ bool CTar32::readdir_AR(CTar32FileStatus &stat)
 		/* if use longfilename, substitute "/\d+" to filename */
 		int bytes; int num;
 		int n = sscanf(stat.filename.c_str(), "/%d%n", &bytes, &num);
-		int len = stat.filename.length();
+		int len = (int)stat.filename.length();
 		if(n == 1 && num == len && !longfilenames_buf.empty()){
 			stat.filename = &longfilenames_buf[0]+bytes;
 		}
@@ -448,21 +458,24 @@ bool CTar32::readdir(CTar32FileStatus *pstat)
 		|| m_archive_type == ARCHIVETYPE_TARZ 
 		|| m_archive_type == ARCHIVETYPE_TARBZ2
 		|| m_archive_type == ARCHIVETYPE_TARLZMA
-		|| m_archive_type == ARCHIVETYPE_TARXZ){
+		|| m_archive_type == ARCHIVETYPE_TARXZ
+		|| m_archive_type == ARCHIVETYPE_TARZSTD) {
 		if(!readdir_TAR(stat))return false;
 	}else if(m_archive_type == ARCHIVETYPE_CPIO
 		|| m_archive_type == ARCHIVETYPE_CPIOGZ
 		|| m_archive_type == ARCHIVETYPE_CPIOZ
 		|| m_archive_type == ARCHIVETYPE_CPIOBZ2
 		|| m_archive_type == ARCHIVETYPE_CPIOLZMA
-		|| m_archive_type == ARCHIVETYPE_CPIOXZ){
+		|| m_archive_type == ARCHIVETYPE_CPIOXZ
+		|| m_archive_type == ARCHIVETYPE_CPIOZSTD) {
 		if(!readdir_CPIO(stat))return false;
 	}else if(m_archive_type == ARCHIVETYPE_AR
 		|| m_archive_type == ARCHIVETYPE_ARGZ
 		|| m_archive_type == ARCHIVETYPE_ARZ
 		|| m_archive_type == ARCHIVETYPE_ARBZ2
 		|| m_archive_type == ARCHIVETYPE_ARLZMA
-		|| m_archive_type == ARCHIVETYPE_ARXZ){
+		|| m_archive_type == ARCHIVETYPE_ARXZ
+		|| m_archive_type == ARCHIVETYPE_ARZSTD) {
 		if(!readdir_AR(stat))return false;
 	}else{
 		if(m_filecount != 0){return false;}
@@ -552,7 +565,8 @@ bool CTar32::addheader(const CTar32FileStatus &stat, bool store_in_utf8)
 		|| m_archive_type == ARCHIVETYPE_TARZ 
 		|| m_archive_type == ARCHIVETYPE_TARBZ2
 		|| m_archive_type == ARCHIVETYPE_TARLZMA
-		|| m_archive_type == ARCHIVETYPE_TARXZ){
+		|| m_archive_type == ARCHIVETYPE_TARXZ
+		|| m_archive_type == ARCHIVETYPE_TARZSTD) {
 		blocksize = 512;
 		HEADER tar_header;
 		{
@@ -583,7 +597,7 @@ bool CTar32::addheader(const CTar32FileStatus &stat, bool store_in_utf8)
 			sprintf(pblock->dbuf.uid, "%06o ",p->uid);
 			sprintf(pblock->dbuf.gid, "%06o ",p->gid);
 			sprintf(pblock->dbuf.size, "%11I64o ", p->original_size);
-			sprintf(pblock->dbuf.mtime, "%11lo ", p->mtime);
+			sprintf(pblock->dbuf.mtime, "%11lo ", (unsigned long)p->mtime);
 			pblock->dbuf.typeflag = p->typeflag;
 			memcpy(pblock->dbuf.magic, p->magic_version, sizeof(p->magic_version));
 			strncpy(pblock->dbuf.uname, p->uname, sizeof pblock->dbuf.uname);
@@ -637,7 +651,8 @@ bool CTar32::addbody(const char *file)
 		|| m_archive_type == ARCHIVETYPE_TARZ 
 		|| m_archive_type == ARCHIVETYPE_TARBZ2
 		|| m_archive_type == ARCHIVETYPE_TARLZMA
-		|| m_archive_type == ARCHIVETYPE_TARXZ){
+		|| m_archive_type == ARCHIVETYPE_TARXZ
+		|| m_archive_type == ARCHIVETYPE_TARZSTD) {
 		/* padding 512-byte block */
 		size64 writesize;
 		if(size%512 == 0){
