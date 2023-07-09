@@ -10,3 +10,7 @@
 	path = src/bzip2/bzip2
 	url = git://sourceware.org/git/bzip2.git
 	branch = master
+[submodule "src/zstd/source"]
+	path = src/zstd/source
+	url = https://github.com/facebook/zstd.git
+	branch = release
