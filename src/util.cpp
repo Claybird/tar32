@@ -107,7 +107,7 @@ std::string make_pathname(const char *dirname_, const char *filename_)
 
 static void escape_filename(std::string &filename)
 {
-	for(unsigned int i=0;i<filename.length();){
+	for(size_t i=0;i<filename.length();){
 		if(filename[i] == ':'){
 			filename[i] = '_';
 		}

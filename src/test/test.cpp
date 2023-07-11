@@ -16,6 +16,9 @@ TEST(dll, TarGetArchiveType)
 	EXPECT_EQ(ARCHIVETYPE_TAR, TarGetArchiveType((PROJECT_DIR() + "/test_2099.tar").c_str()));
 	EXPECT_EQ(ARCHIVETYPE_TARGZ, TarGetArchiveType((PROJECT_DIR() + "/test_2099.tgz").c_str()));
 	EXPECT_EQ(ARCHIVETYPE_TARBZ2, TarGetArchiveType((PROJECT_DIR() + "/test_2099.tbz").c_str()));
+	EXPECT_EQ(ARCHIVETYPE_TARLZMA, TarGetArchiveType((PROJECT_DIR() + "/test_2099.tar.lzma").c_str()));
+	EXPECT_EQ(ARCHIVETYPE_TARXZ, TarGetArchiveType((PROJECT_DIR() + "/test_2099.tar.xz").c_str()));
+	EXPECT_EQ(ARCHIVETYPE_TARZSTD, TarGetArchiveType((PROJECT_DIR() + "/test_2099.tar.zst").c_str()));
 }
 
 TEST(dll, list_tar)
