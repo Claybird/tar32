@@ -3,12 +3,7 @@
 
 TEST(dll, version)
 {
-	ASSERT_EQ(247, TarGetVersion());
-}
-
-TEST(dll, TarGetFileCount)
-{
-	EXPECT_EQ(2099 + 1, TarGetFileCount((PROJECT_DIR() + "/test_2099.tar").c_str()));
+	ASSERT_EQ(247, TarGetVersion());	//need to update manually
 }
 
 TEST(dll, TarGetArchiveType)
@@ -21,24 +16,85 @@ TEST(dll, TarGetArchiveType)
 	EXPECT_EQ(ARCHIVETYPE_TARZSTD, TarGetArchiveType((PROJECT_DIR() + "/test_2099.tar.zst").c_str()));
 }
 
-TEST(dll, list_tar)
+TEST(dll, Tar)
 {
-	HARC hArc = TarOpenArchive(nullptr, (PROJECT_DIR() + "/test_2099.tar").c_str(), 0);
+	TODO;
+}
+
+/*TEST(dll, TarExtractMem_TarCompressMem)
+{
+}*/
+
+TEST(dll, TarCheckArchive)
+{
+	EXPECT_TRUE(TarCheckArchive((PROJECT_DIR() + "/test_2099.tar").c_str(), 0));
+	EXPECT_TRUE(TarCheckArchive((PROJECT_DIR() + "/test_2099.tgz").c_str(), 0));
+	EXPECT_TRUE(TarCheckArchive((PROJECT_DIR() + "/test_2099.tbz").c_str(), 0));
+	EXPECT_TRUE(TarCheckArchive((PROJECT_DIR() + "/test_2099.tar.lzma").c_str(), 0));
+	EXPECT_TRUE(TarCheckArchive((PROJECT_DIR() + "/test_2099.tar.xz").c_str(), 0));
+	EXPECT_TRUE(TarCheckArchive((PROJECT_DIR() + "/test_2099.tar.zst").c_str(), 0));
+
+	EXPECT_FALSE(TarCheckArchive(PROJECT_DIR().c_str(), 0));
+	EXPECT_FALSE(TarCheckArchive(__FILE__, 0));
+}
+
+/*TEST(dll, TarConfigDialog)
+{
+	TODO;
+	No test is planned for GUI
+}*/
+
+TEST(dll, TarGetFileCount)
+{
+	EXPECT_EQ(2100, TarGetFileCount((PROJECT_DIR() + "/test_2099.tar").c_str()));
+	EXPECT_EQ(2100, TarGetFileCount((PROJECT_DIR() + "/test_2099.tgz").c_str()));
+	EXPECT_EQ(2100, TarGetFileCount((PROJECT_DIR() + "/test_2099.tbz").c_str()));
+	EXPECT_EQ(2100, TarGetFileCount((PROJECT_DIR() + "/test_2099.tar.lzma").c_str()));
+	EXPECT_EQ(2100, TarGetFileCount((PROJECT_DIR() + "/test_2099.tar.xz").c_str()));
+	EXPECT_EQ(2100, TarGetFileCount((PROJECT_DIR() + "/test_2099.tar.zst").c_str()));
+
+	EXPECT_EQ(-1, TarGetFileCount(PROJECT_DIR().c_str()));
+	EXPECT_EQ(-1, TarGetFileCount(__FILE__));
+}
+
+void sub_test_tar(const std::string &name)
+{
+	/*
+	TarOpenArchive,
+	TarCloseArchive,
+	TarFindFirst,
+	TarFindNext,
+	TarGetFileName,
+	TarGetOriginalSizeEx
+	TarGetCompressedSizeEx
+	TarGetRatio
+	*/
+	HARC hArc = TarOpenArchive(nullptr, name.c_str(), 0);
 	ASSERT_NE((HARC)0, hArc);
 
 	INDIVIDUALINFO info = {};
 	int ret = TarFindFirst(hArc, "*.*", &info);
 	EXPECT_EQ(0, ret);
 	int count = 0;
-	for (;ret==0; ret = TarFindNext(hArc, &info)) {
+	for (; ret == 0; ret = TarFindNext(hArc, &info)) {
 		int attrib = TarGetAttribute(hArc);
 		if (attrib & FA_DIREC) {
 			EXPECT_STREQ("test_2099/", info.szFileName);
 		} else {
 			if (std::string(info.szFileName).find("pch.txt") != std::string::npos) {
 				EXPECT_EQ(48, info.dwOriginalSize);
+				__int64 llsize;
+				EXPECT_TRUE(TarGetOriginalSizeEx(hArc, &llsize));
+				EXPECT_EQ(__int64(48), llsize);
+				EXPECT_EQ(info.wRatio, TarGetRatio(hArc));
 			} else {
 				EXPECT_EQ(44, info.dwOriginalSize);
+				char buf[256] = {};
+				ASSERT_EQ(0, TarGetFileName(hArc, buf, 256));
+				EXPECT_STREQ(info.szFileName, buf);
+				__int64 llsize;
+				EXPECT_TRUE(TarGetCompressedSizeEx(hArc, &llsize));
+				EXPECT_EQ(__int64(info.dwCompressedSize), llsize);
 			}
 		}
 		count++;
@@ -47,147 +103,36 @@ TEST(dll, list_tar)
 	EXPECT_EQ(2099 + 1, count);
 
 	TarCloseArchive(hArc);
+}
+
+TEST(dll, list_tar)
+{
+	sub_test_tar(PROJECT_DIR() + "/test_2099.tar");
 }
 
 TEST(dll, list_tar_gz)
 {
-	HARC hArc = TarOpenArchive(nullptr, (PROJECT_DIR() + "/test_2099.tgz").c_str(), 0);
-	ASSERT_NE((HARC)0, hArc);
-
-	INDIVIDUALINFO info = {};
-	int ret = TarFindFirst(hArc, "*.*", &info);
-	EXPECT_EQ(0, ret);
-	int count = 0;
-	for (; ret == 0; ret = TarFindNext(hArc, &info)) {
-		int attrib = TarGetAttribute(hArc);
-		if (attrib & FA_DIREC) {
-			EXPECT_STREQ("test_2099/", info.szFileName);
-		} else {
-			if (std::string(info.szFileName).find("pch.txt") != std::string::npos) {
-				EXPECT_EQ(48, info.dwOriginalSize);
-			} else {
-				EXPECT_EQ(44, info.dwOriginalSize);
-			}
-		}
-		count++;
-	}
-
-	EXPECT_EQ(2099 + 1, count);
-
-	TarCloseArchive(hArc);
+	sub_test_tar(PROJECT_DIR() + "/test_2099.tgz");
 }
 
 TEST(dll, list_tar_bz)
 {
-	HARC hArc = TarOpenArchive(nullptr, (PROJECT_DIR() + "/test_2099.tbz").c_str(), 0);
-	ASSERT_NE((HARC)0, hArc);
-
-	INDIVIDUALINFO info = {};
-	int ret = TarFindFirst(hArc, "*.*", &info);
-	EXPECT_EQ(0, ret);
-	int count = 0;
-	for (; ret == 0; ret = TarFindNext(hArc, &info)) {
-		int attrib = TarGetAttribute(hArc);
-		if (attrib & FA_DIREC) {
-			EXPECT_STREQ("test_2099/", info.szFileName);
-		} else {
-			if (std::string(info.szFileName).find("pch.txt") != std::string::npos) {
-				EXPECT_EQ(48, info.dwOriginalSize);
-			} else {
-				EXPECT_EQ(44, info.dwOriginalSize);
-			}
-		}
-		count++;
-	}
-
-	EXPECT_EQ(2099 + 1, count);
-
-	TarCloseArchive(hArc);
+	sub_test_tar(PROJECT_DIR() + "/test_2099.tbz");
 }
 
 TEST(dll, list_tar_lzma)
 {
-	HARC hArc = TarOpenArchive(nullptr, (PROJECT_DIR() + "/test_2099.tar.lzma").c_str(), 0);
-	ASSERT_NE((HARC)0, hArc);
-
-	INDIVIDUALINFO info = {};
-	int ret = TarFindFirst(hArc, "*.*", &info);
-	EXPECT_EQ(0, ret);
-	int count = 0;
-	for (; ret == 0; ret = TarFindNext(hArc, &info)) {
-		int attrib = TarGetAttribute(hArc);
-		if (attrib & FA_DIREC) {
-			EXPECT_STREQ("test_2099/", info.szFileName);
-		} else {
-			if (std::string(info.szFileName).find("pch.txt") != std::string::npos) {
-				EXPECT_EQ(48, info.dwOriginalSize);
-			} else {
-				EXPECT_EQ(44, info.dwOriginalSize);
-			}
-		}
-		count++;
-	}
-
-	EXPECT_EQ(2099 + 1, count);
-
-	TarCloseArchive(hArc);
+	sub_test_tar(PROJECT_DIR() + "/test_2099.tar.lzma");
 }
 
 TEST(dll, list_tar_xz)
 {
-	HARC hArc = TarOpenArchive(nullptr, (PROJECT_DIR() + "/test_2099.tar.xz").c_str(), 0);
-	ASSERT_NE((HARC)0, hArc);
-
-	INDIVIDUALINFO info = {};
-	int ret = TarFindFirst(hArc, "*.*", &info);
-	EXPECT_EQ(0, ret);
-	int count = 0;
-	for (; ret == 0; ret = TarFindNext(hArc, &info)) {
-		int attrib = TarGetAttribute(hArc);
-		if (attrib & FA_DIREC) {
-			EXPECT_STREQ("test_2099/", info.szFileName);
-		} else {
-			if (std::string(info.szFileName).find("pch.txt") != std::string::npos) {
-				EXPECT_EQ(48, info.dwOriginalSize);
-			} else {
-				EXPECT_EQ(44, info.dwOriginalSize);
-			}
-		}
-		count++;
-	}
-
-	EXPECT_EQ(2099 + 1, count);
-
-	TarCloseArchive(hArc);
+	sub_test_tar(PROJECT_DIR() + "/test_2099.tar.xz");
 }
-
 
 TEST(dll, list_tar_zstd)
 {
-	HARC hArc = TarOpenArchive(nullptr, (PROJECT_DIR() + "/test_2099.tar.zst").c_str(), 0);
-	ASSERT_NE((HARC)0, hArc);
-
-	INDIVIDUALINFO info = {};
-	int ret = TarFindFirst(hArc, "*.*", &info);
-	EXPECT_EQ(0, ret);
-	int count = 0;
-	for (; ret == 0; ret = TarFindNext(hArc, &info)) {
-		int attrib = TarGetAttribute(hArc);
-		if (attrib & FA_DIREC) {
-			EXPECT_STREQ("test_2099/", info.szFileName);
-		} else {
-			if (std::string(info.szFileName).find("pch.txt") != std::string::npos) {
-				EXPECT_EQ(48, info.dwOriginalSize);
-			} else {
-				EXPECT_EQ(44, info.dwOriginalSize);
-			}
-		}
-		count++;
-	}
-
-	EXPECT_EQ(2099 + 1, count);
-
-	TarCloseArchive(hArc);
+	sub_test_tar(PROJECT_DIR() + "/test_2099.tar.zst");
 }
 
 TEST(dll, list_multistream_bz)
