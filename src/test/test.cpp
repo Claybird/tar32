@@ -16,9 +16,150 @@ TEST(dll, TarGetArchiveType)
 	EXPECT_EQ(ARCHIVETYPE_TARZSTD, TarGetArchiveType((PROJECT_DIR() + "/test_2099.tar.zst").c_str()));
 }
 
-TEST(dll, Tar)
+void sub_tar_list(const std::string& fname)
 {
-	TODO;
+	//---test for Tar() command line interface
+	// get list of filename and filesize by Tar()
+	// compare the list with those by TarFindFirst/Next() API
+
+	//Tar()
+	std::vector<char> output;
+	output.resize(1024 * 1024);
+	int retCmd = Tar(NULL, ("-l \"" + fname + "\"").c_str(), &output[0], (DWORD)output.size());
+	EXPECT_EQ(0, retCmd);
+
+	//FindFirst()
+	HARC hArc = TarOpenArchive(nullptr, fname.c_str(), 0);
+	ASSERT_NE((HARC)0, hArc);
+
+	INDIVIDUALINFO info = {};
+	int ret = TarFindFirst(hArc, "*.*", &info);
+	EXPECT_EQ(0, ret);
+
+	//Compare
+	char* next_token = NULL;
+	char* token = strtok_s(&output[0], "\n", &next_token);
+	int lineCount = 0;
+	for (;token && ret == 0;) {
+		if (lineCount == 0) {
+			ASSERT_STREQ("filename" "\t" "filesize", token);
+		} else {
+			char line[256];
+			snprintf(line, 256, "%s\t%d", info.szFileName, info.dwOriginalSize);
+			ASSERT_STREQ(line, token);
+			ret = TarFindNext(hArc, &info);
+		}
+		token = strtok_s(NULL, "\n", &next_token);
+		lineCount++;
+	}
+	//make sure both method finishes scan
+	EXPECT_NE(0, ret);
+	EXPECT_EQ(NULL, token);
+
+	TarCloseArchive(hArc);
+}
+
+TEST(dll, Tar_list)
+{
+	sub_tar_list((PROJECT_DIR() + "/test_2099.tar").c_str());
+	sub_tar_list((PROJECT_DIR() + "/test_2099.tgz").c_str());
+	sub_tar_list((PROJECT_DIR() + "/test_2099.tbz").c_str());
+	sub_tar_list((PROJECT_DIR() + "/test_2099.tar.lzma").c_str());
+	sub_tar_list((PROJECT_DIR() + "/test_2099.tar.xz").c_str());
+	sub_tar_list((PROJECT_DIR() + "/test_2099.tar.zst").c_str());
+}
+
+void sub_extract_create(const std::string& fname, const std::string& format_arg, int64_t acceptable_diff)
+{
+	auto prevWD = std::filesystem::current_path();	//getcwd
+	//get temp directory
+	char randomName[256];
+	srand((unsigned)time(nullptr));
+	snprintf(randomName, 256, "tar32_test_%d", rand());
+	auto tempDir = std::filesystem::temp_directory_path() / randomName;
+	ASSERT_FALSE(std::filesystem::exists(tempDir));
+	auto targetDir = tempDir / "extract";
+	std::filesystem::create_directories(targetDir);
+
+	std::filesystem::current_path(targetDir);	//chdir
+	ASSERT_EQ(targetDir, std::filesystem::current_path());
+
+	//---extract existing archive
+	int ret = Tar(NULL, ("-x \"" + fname + "\"").c_str(), nullptr, 0);
+	ASSERT_EQ(0, ret);
+
+	//---create archive from extracted files
+	auto ext = std::filesystem::path(fname).extension().string();
+	auto archiveName = "..\\test" + ext;
+	ret = Tar(NULL, ("-c " + format_arg + " " + archiveName + " --store-in-utf8=0 *.*").c_str(), nullptr, 0);
+	ASSERT_EQ(0, ret);
+
+	//---check
+	EXPECT_TRUE(TarCheckArchive(archiveName.c_str(), 0));
+	EXPECT_EQ(
+		TarGetArchiveType(fname.c_str()),
+		TarGetArchiveType(archiveName.c_str())
+	);
+	EXPECT_EQ(
+		TarGetFileCount(fname.c_str()),
+		TarGetFileCount(archiveName.c_str())
+	);
+
+	HARC hArcA = TarOpenArchive(nullptr, fname.c_str(), 0);
+	ASSERT_NE((HARC)0, hArcA);
+	HARC hArcB = TarOpenArchive(nullptr, archiveName.c_str(), 0);
+	ASSERT_NE((HARC)0, hArcB);
+
+	INDIVIDUALINFO infoA = {}, infoB = {};
+	int retA = TarFindFirst(hArcA, "*.*", &infoA);
+	EXPECT_EQ(0, retA);
+	int retB = TarFindFirst(hArcB, "*.*", &infoB);
+	EXPECT_EQ(0, retB);
+
+	for (;retA==0 && retB==0;) {
+		ASSERT_EQ(infoA.dwOriginalSize, infoB.dwOriginalSize);
+		ASSERT_STREQ(infoA.szFileName, infoB.szFileName);
+		retA = TarFindNext(hArcA, &infoA);
+		retB = TarFindNext(hArcB, &infoB);
+	}
+	EXPECT_EQ(retA, retB);
+
+	TarCloseArchive(hArcA);
+	TarCloseArchive(hArcB);
+
+	//re-created archive size might differ a bit...
+	auto diff = std::filesystem::file_size(fname) - std::filesystem::file_size(archiveName);
+	EXPECT_LE(abs(int64_t(diff)), acceptable_diff);
+
+	//---cleanup
+	std::filesystem::current_path(prevWD);	//chdir
+	std::filesystem::remove_all(tempDir);
+	ASSERT_FALSE(std::filesystem::exists(tempDir));
+}
+
+TEST(dll, Tar_extract_and_create_tar)
+{
+	sub_extract_create((PROJECT_DIR() + "/test_2099.tar").c_str(), "", 0);
+}
+TEST(dll, Tar_extract_and_create_targz)
+{
+	sub_extract_create((PROJECT_DIR() + "/test_2099.tgz").c_str(), "-z6", 50);
+}
+TEST(dll, Tar_extract_and_create_tarbz)
+{
+	sub_extract_create((PROJECT_DIR() + "/test_2099.tbz").c_str(), "-B", 100);
+}
+TEST(dll, Tar_extract_and_create_tarlzma)
+{
+	sub_extract_create((PROJECT_DIR() + "/test_2099.tar.lzma").c_str(), "--lzma=9", 100);
+}
+TEST(dll, Tar_extract_and_create_tarxz)
+{
+	sub_extract_create((PROJECT_DIR() + "/test_2099.tar.xz").c_str(), "-J", 100);
+}
+TEST(dll, Tar_extract_and_create_tarzstd)
+{
+	sub_extract_create((PROJECT_DIR() + "/test_2099.tar.zst").c_str(), "--zstd", 300);
 }
 
 /*TEST(dll, TarExtractMem_TarCompressMem)
