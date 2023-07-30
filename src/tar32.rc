@@ -25,8 +25,8 @@ LANGUAGE LANG_JAPANESE, SUBLANG_DEFAULT
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 2,47,0,3
- PRODUCTVERSION 2,47,0,3
+ FILEVERSION 2,48,0,0
+ PRODUCTVERSION 2,48,0,0
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -42,29 +42,13 @@ BEGIN
         BLOCK "041104b0"
         BEGIN
             VALUE "CompanyName", " "
-#if defined(_WIN64) || defined(WIN64)
-            VALUE "FileDescription", "tar64"
-#else
             VALUE "FileDescription", "tar32"
-#endif
-            VALUE "FileVersion", "2.47.0.3"
-#if defined(_WIN64) || defined(WIN64)
-            VALUE "InternalName", "tar64"
-#else
+            VALUE "FileVersion", "2.48.0.0"
             VALUE "InternalName", "tar32"
-#endif
             VALUE "LegalCopyright", "Copyright (C) 1999-2023 Yoshioka Tsuneo and others, https://github.com/Claybird/tar32, http://ayakawa.o.oo7.jp/"
-#if defined(_WIN64) || defined(WIN64)
-            VALUE "OriginalFilename", "tar64.dll"
-#else
             VALUE "OriginalFilename", "tar32.dll"
-#endif
-#if defined(_WIN64) || defined(WIN64)
-            VALUE "ProductName", "  tar64"
-#else
             VALUE "ProductName", "  tar32"
-#endif
-            VALUE "ProductVersion", "2.47.0.3"
+            VALUE "ProductVersion", "2.48.0.0"
         END
     END
     BLOCK "VarFileInfo"
@@ -107,11 +91,7 @@ END
 
 IDD_CONFIG DIALOG 0, 0, 187, 95
 STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
-#if defined(_WIN64) || defined(WIN64)
-CAPTION "TAR64.DLL Config Dialog"
-#else
 CAPTION "TAR32.DLL Config Dialog"
-#endif
 FONT 9, "‚l‚r ‚oƒSƒVƒbƒN"
 BEGIN
     DEFPUSHBUTTON   "OK",IDOK,130,7,50,14
@@ -121,11 +101,7 @@ END
 
 IDD_DIALOG_STATUS DIALOGEX 0, 0, 235, 86
 STYLE DS_SETFONT | DS_MODALFRAME | DS_SETFOREGROUND | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
-#if defined(_WIN64) || defined(WIN64)
-CAPTION "TAR64.DLL is executing..."
-#else
 CAPTION "TAR32.DLL is executing..."
-#endif
 FONT 9, "‚l‚r ‚oƒSƒVƒbƒN", 0, 0, 0x0
 BEGIN
     LTEXT           "FileName",IDC_STATIC,7,7,31,8

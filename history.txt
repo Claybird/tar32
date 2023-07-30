@@ -426,4 +426,10 @@
 	・ファイルハンドルを二重に閉じて異常終了することがある問題を修正
 
 	by Claybird(claybird.without.wing@gmail.com)
- 
+
+2023/07/30 Ver.2.48RC
+	・Zstandardサポートを追加
+	・64bitサポートを追加
+	Special Thanks to ayakawa-mさん
+
+	by Claybird(claybird.without.wing@gmail.com)

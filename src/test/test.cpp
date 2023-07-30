@@ -3,7 +3,7 @@
 
 TEST(dll, version)
 {
-	ASSERT_EQ(247, TarGetVersion());	//need to update manually
+	ASSERT_EQ(248, TarGetVersion());	//need to update manually
 }
 
 TEST(dll, TarGetArchiveType)

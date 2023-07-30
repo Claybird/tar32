@@ -14,14 +14,14 @@ TAR32.DLLはWindows用のTAR/GZ/BZ2/Z等の圧縮/展開用ライブラリプロ
  - .a, .lib (ar tool format, COFF/a.out/b.out) / extract only
  - .rpm (RPM package) (=leading + signature + header + .cpio.gz) /extract only
  - .deb (Debian Package) (=ar of ("debian-binary" + "control.tar.gz" + "data.tar.gz")) /extract only
- - .tar.gz(.tgz), .tar.bz2, .tar.lzma, .tar.xz
+ - .tar.gz(.tgz), .tar.bz2, .tar.lzma, .tar.xz, .tar.zst
  - .tar.Z(.taz) / extract only
  - .cpio.gz, .cpio.Z, .cpio.bz2 /extract only
  - .a.gz, .a.Z, .a.bz2, lib.gz, lib.Z, lib.bz2, lib.gz / extract only
 
 
 ## 機能
-.tar/.tar.gz/.tar.Z/.gz/.Z/.bz2/.lzma/.xz形式の圧縮/展開が行えます。ただし、.tar.Z/.Zについては展開のみ行えます。
+.tar/.tar.gz/.tar.Z/.gz/.Z/.bz2/.lzma/.xz/.zst形式の圧縮/展開が行えます。ただし、.tar.Z/.Zについては展開のみ行えます。
 
 統合アーカイバプロジェクトのAPI仕様に準拠。TAR32.DLLのAPIに対応した多数のアプリケーションで利用できます。
 
