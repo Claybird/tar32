@@ -51,8 +51,15 @@ OPTION:
         bzip2 compression level.(1:fast-9:slow/small, default:9)
     J[N] | --xz=N
         xz compression level.(0:fast-9:small, default:6)
+
     --lzma=N
         lzma compression level.(0:fast-9:small, default:6)
+
+    --zstd=[N]
+        Zstandard compression level. (1 to 19, default:3)
+
+    --zstd-ultra
+        enables Zstandard compression level from 20 to 22. need to specify before "--zstd"
 
     --check-all-path=[0|1] (currently ignore)
         check match to path.

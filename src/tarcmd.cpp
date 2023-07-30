@@ -112,7 +112,7 @@ static void cmd_usage(CTar32CmdInfo &info)
 		<< "       --lzma=[N]      compress by lzma with level N(default:6)\n"
 		<< "       --xz=[N]        compress by xz with level N(default:6)\n"
 		<< "       --zstd=[N]      compress by Zstandard with level N(default:3)\n"
-		<< "       --zstd-ultra    enabled level from 20 to 22 for compressing with Zstd\n"
+		<< "       --zstd-ultra    enables Zstandard compression level from 20 to 22. specify before --zstd\n"
 #ifdef USE_OTHER_THREADS_WITH_ZSTD
 		<< "       --zstd-threads=[N](0)  number of other threads when compressing with Zstd\n"
 #endif
