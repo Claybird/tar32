@@ -142,8 +142,18 @@ int ITarArcFile::s_get_archive_type(const char *arcfile)
 
 	if(buf[0] == 0x1f && buf[1] == 0x8b){
 		return ARCHIVETYPE_GZ;
-	}else if(buf[0] == 'B' && buf[1] == 'Z' && buf[2] == 'h'
-		&& buf[4]==0x31 && buf[5]==0x41 && buf[6]==0x59 && buf[7]==0x26 && buf[8]==0x53 && buf[9]==0x59){
+	}else if (buf[0] == 'B' && buf[1] == 'Z' && buf[2] == 'h' &&
+		'0' <= buf[3] && buf[3] <= '9' &&
+		(
+			//compressed_magic
+			(buf[4] == 0x31 && buf[5] == 0x41 && buf[6] == 0x59 &&
+				buf[7] == 0x26 && buf[8] == 0x53 && buf[9] == 0x59) ||
+			//eos_magic
+			(buf[4] == 0x17 && buf[5] == 0x72 && buf[6] == 0x45 &&
+				buf[7] == 0x38 && buf[8] == 0x50 && buf[9] == 0x90)
+			)
+	) {
+		//bz2: https://github.com/dsnet/compress/blob/master/doc/bzip2-format.pdf
 		return ARCHIVETYPE_BZ2;
 	}else if(buf[0] == (unsigned char)'\037' && buf[1] == (unsigned char)'\235'){
 		return ARCHIVETYPE_Z;
