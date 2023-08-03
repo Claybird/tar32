@@ -433,3 +433,8 @@
 	Special Thanks to ayakawa-mさん
 
 	by Claybird(claybird.without.wing@gmail.com)
+
+2023/08/03 Ver.2.48RC2
+	・bzip2のヘッダ判定方法を更新
+
+	by Claybird(claybird.without.wing@gmail.com)
