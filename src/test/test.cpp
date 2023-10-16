@@ -20,6 +20,8 @@ TEST(dll, TarGetArchiveType)
 	EXPECT_EQ(ARCHIVETYPE_LZMA, TarGetArchiveType((PROJECT_DIR() + "/empty.lzma").c_str()));
 	EXPECT_EQ(ARCHIVETYPE_XZ, TarGetArchiveType((PROJECT_DIR() + "/empty.xz").c_str()));
 	EXPECT_EQ(ARCHIVETYPE_ZSTD, TarGetArchiveType((PROJECT_DIR() + "/empty.zst").c_str()));
+
+	EXPECT_EQ(ARCHIVETYPE_ZSTD/*ARCHIVETYPE_TARZSTD*/, TarGetArchiveType((PROJECT_DIR() + "/test_2099_with_dictionary.tar.zst").c_str()));
 }
 
 void sub_tar_list(const std::string& fname)
@@ -73,6 +75,7 @@ TEST(dll, Tar_list)
 	sub_tar_list((PROJECT_DIR() + "/test_2099.tar.lzma").c_str());
 	sub_tar_list((PROJECT_DIR() + "/test_2099.tar.xz").c_str());
 	sub_tar_list((PROJECT_DIR() + "/test_2099.tar.zst").c_str());
+	sub_tar_list((PROJECT_DIR() + "/test_2099_with_dictionary.tar.zst").c_str());
 }
 
 void sub_extract_create(const std::string& fname, const std::string& format_arg, int64_t acceptable_diff)
@@ -181,6 +184,9 @@ TEST(dll, TarCheckArchive)
 	EXPECT_TRUE(TarCheckArchive((PROJECT_DIR() + "/test_2099.tar.xz").c_str(), 0));
 	EXPECT_TRUE(TarCheckArchive((PROJECT_DIR() + "/test_2099.tar.zst").c_str(), 0));
 
+	EXPECT_TRUE(TarCheckArchive((PROJECT_DIR() + "/test_2099_with_dictionary.tar.zst").c_str(), 0));
+
+
 	EXPECT_FALSE(TarCheckArchive(PROJECT_DIR().c_str(), 0));
 	EXPECT_FALSE(TarCheckArchive(__FILE__, 0));
 }
@@ -199,6 +205,7 @@ TEST(dll, TarGetFileCount)
 	EXPECT_EQ(2100, TarGetFileCount((PROJECT_DIR() + "/test_2099.tar.lzma").c_str()));
 	EXPECT_EQ(2100, TarGetFileCount((PROJECT_DIR() + "/test_2099.tar.xz").c_str()));
 	EXPECT_EQ(2100, TarGetFileCount((PROJECT_DIR() + "/test_2099.tar.zst").c_str()));
+	EXPECT_EQ(2100, TarGetFileCount((PROJECT_DIR() + "/test_2099_with_dictionary.tar.zst").c_str()));
 
 	EXPECT_EQ(-1, TarGetFileCount(PROJECT_DIR().c_str()));
 	EXPECT_EQ(-1, TarGetFileCount(__FILE__));
@@ -282,6 +289,13 @@ TEST(dll, list_tar_zstd)
 	sub_test_tar(PROJECT_DIR() + "/test_2099.tar.zst");
 }
 
+TEST(dll, list_tar_zstd_dict)
+{
+	sub_test_tar(PROJECT_DIR() + "/test_2099_with_dictionary.tar.zst");
+}
+
+//APIで辞書指定、なければGUIで表示
+//callbackも/Window Message?
 TEST(dll, list_multistream_bz)
 {
 	auto tempDir = std::filesystem::temp_directory_path() / "tar_unit_test";
