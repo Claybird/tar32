@@ -97,7 +97,7 @@ public:
 	CTar32();
 	virtual ~CTar32();
 	static int s_get_archive_type(const char *arcfile);
-	bool open(const char *arcfile, const char*mode,int compress_level, int archive_type/* = ARCHIVETYPE_AUTO*/,int archive_charset, int threads_num);
+	bool open(const char *arcfile, const char*mode,int compress_level, int archive_type/* = ARCHIVETYPE_AUTO*/,int archive_charset, const ExtraTarArcFileOptions* opt);
 	bool close();
 
 	bool readTarHeader(HEADER &tar_header);

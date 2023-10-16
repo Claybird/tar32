@@ -209,8 +209,14 @@ extern "C" HARC WINAPI _export TarOpenArchive2(const HWND _hwnd, LPCSTR _szFileN
 		return NULL;
 	}
 
+	// setup extra options
+	ExtraTarArcFileOptions opt;
+	opt.zstd_dictionary_filename = cmdinfo.zstd_dictionary;
+	opt.zstd_thread_num = cmdinfo.zstd_c_thread_num;
+	opt.zstd_train = cmdinfo.zstd_train;
+
 	CTar32Find *pTar32Find = new CTar32Find;
-	bool bret = pTar32Find->tar32.open(_szFileName,"rb",-1,ARCHIVETYPE_AUTO,cmdinfo.archive_charset,cmdinfo.zstd_c_thread_num);
+	bool bret = pTar32Find->tar32.open(_szFileName,"rb",-1,ARCHIVETYPE_AUTO,cmdinfo.archive_charset,&opt);
 	if(!bret){delete pTar32Find;return 0;}
 	return (HARC)pTar32Find;
 }

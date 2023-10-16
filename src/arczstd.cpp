@@ -34,6 +34,10 @@
 #include "arczstd.h"
 #include "util.h"
 #include "zstd.h"
+#include <iostream>
+#include <fstream>
+
+using namespace std;
 
 CTarArcFile_Zstd::CTarArcFile_Zstd()
 {
@@ -48,6 +52,11 @@ CTarArcFile_Zstd::CTarArcFile_Zstd()
 	m_file = NULL;
 	isWriteMode = false;
 	m_threadNum = ZSTD_DEFAULT_THREADS_NUM;
+	m_dict = NULL;
+	m_dict_size = 0;
+	m_dictionary_filename = "";
+	m_train = zt_none;
+	m_maxdict = 0;
 }
 CTarArcFile_Zstd::~CTarArcFile_Zstd()
 {
@@ -64,11 +73,58 @@ void CTarArcFile_Zstd::set_threads_num(int nThreads)
 	};
 }
 
+void CTarArcFile_Zstd::set_dictionary_filename(const char* filename)
+{
+	m_dictionary_filename = std::string(filename);
+}
+
+bool CTarArcFile_Zstd::load_dictionary()
+{
+	if (m_dictionary_filename.empty()) return true;
+	//
+	if (PathFileExists(m_dictionary_filename.c_str()) && !PathIsDirectory(m_dictionary_filename.c_str()))
+	{
+		struct _stati64 st;
+		if (_stati64(m_dictionary_filename.c_str(), &st) != 0) return false;
+		//
+		m_dict_size = (size_t)st.st_size;
+		m_dict = (void*)new char[m_dict_size];
+
+		ifstream fin(m_dictionary_filename.c_str(), ios::in | ios::binary);
+		if (!fin) {
+			delete[] m_dict;
+			m_dict = NULL;
+			m_dict_size = 0;
+			return false;
+		}
+		fin.read((char*)m_dict, m_dict_size);
+		if (fin.fail()) {
+			delete[] m_dict;
+			m_dict = NULL;
+			m_dict_size = 0;
+			return false;
+		}
+		fin.close();
+		return true;
+	}
+	else
+		return false;
+}
+
+void CTarArcFile_Zstd::set_train(ZSTD_TRAIN_MODE mode, size_t maxdict)
+{
+	m_train = mode;
+	m_maxdict = maxdict;
+}
+
 bool CTarArcFile_Zstd::open(const char* arcfile, const char* mode, int compress_level)
 {
 	close();
 	bool allOK = false;
 	m_arcfile = arcfile;
+
+	if (!load_dictionary()) return false;
+
 	bool bReadMode = (NULL != strchr(mode, 'r'));
 	if (bReadMode) {
 		// decompress
@@ -79,7 +135,12 @@ bool CTarArcFile_Zstd::open(const char* arcfile, const char* mode, int compress_
 			m_buffIn = new char[m_buffInSize];
 			m_buffOut = new char[m_buffOutSize];
 			m_dctx = ZSTD_createDCtx();
-			allOK = (m_dctx != NULL);
+			if (m_dctx && m_dict) {
+				size_t result = ZSTD_DCtx_loadDictionary(m_dctx, m_dict, m_dict_size);
+				allOK = !ZSTD_isError(result);
+			}
+			else
+				allOK = (m_dctx != NULL);
 			if (allOK) {
 				m_input = { m_buffIn, 0, 0 };
 				m_output = { m_buffOut, 0, 0 };
@@ -98,20 +159,27 @@ bool CTarArcFile_Zstd::open(const char* arcfile, const char* mode, int compress_
 			m_buffOut = new char[m_buffOutSize];
 			m_cctx = ZSTD_createCCtx();
 			if (m_cctx != NULL) {
-				if (compress_level < ZSTD_minCLevel()) {
-					compress_level = ZSTD_minCLevel();
+				bool bDictOk = true;
+				if (m_dict) {
+					size_t result = ZSTD_CCtx_loadDictionary(m_cctx, m_dict, m_dict_size);
+					bDictOk = !ZSTD_isError(result);
 				}
-				else if (compress_level > ZSTD_maxCLevel()) {
-					compress_level = ZSTD_maxCLevel();
-				};
-				if (!ZSTD_isError(ZSTD_CCtx_setParameter(m_cctx, ZSTD_c_compressionLevel, compress_level))) {
-					if (!ZSTD_isError(ZSTD_CCtx_setParameter(m_cctx, ZSTD_c_checksumFlag, 1))) {
-						ZSTD_CCtx_setParameter(m_cctx, ZSTD_c_nbWorkers, m_threadNum); // 0=blocking mode
-						m_input = { m_buffIn, m_buffInSize, 0 };
-						m_output = { m_buffOut, 0, 0 };
-						isWriteMode = true;
-						m_inOfs = 0;
-						allOK = true;
+				if (bDictOk) {
+					if (compress_level < ZSTD_minCLevel()) {
+						compress_level = ZSTD_minCLevel();
+					}
+					else if (compress_level > ZSTD_maxCLevel()) {
+						compress_level = ZSTD_maxCLevel();
+					};
+					if (!ZSTD_isError(ZSTD_CCtx_setParameter(m_cctx, ZSTD_c_compressionLevel, compress_level))) {
+						if (!ZSTD_isError(ZSTD_CCtx_setParameter(m_cctx, ZSTD_c_checksumFlag, 1))) {
+							ZSTD_CCtx_setParameter(m_cctx, ZSTD_c_nbWorkers, m_threadNum); // 0=blocking mode
+							m_input = { m_buffIn, m_buffInSize, 0 };
+							m_output = { m_buffOut, 0, 0 };
+							isWriteMode = true;
+							m_inOfs = 0;
+							allOK = true;
+						};
 					};
 				};
 			};
@@ -139,6 +207,11 @@ bool CTarArcFile_Zstd::open(const char* arcfile, const char* mode, int compress_
 		if (m_file) {
 			fclose(m_file);
 			m_file = NULL;
+		}
+		if (m_dict) {
+			delete[] m_dict;
+			m_dict = NULL;
+			m_dict_size = 0;
 		}
 		isWriteMode = false;
 	}
@@ -294,6 +367,11 @@ void CTarArcFile_Zstd::close()
 	if (m_file) {
 		fclose(m_file);
 		m_file = NULL;
+	}
+	if (m_dict) {
+		delete[] m_dict;
+		m_dict = NULL;
+		m_dict_size = 0;
 	}
 	isWriteMode = false;
 }

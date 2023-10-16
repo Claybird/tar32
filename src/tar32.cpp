@@ -58,7 +58,7 @@ CTar32::~CTar32()
 }
 int CTar32::s_get_archive_type(const char *arcfile)
 {
-	std::auto_ptr<ITarArcFile> pfile(ITarArcFile::s_open(arcfile,"rb",-1,ARCHIVETYPE_AUTO,0));
+	std::auto_ptr<ITarArcFile> pfile(ITarArcFile::s_open(arcfile,"rb",-1,ARCHIVETYPE_AUTO,NULL));
 	if(pfile.get()==NULL){return -1;}
 
 	//int archive_type = ITarArcFile::s_get_archive_type();
@@ -133,7 +133,7 @@ int CTar32::s_get_archive_type(const char *arcfile)
 	}
 	return archive_type;
 }
-bool CTar32::open(const char *arcfile,const char *mode,int compress_level,int archive_type /*= ARCHIVETYPE_AUTO*/,int archive_charset,int threads_num)
+bool CTar32::open(const char *arcfile,const char *mode,int compress_level,int archive_type /*= ARCHIVETYPE_AUTO*/,int archive_charset, const ExtraTarArcFileOptions* opt)
 {
 	m_archive_type = archive_type;
 	m_archive_charset = archive_charset;
@@ -144,7 +144,7 @@ bool CTar32::open(const char *arcfile,const char *mode,int compress_level,int ar
 			return false;
 		}
 	}
-	m_pfile = ITarArcFile::s_open(arcfile,mode,compress_level,m_archive_type,threads_num);
+	m_pfile = ITarArcFile::s_open(arcfile,mode,compress_level,m_archive_type,opt);
 	if(!m_pfile){return false;}
 	return true;
 }

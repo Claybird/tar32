@@ -62,7 +62,7 @@ size64 ITarArcFile::seek(size64 offset, int origin)
 	return 0;
 }
 /*static*/
-ITarArcFile *ITarArcFile::s_open(const char *arcfile, const char *mode, int compress_level, int type, int threads_num)
+ITarArcFile *ITarArcFile::s_open(const char *arcfile, const char *mode, int compress_level, int type, const ExtraTarArcFileOptions* opt)
 {
 	ITarArcFile *pfile = NULL;
 	int ret = 0;
@@ -116,8 +116,16 @@ ITarArcFile *ITarArcFile::s_open(const char *arcfile, const char *mode, int comp
 	case ARCHIVETYPE_CPIOZSTD:
 	case ARCHIVETYPE_ARZSTD:
 		pfile = new CTarArcFile_Zstd;
-		if (strchr(mode, 'w') != 0) ((CTarArcFile_Zstd*)pfile)->set_threads_num(threads_num); // write mode only
-			break;
+		if (opt) {
+			if (strchr(mode, 'w') != 0)
+				((CTarArcFile_Zstd*)pfile)->set_threads_num(opt->zstd_thread_num); // write mode only
+			if (!opt->zstd_dictionary_filename.empty())
+				((CTarArcFile_Zstd*)pfile)->set_dictionary_filename(opt->zstd_dictionary_filename.c_str()); // use dictionary
+			if (opt->zstd_train != zt_none) {
+				((CTarArcFile_Zstd*)pfile)->set_train(opt->zstd_train, opt->zstd_maxdict); // train mode
+			}
+		};
+		break;
 	default:
 		return NULL;
 	}

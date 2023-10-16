@@ -70,6 +70,9 @@ CTar32CmdInfo::CTar32CmdInfo(char *s, int len) : output(s,len), exception("",0){
 	
 	b_zstd_ultra = false;
 	zstd_c_thread_num = ZSTD_DEFAULT_THREADS_NUM;
+	zstd_dictionary = "";
+	zstd_train = zt_none;
+	zstd_maxdict = ZSTD_DEFAULT_MAXDICT;
 
 	wm_main_thread_end = 0;
 	hParentWnd = NULL;
@@ -113,6 +116,20 @@ static void cmd_usage(CTar32CmdInfo &info)
 		<< "       --xz=[N]        compress by xz with level N(default:6)\n"
 		<< "       --zstd=[N]      compress by Zstandard with level N(default:3)\n"
 		<< "       --zstd-ultra    enables Zstandard compression level from 20 to 22. specify before --zstd\n"
+		<< "       --zstd-dic=dictionary  use dictionary file for compress/decompress\n"
+		<< "                              with Zstandard\n"
+#ifdef USE_TRAINMODE_FOR_ZSTD
+		<< "       --zstd-train           make dictionary for Zstandard.\n"
+		<< "                              dictionary filename is \"archive.\"\n"
+		<< "       --zstd-train-cover     make dictionary forZstandard with cover mode.\n"
+		<< "                              dictionary filename is \"archive.\"\n"
+		<< "       --zstd-train-fastcover make dictionary forZstandard with fast cover mode.\n"
+		<< "                              dictionary filename is \"archive.\"\n"
+		<< "       --zstd-train-legacy    make dictionary forZstandard with legacy mode.\n"
+		<< "                              dictionary filename is \"archive.\"\n"
+		<< "       --zstd-maxdict=[N]     Limit dictionary to specified size.\n"
+		<< "                              (default: 112640)\n"
+#endif
 #ifdef USE_OTHER_THREADS_WITH_ZSTD
 		<< "       --zstd-threads=[N](0)  number of other threads when compressing with Zstd\n"
 #endif
@@ -244,6 +261,26 @@ void tar_cmd_parser(LPCSTR szCmdLine,CTar32CmdInfo &cmdinfo)
 						cmdinfo.compress_level = tmp_zstd_level;
 						tmp_zstd_level = -1;
 					}
+				}
+				else if (key == "zstd-dic") {
+					cmdinfo.zstd_dictionary = val.c_str();
+#ifdef USE_TRAINMODE_FOR_ZSTD
+				}
+				else if (key == "zstd-train") {
+					cmdinfo.zstd_train = zt_train_fastcover;
+				}
+				else if (key == "zstd-train-cover") {
+					cmdinfo.zstd_train = zt_train_cover;
+				}
+				else if (key == "zstd-train-fastcover") {
+					cmdinfo.zstd_train = zt_train_fastcover;
+				}
+				else if (key == "zstd-train-legacy") {
+					cmdinfo.zstd_train = zt_train_legacy;
+				}
+				else if (key == "zstd-maxdict") {
+					cmdinfo.zstd_maxdict = atoi(val.c_str());
+#endif
 #ifdef USE_OTHER_THREADS_WITH_ZSTD
 				}else if (key == "zstd-threads") {
 					cmdinfo.zstd_c_thread_num = atoi(val.c_str());
@@ -735,6 +772,15 @@ bool extract_file(CTar32CmdInfo &cmdinfo, CTar32 *pTarfile, const char *fname,st
 //	}
 	return true;
 }
+
+void cmdinfo2extraopt(CTar32CmdInfo& cmdinfo, ExtraTarArcFileOptions& opt)
+{
+	opt.zstd_dictionary_filename = cmdinfo.zstd_dictionary;
+	opt.zstd_thread_num = cmdinfo.zstd_c_thread_num;
+	opt.zstd_train = cmdinfo.zstd_train;
+	opt.zstd_maxdict = cmdinfo.zstd_maxdict;
+}
+
 static void cmd_extract(CTar32CmdInfo &cmdinfo)
 {
 	{
@@ -751,9 +797,13 @@ static void cmd_extract(CTar32CmdInfo &cmdinfo)
 		if(ret){throw CTar32Exception("Cancel button was pushed.",ERROR_USER_CANCEL);}
 	}
 
+	// setup extra options
+	ExtraTarArcFileOptions opt;
+	cmdinfo2extraopt(cmdinfo, opt);
+
 	CTar32 tarfile;
 	int ret;
-	ret = tarfile.open(cmdinfo.arcfile.c_str(), "rb",-1,ARCHIVETYPE_AUTO,cmdinfo.archive_charset,cmdinfo.zstd_c_thread_num);
+	ret = tarfile.open(cmdinfo.arcfile.c_str(), "rb",-1,ARCHIVETYPE_AUTO,cmdinfo.archive_charset,&opt);
 	if(!ret){
 		throw CTar32Exception("can't open archive file", ERROR_ARC_FILE_OPEN);
 	}
@@ -880,8 +930,12 @@ static void cmd_create(CTar32CmdInfo &cmdinfo)
 	int filenum = 0;
 	//char mode[10];
 
+	// setup extra options
+	ExtraTarArcFileOptions opt;
+	cmdinfo2extraopt(cmdinfo, opt);
+
 	//sprintf(mode, "wb%d", cmdinfo.compress_level);
-	ret = tarfile.open(cmdinfo.arcfile.c_str(), "wb",cmdinfo.compress_level, cmdinfo.archive_type,cmdinfo.archive_charset,cmdinfo.zstd_c_thread_num);
+	ret = tarfile.open(cmdinfo.arcfile.c_str(), "wb",cmdinfo.compress_level, cmdinfo.archive_type,cmdinfo.archive_charset,&opt);
 	if(!ret){
 		throw CTar32Exception("can't open archive file", ERROR_ARC_FILE_OPEN);
 	}
@@ -990,9 +1044,13 @@ static void cmd_create(CTar32CmdInfo &cmdinfo)
 }
 static void cmd_list(CTar32CmdInfo &cmdinfo)
 {
+	// setup extra options
+	ExtraTarArcFileOptions opt;
+	cmdinfo2extraopt(cmdinfo, opt);
+
 	CTar32 tarfile;
 	bool bret;
-	bret = tarfile.open(cmdinfo.arcfile.c_str(), "rb",-1,ARCHIVETYPE_AUTO,cmdinfo.archive_charset,cmdinfo.zstd_c_thread_num);
+	bret = tarfile.open(cmdinfo.arcfile.c_str(), "rb",-1,ARCHIVETYPE_AUTO,cmdinfo.archive_charset,&opt);
 	if(!bret){
 		throw CTar32Exception("can't open archive file", ERROR_ARC_FILE_OPEN);
 	}

@@ -6,13 +6,15 @@
 #ifndef __ARCFILE_H
 #define __ARCFILE_H
 
+#include "arczstddef.h"
+
 #define ARCHIVETYPE_AUTO -1
 // enum{TARARCFILE_AUTO, TARARCFILE_NORMAL,TARARCFILE_GZIP,TARARCFILE_BZIP2};
 /*#ifndef interface
  #define interface struct
 #endif*/
 struct/*interface*/ ITarArcFile{
-	static ITarArcFile *s_open(const char *arcfile, const char *mode, int compress_level,int type, int threads_num);
+	static ITarArcFile *s_open(const char *arcfile, const char *mode, int compress_level,int type, const ExtraTarArcFileOptions* opt);
 	static int s_get_archive_type(const char *arcfile);
 	virtual bool open(const char *arcfile, const char *mode, int compress_level) = 0;
 	virtual size64 read(void *buf, size64 size) = 0;

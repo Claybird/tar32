@@ -305,6 +305,7 @@
     <ClInclude Include="arclzma.h" />
     <ClInclude Include="arcz.h" />
     <ClInclude Include="arczstd.h" />
+    <ClInclude Include="arczstddef.h" />
     <ClInclude Include="bzip2\bzlib.h" />
     <ClInclude Include="Cmdline.h" />
     <ClInclude Include="config.h" />
