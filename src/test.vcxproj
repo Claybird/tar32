@@ -50,7 +50,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='UnitTest|Win32'">
     <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(SolutionDir)</IncludePath>
     <ExecutablePath>$(ProjectDir)\tar32\release;$(VC_ExecutablePath_x86);$(CommonExecutablePath)</ExecutablePath>
-    <OutDir>$(ProjectDir)\tar32\Release</OutDir>
+    <OutDir>$(ProjectDir)\tar32\Debug\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(SolutionDir)</IncludePath>
@@ -65,7 +65,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='UnitTest|x64'">
     <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(SolutionDir)</IncludePath>
     <ExecutablePath>$(ProjectDir)\tar32\release;$(VC_ExecutablePath_x64);$(CommonExecutablePath)</ExecutablePath>
-    <OutDir>$(ProjectDir)\tar32\x64\Release\</OutDir>
+    <OutDir>$(ProjectDir)\tar32\x64\Debug\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(SolutionDir)</IncludePath>
