@@ -30,6 +30,8 @@
 		If you use this file, please report me.
 */
 
+#pragma once
+
 class CTar32Exception{
 public:
 	CTar32Exception(const char *str, int code){

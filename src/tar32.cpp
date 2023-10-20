@@ -42,6 +42,7 @@
 #include "tar32dll.h" // CTar32Exception
 #include "tar32api.h" // API ERROR codes
 #include "fast_stl.h"
+#include "arczstd.h"
 
 CTar32::CTar32()
 {
@@ -74,7 +75,19 @@ int CTar32::s_get_archive_type(const char *arcfile)
 		ar_first_hdr ar;
 	};
 	archive_header arc_header;
-	size64 ret = pfile->read(&arc_header,sizeof(arc_header));
+	size64 ret;
+	try {
+		ret = pfile->read(&arc_header, sizeof(arc_header));
+	} catch (const ArcFileZstdDictError&) {
+		std::string lower;
+		std::string afile = arcfile;
+		std::transform(afile.begin(), afile.end(), std::back_inserter(lower), tolower);
+		auto pos = lower.rfind(".tar.zst");
+		if (pos == lower.length() - 8) {
+			return ARCHIVETYPE_TARZSTD;
+		}
+		return ARCHIVETYPE_ZSTD;
+	}
 	if(ret >= sizeof(arc_header.tar)
 		&& (arc_header.tar.compsum() == strtol(arc_header.tar.dbuf.chksum, NULL, 8) || arc_header.tar.compsum_oldtar() == strtol(arc_header.tar.dbuf.chksum, NULL, 8))){
 		switch(archive_type){
@@ -666,6 +679,14 @@ bool CTar32::addbody(const char *file)
 	return true;
 }
 
+void CTar32::reopen_with_dictionary(const char* dict)
+{
+	if (m_pfile &&
+		(m_archive_type == ARCHIVETYPE_ZSTD || m_archive_type == ARCHIVETYPE_TARZSTD)
+	) {
+		((CTarArcFile_Zstd*)m_pfile)->reopen_with_dictionary(dict);
+	}
+}
 
 
 

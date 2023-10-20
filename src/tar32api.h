@@ -102,6 +102,8 @@ typedef struct {
 } EXTRACTINGINFOEX;
 typedef BOOL CALLBACK ARCHIVERPROC(HWND _hwnd,UINT _uMsg,UINT _nState, EXTRACTINGINFOEX * _lpEis);
 
+typedef int (CALLBACK* TAR_DICT_CALLBACK)(char* buff, int buflen);
+
 typedef struct {
 	DWORD				dwStructSize;
 	EXTRACTINGINFO		exinfo;

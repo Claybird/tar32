@@ -52,6 +52,7 @@ public:
 	static int check_head_format(unsigned char* buf, size_t buf_size);
 	void	set_threads_num(int nThreads);
 	void	set_dictionary_filename(const char* filename);
+	void	reopen_with_dictionary(const char* filename);
 	bool	load_dictionary();
 	void	set_train(ZSTD_TRAIN_MODE mode, size_t maxdict);
 private:

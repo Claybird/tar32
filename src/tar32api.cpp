@@ -215,10 +215,32 @@ extern "C" HARC WINAPI _export TarOpenArchive2(const HWND _hwnd, LPCSTR _szFileN
 	opt.zstd_thread_num = cmdinfo.zstd_c_thread_num;
 	opt.zstd_train = cmdinfo.zstd_train;
 
-	CTar32Find *pTar32Find = new CTar32Find;
-	bool bret = pTar32Find->tar32.open(_szFileName,"rb",-1,ARCHIVETYPE_AUTO,cmdinfo.archive_charset,&opt);
-	if(!bret){delete pTar32Find;return 0;}
-	return (HARC)pTar32Find;
+	CTar32Find* pTar32Find = new CTar32Find;
+	while (true) {
+		try {
+			bool bret = pTar32Find->tar32.open(_szFileName, "rb", -1, ARCHIVETYPE_AUTO, cmdinfo.archive_charset, &opt);
+			if (!bret) { delete pTar32Find; return 0; }
+			return (HARC)pTar32Find;
+		} catch (const ArcFileZstdDictError&) {
+			//辞書ファイルを要求する
+			TAR_DICT_CALLBACK callback = getDictionaryCallback();
+			if (callback) {
+				char buf[_MAX_PATH + 1] = {};
+				int ret = callback(buf, _MAX_PATH);
+				if (ret == 0) {
+					pTar32Find->tar32.reopen_with_dictionary(buf);
+				} else {
+					//throw CTar32Exception("Cancel button was pushed.", ERROR_USER_CANCEL);
+					delete pTar32Find;
+					return 0;
+				}
+			} else {
+				//throw CTar32Exception("Failed to open proper zstd dict file", ERROR_ARC_FILE_OPEN);
+				delete pTar32Find;
+				return 0;
+			}
+		}
+	}
 }
 extern "C" int WINAPI _export TarCloseArchive(HARC _harc)
 {
@@ -240,13 +262,32 @@ extern "C" int WINAPI _export TarFindNext(HARC _harc, INDIVIDUALINFO *_lpSubInfo
 	if(!pTar32){return -1; /*ERROR_HANDLE;*/}
 	CTar32FileStatus stat;
 	bool bret;
-	try{
-		bret = pTar32->readdir(&stat);
-		if(!bret){return -1;}
-		bret = pTar32->readskip();
-		if(!bret){return -1;}
-	}catch(CTar32Exception &){
-		return -1;
+	for (;;) {
+		try {
+			bret = pTar32->readdir(&stat);
+			if (!bret) { return -1; }
+			bret = pTar32->readskip();
+			if (!bret) { return -1; }
+			break;
+		} catch (const ArcFileZstdDictError&) {
+			//辞書ファイルを要求する
+			TAR_DICT_CALLBACK callback = getDictionaryCallback();
+			if (callback) {
+				char buf[_MAX_PATH + 1] = {};
+				int ret = callback(buf, _MAX_PATH);
+				if (ret == 0) {
+					pTar32->reopen_with_dictionary(buf);
+				} else {
+					//throw CTar32Exception("Cancel button was pushed.", ERROR_USER_CANCEL);
+					return -1;
+				}
+			} else {
+				//throw CTar32Exception("Failed to open proper zstd dict file", ERROR_ARC_FILE_OPEN);
+				return -1;
+			}
+		} catch (CTar32Exception&) {
+			return -1;
+		}
 	}
 	if(_lpSubInfo){
 		/* convert from CTar32Status to INDIVIDUALINFO */
@@ -609,6 +650,44 @@ extern "C" void WINAPI/*CALLBACK*/ TarCommandLine(HWND hwnd, HINSTANCE hinst, LP
 {
 	char buf[64000];
 	int iRet = Tar(hwnd,lpszCmdLine,buf,sizeof(buf));
+}
+
+
+//--------------------------------------
+// ZSTD辞書を取得するためのコールバック
+//--------------------------------------
+
+#include <shobjidl.h> 
+//0 to continue, cancel otherwise
+int CALLBACK default_dict_callback(char* buff, int buflen)
+{
+	OPENFILENAME ofn = {};
+	ofn.lStructSize = sizeof(ofn);
+	ofn.lpstrFile = buff;
+	ofn.nMaxFile = buflen;
+
+	ofn.lpstrFilter = "Dict file(*.dic)\0*.dic\0" "All files(*.*)\0*.*\0";
+	ofn.lpstrDefExt = "dic";
+	ofn.lpstrTitle = "Select Zstd dictionary";
+	ofn.nFilterIndex = 1;
+	return FALSE == GetOpenFileName(&ofn);
+}
+
+TAR_DICT_CALLBACK g_dict_callback = default_dict_callback;
+
+int WINAPI TarSetDictionaryCallback(TAR_DICT_CALLBACK callback)
+{
+	if (callback) {
+		g_dict_callback = callback;
+	} else {
+		g_dict_callback = default_dict_callback;
+	}
+	return 0;
+}
+
+TAR_DICT_CALLBACK getDictionaryCallback()
+{
+	return g_dict_callback;
 }
 
 

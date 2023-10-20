@@ -67,4 +67,13 @@ struct ExtraTarArcFileOptions {
 	size_t			zstd_maxdict;
 };
 
+#include "tar32dll.h"
+#include "tar32api.h"
+//例外：辞書ファイルがない
+struct ArcFileZstdDictError:CTar32Exception {
+	ArcFileZstdDictError() :CTar32Exception("Failed to open proper zstd dict file", ERROR_ARC_FILE_OPEN) {}
+	virtual ~ArcFileZstdDictError() {}
+};
+
+
 #endif

@@ -21,7 +21,7 @@ TEST(dll, TarGetArchiveType)
 	EXPECT_EQ(ARCHIVETYPE_XZ, TarGetArchiveType((PROJECT_DIR() + "/empty.xz").c_str()));
 	EXPECT_EQ(ARCHIVETYPE_ZSTD, TarGetArchiveType((PROJECT_DIR() + "/empty.zst").c_str()));
 
-	EXPECT_EQ(ARCHIVETYPE_ZSTD/*ARCHIVETYPE_TARZSTD*/, TarGetArchiveType((PROJECT_DIR() + "/test_2099_with_dictionary.tar.zst").c_str()));
+	EXPECT_EQ(ARCHIVETYPE_TARZSTD, TarGetArchiveType((PROJECT_DIR() + "/test_2099_with_dictionary.tar.zst").c_str()));
 }
 
 void sub_tar_list(const std::string& fname)

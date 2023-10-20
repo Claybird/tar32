@@ -34,6 +34,7 @@
 #include "arczstd.h"
 #include "util.h"
 #include "zstd.h"
+#include "zstd_errors.h"
 #include <iostream>
 #include <fstream>
 
@@ -76,6 +77,13 @@ void CTarArcFile_Zstd::set_threads_num(int nThreads)
 void CTarArcFile_Zstd::set_dictionary_filename(const char* filename)
 {
 	m_dictionary_filename = std::string(filename);
+	load_dictionary();
+}
+
+void CTarArcFile_Zstd::reopen_with_dictionary(const char* filename)
+{
+	m_dictionary_filename = std::string(filename);
+	open(m_arcfile.c_str(), "r", -1);
 }
 
 bool CTarArcFile_Zstd::load_dictionary()
@@ -248,11 +256,16 @@ size64 CTarArcFile_Zstd::read(void* buf, size64 size)
 			m_output = { m_buffOut, m_buffOutSize, 0 };
 			size_t const ret = ZSTD_decompressStream(m_dctx, &m_output, &m_input);
 			if (ZSTD_isError(ret)) {
-				// エラー発生
-				m_input = { m_buffIn, 0, 0 };
-				m_output = { m_buffOut, 0, 0 };
-				m_outOfs = 0;
-				break; // return copiedSize;
+				if (ret == -ZSTD_error_dictionary_wrong) {
+					//辞書が不正; 交換を促す
+					throw ArcFileZstdDictError();
+				} else {
+					// エラー発生
+					m_input = { m_buffIn, 0, 0 };
+					m_output = { m_buffOut, 0, 0 };
+					m_outOfs = 0;
+					break; // return copiedSize;
+				}
 			}
 		}
 		// m_output.dstからコピー 
