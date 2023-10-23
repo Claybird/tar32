@@ -41,7 +41,6 @@
 #include "dlg.h"
 #include "tar32res.h"
 
-#include "fast_stl.h"
 #include "tarcmd.h"
 
 #include "zstd.h"
@@ -701,8 +700,7 @@ bool extract_file(CTar32CmdInfo &cmdinfo, CTar32 *pTarfile, const char *fname,st
 	CTar32InternalFile file; file.open(pTarfile);
 
 
-	//std::ofstream fs_w;
-	fast_fstream fs_w;
+	std::ofstream fs_w;
 	if(!cmdinfo.b_print){
 		mkdir_recursive(get_dirname(fname2.c_str()).c_str());
 		fs_w.open(fname2.c_str(), std::ios::out|std::ios::binary);
@@ -892,8 +890,7 @@ static bool add_file(CTar32CmdInfo &cmdinfo, CTar32 *pTarfile, const char *fname
 	CTar32InternalFile file; file.open(pTarfile, /*write*/true);
 
 
-	//std::ifstream fs_r;
-	fast_fstream fs_r;
+	std::ifstream fs_r;
 	fs_r.open(fname2.c_str(), std::ios::in|std::ios::binary);
 	if(fs_r.fail()){throw CTar32Exception("can't read file", ERROR_CANNOT_READ);return false;}
 

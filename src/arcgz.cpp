@@ -38,7 +38,6 @@
 #include "zlib.h"
 
 #include "rpm.h"
-#include "fast_stl.h"
 
 CTarArcFile_GZip::CTarArcFile_GZip()
 {
@@ -81,8 +80,7 @@ bool CTarArcFile_GZip::open(const char *arcfile, const char *mode, int compress_
 
 	if(bReadMode){
 		/* retrieve GZIP header information(filename, time,...) */
-		//std::ifstream fs_r;
-		fast_fstream fs_r;
+		std::ifstream fs_r;
 		fs_r.open(arcfile, std::ios::in|std::ios::binary);
 		int c;
 		if(fs_r.fail()){return false;}

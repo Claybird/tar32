@@ -1,6 +1,5 @@
 #include "stdafx.h"
 #include "rpm.h"
-#include "fast_stl.h"
 
 /* Reference: lib/rpmlib.h of rpm package. */
 struct rpmlead{
@@ -73,8 +72,7 @@ size64 rpm_getheadersize(const char *arcfile)
 	rpmlead lead;
 	rpmsig_headersig sigheader,header;
 	
-	//std::ifstream fs;
-	fast_fstream fs;
+	std::ifstream fs;
 	fs.open(arcfile, std::ios::in|std::ios::binary);
 	if(fs.fail()){return false;}
 	

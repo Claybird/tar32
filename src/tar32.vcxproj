@@ -311,7 +311,6 @@
     <ClInclude Include="config.h" />
     <ClInclude Include="cpio.h" />
     <ClInclude Include="dlg.h" />
-    <ClInclude Include="fast_stl.h" />
     <ClInclude Include="lzma\lzma.h" />
     <ClInclude Include="normal.h" />
     <ClInclude Include="rpm.h" />

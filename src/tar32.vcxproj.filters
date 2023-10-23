@@ -140,9 +140,6 @@
     <ClInclude Include="lzma\lzma.h">
       <Filter>lzma</Filter>
     </ClInclude>
-    <ClInclude Include="fast_stl.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="arczstd.h">
       <Filter>Header Files</Filter>
     </ClInclude>

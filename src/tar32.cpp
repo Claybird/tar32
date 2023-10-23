@@ -41,7 +41,6 @@
 #include "util.h"
 #include "tar32dll.h" // CTar32Exception
 #include "tar32api.h" // API ERROR codes
-#include "fast_stl.h"
 #include "arczstd.h"
 
 CTar32::CTar32()
@@ -542,8 +541,7 @@ bool CTar32::extract(const char *fname_extract_to)
 	//mkdir_recursive(dirname.c_str());
 	mkdir_recursive(get_dirname(fname.c_str()).c_str());
 
-	//std::ofstream fs_w;
-	fast_fstream fs_w;
+	std::ofstream fs_w;
 	fs_w.open(fname.c_str(), std::ios::out|std::ios::binary);
 	if(fs_w.fail()){return false;}
 	//FILE *fp_w = fopen(fname.c_str(), "wb");
@@ -639,8 +637,7 @@ bool CTar32::addbody(const char *file)
 	if(st.st_size == 0){return true;}
 	//FILE *fp_r;
 	//fp_r = fopen(file, "rb");
-	//std::ifstream fs_r;
-	fast_fstream fs_r;
+	std::ifstream fs_r;
 	fs_r.open(file,std::ios::in|std::ios::binary);
 	//if(!fp_r){
 	if(fs_r.fail()){
