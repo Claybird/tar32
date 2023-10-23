@@ -427,9 +427,10 @@
 
 	by Claybird(claybird.without.wing@gmail.com)
 
-2023/07/30 Ver.2.48RC
+2023/08/13 Ver.2.48
 	・Zstandardサポートを追加
 	・64bitサポートを追加
-	Special Thanks to ayakawa-mさん
+	  Special Thanks to ayakawa-mさん
+	・bzip2のヘッダ判定方法を更新
 
 	by Claybird(claybird.without.wing@gmail.com)

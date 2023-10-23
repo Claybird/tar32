@@ -97,7 +97,7 @@ public:
 	CTar32();
 	virtual ~CTar32();
 	static int s_get_archive_type(const char *arcfile);
-	bool open(const char *arcfile, const char*mode,int compress_level, int archive_type/* = ARCHIVETYPE_AUTO*/,int archive_charset, int threads_num);
+	bool open(const char *arcfile, const char*mode,int compress_level, int archive_type/* = ARCHIVETYPE_AUTO*/,int archive_charset, const ExtraTarArcFileOptions* opt);
 	bool close();
 
 	bool readTarHeader(HEADER &tar_header);
@@ -111,6 +111,7 @@ public:
 	CTar32FileStatus m_currentfile_status;
 	int m_archive_type;
 	std::string get_arc_filename(){return m_pfile->get_arc_filename();}
+	void reopen_with_dictionary(const char*);
 private:
 	ITarArcFile *m_pfile;
 	int m_filecount;	
@@ -144,4 +145,6 @@ private:
 	bool m_write;
 };
 
+typedef int (CALLBACK* TAR_DICT_CALLBACK)(char* buff, int buflen);
+TAR_DICT_CALLBACK getDictionaryCallback();
 

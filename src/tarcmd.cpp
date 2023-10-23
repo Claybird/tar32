@@ -70,6 +70,9 @@ CTar32CmdInfo::CTar32CmdInfo(char *s, int len) : output(s,len), exception("",0){
 	
 	b_zstd_ultra = false;
 	zstd_c_thread_num = ZSTD_DEFAULT_THREADS_NUM;
+	zstd_dictionary = "";
+	zstd_train = zt_none;
+	zstd_maxdict = ZSTD_DEFAULT_MAXDICT;
 
 	wm_main_thread_end = 0;
 	hParentWnd = NULL;
@@ -113,6 +116,20 @@ static void cmd_usage(CTar32CmdInfo &info)
 		<< "       --xz=[N]        compress by xz with level N(default:6)\n"
 		<< "       --zstd=[N]      compress by Zstandard with level N(default:3)\n"
 		<< "       --zstd-ultra    enables Zstandard compression level from 20 to 22. specify before --zstd\n"
+		<< "       --zstd-dic=dictionary  use dictionary file for compress/decompress\n"
+		<< "                              with Zstandard\n"
+#ifdef USE_TRAINMODE_FOR_ZSTD
+		<< "       --zstd-train           make dictionary for Zstandard.\n"
+		<< "                              dictionary filename is \"archive.\"\n"
+		<< "       --zstd-train-cover     make dictionary forZstandard with cover mode.\n"
+		<< "                              dictionary filename is \"archive.\"\n"
+		<< "       --zstd-train-fastcover make dictionary forZstandard with fast cover mode.\n"
+		<< "                              dictionary filename is \"archive.\"\n"
+		<< "       --zstd-train-legacy    make dictionary forZstandard with legacy mode.\n"
+		<< "                              dictionary filename is \"archive.\"\n"
+		<< "       --zstd-maxdict=[N]     Limit dictionary to specified size.\n"
+		<< "                              (default: 112640)\n"
+#endif
 #ifdef USE_OTHER_THREADS_WITH_ZSTD
 		<< "       --zstd-threads=[N](0)  number of other threads when compressing with Zstd\n"
 #endif
@@ -244,6 +261,26 @@ void tar_cmd_parser(LPCSTR szCmdLine,CTar32CmdInfo &cmdinfo)
 						cmdinfo.compress_level = tmp_zstd_level;
 						tmp_zstd_level = -1;
 					}
+				}
+				else if (key == "zstd-dic") {
+					cmdinfo.zstd_dictionary = val.c_str();
+#ifdef USE_TRAINMODE_FOR_ZSTD
+				}
+				else if (key == "zstd-train") {
+					cmdinfo.zstd_train = zt_train_fastcover;
+				}
+				else if (key == "zstd-train-cover") {
+					cmdinfo.zstd_train = zt_train_cover;
+				}
+				else if (key == "zstd-train-fastcover") {
+					cmdinfo.zstd_train = zt_train_fastcover;
+				}
+				else if (key == "zstd-train-legacy") {
+					cmdinfo.zstd_train = zt_train_legacy;
+				}
+				else if (key == "zstd-maxdict") {
+					cmdinfo.zstd_maxdict = atoi(val.c_str());
+#endif
 #ifdef USE_OTHER_THREADS_WITH_ZSTD
 				}else if (key == "zstd-threads") {
 					cmdinfo.zstd_c_thread_num = atoi(val.c_str());
@@ -735,6 +772,15 @@ bool extract_file(CTar32CmdInfo &cmdinfo, CTar32 *pTarfile, const char *fname,st
 //	}
 	return true;
 }
+
+void cmdinfo2extraopt(CTar32CmdInfo& cmdinfo, ExtraTarArcFileOptions& opt)
+{
+	opt.zstd_dictionary_filename = cmdinfo.zstd_dictionary;
+	opt.zstd_thread_num = cmdinfo.zstd_c_thread_num;
+	opt.zstd_train = cmdinfo.zstd_train;
+	opt.zstd_maxdict = cmdinfo.zstd_maxdict;
+}
+
 static void cmd_extract(CTar32CmdInfo &cmdinfo)
 {
 	{
@@ -751,56 +797,82 @@ static void cmd_extract(CTar32CmdInfo &cmdinfo)
 		if(ret){throw CTar32Exception("Cancel button was pushed.",ERROR_USER_CANCEL);}
 	}
 
+	// setup extra options
+	ExtraTarArcFileOptions opt;
+	cmdinfo2extraopt(cmdinfo, opt);
+
 	CTar32 tarfile;
 	int ret;
-	ret = tarfile.open(cmdinfo.arcfile.c_str(), "rb",-1,ARCHIVETYPE_AUTO,cmdinfo.archive_charset,cmdinfo.zstd_c_thread_num);
-	if(!ret){
-		throw CTar32Exception("can't open archive file", ERROR_ARC_FILE_OPEN);
-	}
+	while (true) {
+		try {
+			ret = tarfile.open(cmdinfo.arcfile.c_str(), "rb", -1, ARCHIVETYPE_AUTO, cmdinfo.archive_charset, &opt);
+			if (!ret) {
+				throw CTar32Exception("can't open archive file", ERROR_ARC_FILE_OPEN);
+			}
 
-	CTar32FileStatus stat;
-	std::vector<char> buffer;
-	buffer.resize(1024*1024);
-	while(true){
-		bool bret = tarfile.readdir(&stat);
-		if(!bret){break;}
+			CTar32FileStatus stat;
+			std::vector<char> buffer;
+			buffer.resize(1024 * 1024);
+			while (true) {
+				bool bret = tarfile.readdir(&stat);
+				if (!bret) { break; }
 
-		std::string file_internal = stat.filename;
-		std::string file_external;
-		{
-			const std::list<CTar32CmdInfo::CArgs> &args = cmdinfo.argfiles;
-			std::list<CTar32CmdInfo::CArgs>::const_iterator filei;
-			for(filei = args.begin();filei!=args.end();filei++){
-				if(::is_regexp_match_dbcs(filei->file.c_str(), file_internal.c_str())){
-					std::string file_internal2 = file_internal;
-					if(! cmdinfo.b_absolute_paths){
-						file_internal2 = escape_absolute_paths(file_internal2.c_str());
+				std::string file_internal = stat.filename;
+				std::string file_external;
+				{
+					const std::list<CTar32CmdInfo::CArgs>& args = cmdinfo.argfiles;
+					std::list<CTar32CmdInfo::CArgs>::const_iterator filei;
+					for (filei = args.begin(); filei != args.end(); filei++) {
+						if (::is_regexp_match_dbcs(filei->file.c_str(), file_internal.c_str())) {
+							std::string file_internal2 = file_internal;
+							if (!cmdinfo.b_absolute_paths) {
+								file_internal2 = escape_absolute_paths(file_internal2.c_str());
+							}
+							if (!cmdinfo.b_use_directory) {
+								file_internal2 = get_filename(file_internal2.c_str());
+							}
+							file_external = make_pathname(filei->current_dir.c_str(), file_internal2.c_str());
+							break;
+						}
 					}
-					if(!cmdinfo.b_use_directory){
-						file_internal2 = get_filename(file_internal2.c_str());
-					}
-					file_external = make_pathname(filei->current_dir.c_str(), file_internal2.c_str());
-					break;
+				}
+				if (file_external.empty()) {
+					bret = tarfile.readskip();
+				} else {
+					bool bret2 = extract_file(cmdinfo, &tarfile, file_external.c_str(), buffer);
 				}
 			}
-		}
-		if(file_external.empty()){
-			bret = tarfile.readskip();
-		}else{
-			bool bret2 = extract_file(cmdinfo,&tarfile,file_external.c_str(),buffer);
-		}
-	}
 
-	{
-		EXTRACTINGINFOEX extractinfo;
-		memset(&extractinfo,0,sizeof(extractinfo));
-		EXTRACTINGINFOEX64 exinfo64;
-		memset(&exinfo64,0,sizeof(exinfo64));
-		exinfo64.dwStructSize=sizeof(exinfo64);
-		int ret = SendArcMessage(cmdinfo, ARCEXTRACT_END, &extractinfo,&exinfo64);
-		if(ret){throw CTar32Exception("Cancel button was pushed.",ERROR_USER_CANCEL);}
+			{
+				EXTRACTINGINFOEX extractinfo;
+				memset(&extractinfo, 0, sizeof(extractinfo));
+				EXTRACTINGINFOEX64 exinfo64;
+				memset(&exinfo64, 0, sizeof(exinfo64));
+				exinfo64.dwStructSize = sizeof(exinfo64);
+				int ret = SendArcMessage(cmdinfo, ARCEXTRACT_END, &extractinfo, &exinfo64);
+				if (ret) { throw CTar32Exception("Cancel button was pushed.", ERROR_USER_CANCEL); }
+			}
+
+			break;
+		} catch (const ArcFileZstdDictError&) {
+			//辞書ファイルを要求する
+			TAR_DICT_CALLBACK callback = getDictionaryCallback();
+			if (callback) {
+				char buf[_MAX_PATH + 1] = {};
+				int ret = callback(buf, _MAX_PATH);
+				buf[_MAX_PATH] = '\0';
+				if (ret==0) {
+					tarfile.reopen_with_dictionary(buf);
+				} else {
+					throw CTar32Exception("Cancel button was pushed.", ERROR_USER_CANCEL);
+				}
+			} else {
+				throw CTar32Exception("Failed to open proper zstd dict file", ERROR_ARC_FILE_OPEN);
+			}
+		}
 	}
 }
+
 static bool add_file(CTar32CmdInfo &cmdinfo, CTar32 *pTarfile, const char *fname,std::vector<char> &buffer)
 {
 	CTar32FileStatus &stat = pTarfile->m_currentfile_status;
@@ -880,8 +952,12 @@ static void cmd_create(CTar32CmdInfo &cmdinfo)
 	int filenum = 0;
 	//char mode[10];
 
+	// setup extra options
+	ExtraTarArcFileOptions opt;
+	cmdinfo2extraopt(cmdinfo, opt);
+
 	//sprintf(mode, "wb%d", cmdinfo.compress_level);
-	ret = tarfile.open(cmdinfo.arcfile.c_str(), "wb",cmdinfo.compress_level, cmdinfo.archive_type,cmdinfo.archive_charset,cmdinfo.zstd_c_thread_num);
+	ret = tarfile.open(cmdinfo.arcfile.c_str(), "wb",cmdinfo.compress_level, cmdinfo.archive_type,cmdinfo.archive_charset,&opt);
 	if(!ret){
 		throw CTar32Exception("can't open archive file", ERROR_ARC_FILE_OPEN);
 	}
@@ -990,21 +1066,44 @@ static void cmd_create(CTar32CmdInfo &cmdinfo)
 }
 static void cmd_list(CTar32CmdInfo &cmdinfo)
 {
+	// setup extra options
+	ExtraTarArcFileOptions opt;
+	cmdinfo2extraopt(cmdinfo, opt);
+
 	CTar32 tarfile;
 	bool bret;
-	bret = tarfile.open(cmdinfo.arcfile.c_str(), "rb",-1,ARCHIVETYPE_AUTO,cmdinfo.archive_charset,cmdinfo.zstd_c_thread_num);
-	if(!bret){
+	CTar32FileStatus stat;
+	bret = tarfile.open(cmdinfo.arcfile.c_str(), "rb", -1, ARCHIVETYPE_AUTO, cmdinfo.archive_charset, &opt);
+	if (!bret) {
 		throw CTar32Exception("can't open archive file", ERROR_ARC_FILE_OPEN);
 	}
-	CTar32FileStatus stat;
 	bret = true;
 	cmdinfo.output << "filename" << "\t" << "filesize" << "\n";
-	
-	while(1){
-		bret = tarfile.readdir(&stat);
-		if(!bret){break;}
-		bret = tarfile.readskip();
-		if(!bret){break;}
-		cmdinfo.output << stat.filename << "\t" << stat.original_size << "\n";
+	for (;;) {
+		try {
+			while (1) {
+				bret = tarfile.readdir(&stat);
+				if (!bret) { break; }
+				bret = tarfile.readskip();
+				if (!bret) { break; }
+				cmdinfo.output << stat.filename << "\t" << stat.original_size << "\n";
+			}
+			return;
+
+		} catch (const ArcFileZstdDictError& e) {
+			//辞書ファイルを要求する
+			TAR_DICT_CALLBACK callback = getDictionaryCallback();
+			if (callback) {
+				char buf[_MAX_PATH + 1] = {};
+				int ret = callback(buf, _MAX_PATH);
+				if (ret == 0) {
+					tarfile.reopen_with_dictionary(buf);
+				} else {
+					throw CTar32Exception("Cancel button was pushed.", ERROR_USER_CANCEL);
+				}
+			} else {
+				throw e;
+			}
+		}
 	}
 }

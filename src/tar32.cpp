@@ -42,6 +42,7 @@
 #include "tar32dll.h" // CTar32Exception
 #include "tar32api.h" // API ERROR codes
 #include "fast_stl.h"
+#include "arczstd.h"
 
 CTar32::CTar32()
 {
@@ -58,7 +59,7 @@ CTar32::~CTar32()
 }
 int CTar32::s_get_archive_type(const char *arcfile)
 {
-	std::auto_ptr<ITarArcFile> pfile(ITarArcFile::s_open(arcfile,"rb",-1,ARCHIVETYPE_AUTO,0));
+	std::auto_ptr<ITarArcFile> pfile(ITarArcFile::s_open(arcfile,"rb",-1,ARCHIVETYPE_AUTO,NULL));
 	if(pfile.get()==NULL){return -1;}
 
 	//int archive_type = ITarArcFile::s_get_archive_type();
@@ -74,7 +75,19 @@ int CTar32::s_get_archive_type(const char *arcfile)
 		ar_first_hdr ar;
 	};
 	archive_header arc_header;
-	size64 ret = pfile->read(&arc_header,sizeof(arc_header));
+	size64 ret;
+	try {
+		ret = pfile->read(&arc_header, sizeof(arc_header));
+	} catch (const ArcFileZstdDictError&) {
+		std::string lower;
+		std::string afile = arcfile;
+		std::transform(afile.begin(), afile.end(), std::back_inserter(lower), tolower);
+		auto pos = lower.rfind(".tar.zst");
+		if (pos == lower.length() - 8) {
+			return ARCHIVETYPE_TARZSTD;
+		}
+		return ARCHIVETYPE_ZSTD;
+	}
 	if(ret >= sizeof(arc_header.tar)
 		&& (arc_header.tar.compsum() == strtol(arc_header.tar.dbuf.chksum, NULL, 8) || arc_header.tar.compsum_oldtar() == strtol(arc_header.tar.dbuf.chksum, NULL, 8))){
 		switch(archive_type){
@@ -133,7 +146,7 @@ int CTar32::s_get_archive_type(const char *arcfile)
 	}
 	return archive_type;
 }
-bool CTar32::open(const char *arcfile,const char *mode,int compress_level,int archive_type /*= ARCHIVETYPE_AUTO*/,int archive_charset,int threads_num)
+bool CTar32::open(const char *arcfile,const char *mode,int compress_level,int archive_type /*= ARCHIVETYPE_AUTO*/,int archive_charset, const ExtraTarArcFileOptions* opt)
 {
 	m_archive_type = archive_type;
 	m_archive_charset = archive_charset;
@@ -144,7 +157,7 @@ bool CTar32::open(const char *arcfile,const char *mode,int compress_level,int ar
 			return false;
 		}
 	}
-	m_pfile = ITarArcFile::s_open(arcfile,mode,compress_level,m_archive_type,threads_num);
+	m_pfile = ITarArcFile::s_open(arcfile,mode,compress_level,m_archive_type,opt);
 	if(!m_pfile){return false;}
 	return true;
 }
@@ -666,6 +679,14 @@ bool CTar32::addbody(const char *file)
 	return true;
 }
 
+void CTar32::reopen_with_dictionary(const char* dict)
+{
+	if (m_pfile &&
+		(m_archive_type == ARCHIVETYPE_ZSTD || m_archive_type == ARCHIVETYPE_TARZSTD)
+	) {
+		((CTarArcFile_Zstd*)m_pfile)->reopen_with_dictionary(dict);
+	}
+}
 
 
 

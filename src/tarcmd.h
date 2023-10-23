@@ -5,6 +5,8 @@
 */
 int tar_cmd(const HWND hwnd, LPCSTR szCmdLine,LPSTR szOutput, const DWORD dwSize, int *pWriteSize=NULL);
 
+#include "arczstddef.h"
+
 class CTar32CmdInfo
 {
 public:
@@ -41,6 +43,9 @@ public:
 
 	bool b_zstd_ultra;       // Zstandard 圧縮率20以上の許可フラグ
 	int  zstd_c_thread_num;  // Zstandard 圧縮時に使用するスレッド数
+	std::string zstd_dictionary;	// Zstandard 圧縮/展開時に参照するdictionary file name
+	ZSTD_TRAIN_MODE zstd_train;	 	// Zstandard dictionary mode
+	int  zstd_maxdict;		// Zstandard dictionaryの最大サイズ指定
 
 	std::string current_directory;
 

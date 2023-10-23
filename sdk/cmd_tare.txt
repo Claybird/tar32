@@ -61,6 +61,9 @@ OPTION:
     --zstd-ultra
         enables Zstandard compression level from 20 to 22. specify before "--zstd"
 
+    --zstd-dic=dictionary
+        use dictionary file for compress/decompress with Zstandard
+
     --check-all-path=[0|1] (currently ignore)
         check match to path.
         if 1 *.* isn't match aa/ii.

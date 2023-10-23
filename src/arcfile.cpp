@@ -62,7 +62,7 @@ size64 ITarArcFile::seek(size64 offset, int origin)
 	return 0;
 }
 /*static*/
-ITarArcFile *ITarArcFile::s_open(const char *arcfile, const char *mode, int compress_level, int type, int threads_num)
+ITarArcFile *ITarArcFile::s_open(const char *arcfile, const char *mode, int compress_level, int type, const ExtraTarArcFileOptions* opt)
 {
 	ITarArcFile *pfile = NULL;
 	int ret = 0;
@@ -116,8 +116,16 @@ ITarArcFile *ITarArcFile::s_open(const char *arcfile, const char *mode, int comp
 	case ARCHIVETYPE_CPIOZSTD:
 	case ARCHIVETYPE_ARZSTD:
 		pfile = new CTarArcFile_Zstd;
-		if (strchr(mode, 'w') != 0) ((CTarArcFile_Zstd*)pfile)->set_threads_num(threads_num); // write mode only
-			break;
+		if (opt) {
+			if (strchr(mode, 'w') != 0)
+				((CTarArcFile_Zstd*)pfile)->set_threads_num(opt->zstd_thread_num); // write mode only
+			if (!opt->zstd_dictionary_filename.empty())
+				((CTarArcFile_Zstd*)pfile)->set_dictionary_filename(opt->zstd_dictionary_filename.c_str()); // use dictionary
+			if (opt->zstd_train != zt_none) {
+				((CTarArcFile_Zstd*)pfile)->set_train(opt->zstd_train, opt->zstd_maxdict); // train mode
+			}
+		};
+		break;
 	default:
 		return NULL;
 	}
@@ -142,8 +150,18 @@ int ITarArcFile::s_get_archive_type(const char *arcfile)
 
 	if(buf[0] == 0x1f && buf[1] == 0x8b){
 		return ARCHIVETYPE_GZ;
-	}else if(buf[0] == 'B' && buf[1] == 'Z' && buf[2] == 'h'
-		&& buf[4]==0x31 && buf[5]==0x41 && buf[6]==0x59 && buf[7]==0x26 && buf[8]==0x53 && buf[9]==0x59){
+	}else if (buf[0] == 'B' && buf[1] == 'Z' && buf[2] == 'h' &&
+		'0' <= buf[3] && buf[3] <= '9' &&
+		(
+			//compressed_magic
+			(buf[4] == 0x31 && buf[5] == 0x41 && buf[6] == 0x59 &&
+				buf[7] == 0x26 && buf[8] == 0x53 && buf[9] == 0x59) ||
+			//eos_magic
+			(buf[4] == 0x17 && buf[5] == 0x72 && buf[6] == 0x45 &&
+				buf[7] == 0x38 && buf[8] == 0x50 && buf[9] == 0x90)
+			)
+	) {
+		//bz2: https://github.com/dsnet/compress/blob/master/doc/bzip2-format.pdf
 		return ARCHIVETYPE_BZ2;
 	}else if(buf[0] == (unsigned char)'\037' && buf[1] == (unsigned char)'\235'){
 		return ARCHIVETYPE_Z;

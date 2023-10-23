@@ -322,6 +322,34 @@ BOOL WINAPI TarKillOwnerWindowEx(HWND hWnd)
 -----------------------------------------------------------------------
 
 -----------------------------------------------------------------------
+void WINAPI TarSetDictionaryCallback(TAR_DICT_CALLBACK dictCallback)
+-----------------------------------------------------------------------
+Description
+	Set callback that provides dictionary file name while extracting Zstandard archive.
+
+Arguments.
+	dictCallback	Pointer to callback function. NULL to use default one.
+
+Return Value:
+	None
+
+
+-----------------------------------------------------------------------
+int CALLBACK TAR_DICT_CALLBACK(char* buff, int buflen)
+-----------------------------------------------------------------------
+Description
+	Callback that provides dictionary file name while extracting Zstandard archive.
+
+Arguments.
+	buff	buffer to store filename
+	buflen	size of buff
+
+Return Value:
+	0	Successful and continue extract
+	otherwise	Abort extract
+
+
+-----------------------------------------------------------------------
 INDIVIDUALINFO Structure
 -----------------------------------------------------------------------
 Structure Definition
@@ -337,7 +365,7 @@ Structure Definition
 			char		szAttribute[5];
 			char		szMode[8];
 			UINT		uOSType;
-		}Å@INDIVIDUALINFO;
+		} INDIVIDUALINFO;
 
 Member variables
 	szFileName		Archive FileName

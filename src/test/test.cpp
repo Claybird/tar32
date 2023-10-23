@@ -1,4 +1,4 @@
-ï»¿#include "pch.h"
+#include "pch.h"
 #include "tar32api.h"
 
 TEST(dll, version)
@@ -14,6 +14,14 @@ TEST(dll, TarGetArchiveType)
 	EXPECT_EQ(ARCHIVETYPE_TARLZMA, TarGetArchiveType((PROJECT_DIR() + "/test_2099.tar.lzma").c_str()));
 	EXPECT_EQ(ARCHIVETYPE_TARXZ, TarGetArchiveType((PROJECT_DIR() + "/test_2099.tar.xz").c_str()));
 	EXPECT_EQ(ARCHIVETYPE_TARZSTD, TarGetArchiveType((PROJECT_DIR() + "/test_2099.tar.zst").c_str()));
+
+	EXPECT_EQ(ARCHIVETYPE_GZ, TarGetArchiveType((PROJECT_DIR() + "/empty.gz").c_str()));
+	EXPECT_EQ(ARCHIVETYPE_BZ2, TarGetArchiveType((PROJECT_DIR() + "/empty.bz2").c_str()));
+	EXPECT_EQ(ARCHIVETYPE_LZMA, TarGetArchiveType((PROJECT_DIR() + "/empty.lzma").c_str()));
+	EXPECT_EQ(ARCHIVETYPE_XZ, TarGetArchiveType((PROJECT_DIR() + "/empty.xz").c_str()));
+	EXPECT_EQ(ARCHIVETYPE_ZSTD, TarGetArchiveType((PROJECT_DIR() + "/empty.zst").c_str()));
+
+	EXPECT_EQ(ARCHIVETYPE_TARZSTD, TarGetArchiveType((PROJECT_DIR() + "/test_2099_with_dictionary.tar.zst").c_str()));
 }
 
 void sub_tar_list(const std::string& fname)
@@ -59,6 +67,20 @@ void sub_tar_list(const std::string& fname)
 	TarCloseArchive(hArc);
 }
 
+//0 to continue, cancel otherwise
+int CALLBACK dictCancelCallback(char* buff, int buflen)
+{
+	return 1;
+}
+
+//0 to continue, cancel otherwise
+int CALLBACK dictTestCallback(char* buff, int buflen)
+{
+	auto dict = PROJECT_DIR()+ "/test_2099.dic";
+	strncpy(buff, dict.c_str(), buflen);
+	return 0;
+}
+
 TEST(dll, Tar_list)
 {
 	sub_tar_list((PROJECT_DIR() + "/test_2099.tar").c_str());
@@ -67,6 +89,10 @@ TEST(dll, Tar_list)
 	sub_tar_list((PROJECT_DIR() + "/test_2099.tar.lzma").c_str());
 	sub_tar_list((PROJECT_DIR() + "/test_2099.tar.xz").c_str());
 	sub_tar_list((PROJECT_DIR() + "/test_2099.tar.zst").c_str());
+
+	TarSetDictionaryCallback(dictTestCallback);
+	sub_tar_list((PROJECT_DIR() + "/test_2099_with_dictionary.tar.zst").c_str());
+	TarSetDictionaryCallback(nullptr);
 }
 
 void sub_extract_create(const std::string& fname, const std::string& format_arg, int64_t acceptable_diff)
@@ -175,6 +201,9 @@ TEST(dll, TarCheckArchive)
 	EXPECT_TRUE(TarCheckArchive((PROJECT_DIR() + "/test_2099.tar.xz").c_str(), 0));
 	EXPECT_TRUE(TarCheckArchive((PROJECT_DIR() + "/test_2099.tar.zst").c_str(), 0));
 
+	EXPECT_TRUE(TarCheckArchive((PROJECT_DIR() + "/test_2099_with_dictionary.tar.zst").c_str(), 0));
+
+
 	EXPECT_FALSE(TarCheckArchive(PROJECT_DIR().c_str(), 0));
 	EXPECT_FALSE(TarCheckArchive(__FILE__, 0));
 }
@@ -193,6 +222,11 @@ TEST(dll, TarGetFileCount)
 	EXPECT_EQ(2100, TarGetFileCount((PROJECT_DIR() + "/test_2099.tar.lzma").c_str()));
 	EXPECT_EQ(2100, TarGetFileCount((PROJECT_DIR() + "/test_2099.tar.xz").c_str()));
 	EXPECT_EQ(2100, TarGetFileCount((PROJECT_DIR() + "/test_2099.tar.zst").c_str()));
+	TarSetDictionaryCallback(dictTestCallback);
+	EXPECT_EQ(2100, TarGetFileCount((PROJECT_DIR() + "/test_2099_with_dictionary.tar.zst").c_str()));
+	TarSetDictionaryCallback(dictCancelCallback);
+	EXPECT_EQ(0, TarGetFileCount((PROJECT_DIR() + "/test_2099_with_dictionary.tar.zst").c_str()));
+	TarSetDictionaryCallback(nullptr);
 
 	EXPECT_EQ(-1, TarGetFileCount(PROJECT_DIR().c_str()));
 	EXPECT_EQ(-1, TarGetFileCount(__FILE__));
@@ -276,6 +310,12 @@ TEST(dll, list_tar_zstd)
 	sub_test_tar(PROJECT_DIR() + "/test_2099.tar.zst");
 }
 
+TEST(dll, list_tar_zstd_dict)
+{
+	TarSetDictionaryCallback(dictTestCallback);
+	sub_test_tar(PROJECT_DIR() + "/test_2099_with_dictionary.tar.zst");
+	TarSetDictionaryCallback(nullptr);
+}
 TEST(dll, list_multistream_bz)
 {
 	auto tempDir = std::filesystem::temp_directory_path() / "tar_unit_test";
@@ -314,7 +354,7 @@ TEST(dll, list_tar_utf8)
 	for (; ret == 0; ret = TarFindNext(hArc, &info)) {
 		int attrib = TarGetAttribute(hArc);
 		EXPECT_FALSE(attrib & FA_DIREC);
-		EXPECT_STREQ("æ—¥æœ¬èªž.txt", info.szFileName);
+		EXPECT_STREQ("“ú–{Œê.txt", info.szFileName);
 	}
 
 	TarCloseArchive(hArc);

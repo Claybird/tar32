@@ -31,15 +31,13 @@
 		If you use this file, please report me.
 */
 
+#ifndef _ARCZSTD_H
+#define _ARCZSRD_H
+
 #include "arcfile.h"
 #include "zstd.h"
 #include "tar32api.h" // ARCHIVETYPE_
-
-// defaultのthread数 0→blocking mode / 1以上→圧縮は別スレッドで行う……があまり差は出ないし、メモリをがっつり喰う
-#define	ZSTD_DEFAULT_THREADS_NUM	0
-
-// Zstandardの通常の最大圧縮Level
-#define ZSTD_NORMAL_MAX_LEVEL	19
+#include "arczstddef.h"
 
 class CTarArcFile_Zstd : public ITarArcFile {
 public:
@@ -53,6 +51,10 @@ public:
 	virtual std::string get_orig_filename();
 	static int check_head_format(unsigned char* buf, size_t buf_size);
 	void	set_threads_num(int nThreads);
+	void	set_dictionary_filename(const char* filename);
+	void	reopen_with_dictionary(const char* filename);
+	bool	load_dictionary();
+	void	set_train(ZSTD_TRAIN_MODE mode, size_t maxdict);
 private:
 	ZSTD_CCtx*	m_cctx;  // for compress
 	ZSTD_DCtx*	m_dctx;  // for decompress
@@ -63,7 +65,14 @@ private:
 	ZSTD_outBuffer	m_output;
 	FILE* m_file;
 	bool isWriteMode;
+	std::string m_dictionary_filename;
+	void* m_dict;
+	size_t	m_dict_size;
+	ZSTD_TRAIN_MODE	m_train;
+	size_t	m_maxdict;
 
 	int	m_threadNum; // 圧縮に使用するスレッド数
 };
-#pragma once
+
+#endif
+

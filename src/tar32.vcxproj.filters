@@ -146,6 +146,9 @@
     <ClInclude Include="arczstd.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="arczstddef.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Tar32.def">
