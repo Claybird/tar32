@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "pch.h"
 #include "tar32api.h"
 
 TEST(dll, version)
@@ -67,6 +67,20 @@ void sub_tar_list(const std::string& fname)
 	TarCloseArchive(hArc);
 }
 
+//0 to continue, cancel otherwise
+int CALLBACK dictCancelCallback(char* buff, int buflen)
+{
+	return 1;
+}
+
+//0 to continue, cancel otherwise
+int CALLBACK dictTestCallback(char* buff, int buflen)
+{
+	auto dict = PROJECT_DIR()+ "/test_2099.dic";
+	strncpy(buff, dict.c_str(), buflen);
+	return 0;
+}
+
 TEST(dll, Tar_list)
 {
 	sub_tar_list((PROJECT_DIR() + "/test_2099.tar").c_str());
@@ -75,7 +89,10 @@ TEST(dll, Tar_list)
 	sub_tar_list((PROJECT_DIR() + "/test_2099.tar.lzma").c_str());
 	sub_tar_list((PROJECT_DIR() + "/test_2099.tar.xz").c_str());
 	sub_tar_list((PROJECT_DIR() + "/test_2099.tar.zst").c_str());
+
+	TarSetDictionaryCallback(dictTestCallback);
 	sub_tar_list((PROJECT_DIR() + "/test_2099_with_dictionary.tar.zst").c_str());
+	TarSetDictionaryCallback(nullptr);
 }
 
 void sub_extract_create(const std::string& fname, const std::string& format_arg, int64_t acceptable_diff)
@@ -205,7 +222,11 @@ TEST(dll, TarGetFileCount)
 	EXPECT_EQ(2100, TarGetFileCount((PROJECT_DIR() + "/test_2099.tar.lzma").c_str()));
 	EXPECT_EQ(2100, TarGetFileCount((PROJECT_DIR() + "/test_2099.tar.xz").c_str()));
 	EXPECT_EQ(2100, TarGetFileCount((PROJECT_DIR() + "/test_2099.tar.zst").c_str()));
+	TarSetDictionaryCallback(dictTestCallback);
 	EXPECT_EQ(2100, TarGetFileCount((PROJECT_DIR() + "/test_2099_with_dictionary.tar.zst").c_str()));
+	TarSetDictionaryCallback(dictCancelCallback);
+	EXPECT_EQ(0, TarGetFileCount((PROJECT_DIR() + "/test_2099_with_dictionary.tar.zst").c_str()));
+	TarSetDictionaryCallback(nullptr);
 
 	EXPECT_EQ(-1, TarGetFileCount(PROJECT_DIR().c_str()));
 	EXPECT_EQ(-1, TarGetFileCount(__FILE__));
@@ -291,11 +312,10 @@ TEST(dll, list_tar_zstd)
 
 TEST(dll, list_tar_zstd_dict)
 {
+	TarSetDictionaryCallback(dictTestCallback);
 	sub_test_tar(PROJECT_DIR() + "/test_2099_with_dictionary.tar.zst");
+	TarSetDictionaryCallback(nullptr);
 }
-
-//APIで辞書指定、なければGUIで表示
-//callbackも/Window Message?
 TEST(dll, list_multistream_bz)
 {
 	auto tempDir = std::filesystem::temp_directory_path() / "tar_unit_test";
@@ -334,7 +354,7 @@ TEST(dll, list_tar_utf8)
 	for (; ret == 0; ret = TarFindNext(hArc, &info)) {
 		int attrib = TarGetAttribute(hArc);
 		EXPECT_FALSE(attrib & FA_DIREC);
-		EXPECT_STREQ("日本語.txt", info.szFileName);
+		EXPECT_STREQ("���{��.txt", info.szFileName);
 	}
 
 	TarCloseArchive(hArc);

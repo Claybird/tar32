@@ -675,14 +675,13 @@ int CALLBACK default_dict_callback(char* buff, int buflen)
 
 TAR_DICT_CALLBACK g_dict_callback = default_dict_callback;
 
-int WINAPI TarSetDictionaryCallback(TAR_DICT_CALLBACK callback)
+void WINAPI TarSetDictionaryCallback(TAR_DICT_CALLBACK dictCallback)
 {
-	if (callback) {
-		g_dict_callback = callback;
+	if (dictCallback) {
+		g_dict_callback = dictCallback;
 	} else {
 		g_dict_callback = default_dict_callback;
 	}
-	return 0;
 }
 
 TAR_DICT_CALLBACK getDictionaryCallback()

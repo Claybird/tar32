@@ -62,6 +62,8 @@ EXPORTS
 	TarGetAccessTime64
 	TarGetCreateTime64
 
+	TarSetDictionaryCallback
+
 ;rundll32 interface
 ;  command line: rundll32.exe tar32.dll,TarCommandLine -xvf foo.tar.gz
 	TarCommandLine

@@ -211,6 +211,9 @@ BOOL WINAPI _export TarGetWriteTime64(HARC _harc, __int64 *_lpllLastWriteTime);
 BOOL WINAPI _export TarGetAccessTime64(HARC _harc, __int64 *_lpllAccessTime);
 BOOL WINAPI _export TarGetCreateTime64(HARC _harc, __int64 *_lpllCreateTime);
 
+void WINAPI _export TarSetDictionaryCallback(TAR_DICT_CALLBACK dictCallback);
+
+
 #ifdef __cplusplus
 }
 #endif
