@@ -72,53 +72,48 @@ size64 rpm_getheadersize(const char *arcfile)
 	rpmlead lead;
 	rpmsig_headersig sigheader,header;
 	
-	std::ifstream fs;
-	fs.open(arcfile, std::ios::in|std::ios::binary);
-	if(fs.fail()){return false;}
+	CAutoFile fs;
+	fs.open(arcfile, "rb");
+	if(!fs.is_opened()){return false;}
 	
-	fs.read((char*)&lead, sizeof(lead));
-	if(fs.gcount() != sizeof(lead)){return -1;}
+	size_t read = fread(&lead, 1, sizeof(lead), fs);
+	if(read != sizeof(lead)){return -1;}
 	if(! lead.magic_check()){return -1;}
 	lead.hton();
 
 	if(lead.signature_type == RPMSIG_NONE){
 		;
 	}else if(lead.signature_type == RPMSIG_PGP262_1024){
-		fs.seekg(256, std::ios::cur);
-		if(fs.fail()){return false;}
+		if (0 != _fseeki64(fs, 256, SEEK_CUR)) { return false; }
 	}else if(lead.signature_type == RPMSIG_HEADERSIG){
-		fs.read((char*)&sigheader,sizeof(sigheader));
-		if(fs.gcount() != sizeof(sigheader)){return -1;}
+		read = fread(&sigheader,1, sizeof(sigheader), fs);
+		if(read != sizeof(sigheader)){return -1;}
 		if(!sigheader.magic_check()){return -1;}
 		sigheader.hton();
 
 		int siglen = sigheader.get_lostheaderlen();
-		fs.seekg(siglen, std::ios::cur);
-		if(fs.fail()){return -1;}
+		if (0 != _fseeki64(fs, siglen, SEEK_CUR)) { return -1; }
 
-		size64 pos = fs.tellg();
+		size64 pos = _ftelli64(fs);
 		if(pos == -1){return -1;}
 		if((pos%8) != 0){
 			/* 8 byte padding */
 			// int pad = pos - (pos/8)*8;
 			size64 pad = (pos/8 + 1) * 8 - pos ;  // fix by tsuneo 2001.05.14
-			fs.seekg(pad, std::ios::cur);
-			if(fs.fail()){return -1;}
+			if (0 != _fseeki64(fs, pad, SEEK_CUR)) { return -1; }
 		}
 	}else{
 		return -1;
 	}
 
-	fs.read((char*)&header, sizeof(header));
-	if(fs.gcount() != sizeof(header)){return -1;}
+	read = fread(&header, 1, sizeof(header), fs);
+	if(read != sizeof(header)){return -1;}
 	if(!header.magic_check()){return -1;}
 	header.hton();
 	int hdrlen = header.get_lostheaderlen();
 	if(hdrlen == -1){return -1;}
-	fs.seekg(hdrlen, std::ios::cur);
-	if(fs.fail()){return -1;}
+	if (0 != _fseeki64(fs, hdrlen, SEEK_CUR)) { return -1; }
 	
-	size64 size = fs.tellg();
+	size64 size = _ftelli64(fs);
 	return size;
-
 }

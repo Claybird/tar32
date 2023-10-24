@@ -541,9 +541,9 @@ bool CTar32::extract(const char *fname_extract_to)
 	//mkdir_recursive(dirname.c_str());
 	mkdir_recursive(get_dirname(fname.c_str()).c_str());
 
-	std::ofstream fs_w;
-	fs_w.open(fname.c_str(), std::ios::out|std::ios::binary);
-	if(fs_w.fail()){return false;}
+	CAutoFile fs_w;
+	fs_w.open(fname, "wb");
+	if(!fs_w.is_opened()){return false;}
 	//FILE *fp_w = fopen(fname.c_str(), "wb");
 	//if(fp_w == NULL){
 	//	return false;
@@ -552,11 +552,10 @@ bool CTar32::extract(const char *fname_extract_to)
 	while(filesize==-1 || readsize<filesize){
 		size64 nextreadsize = (filesize==-1) ? buf_size : min(filesize-readsize,buf_size);
 		size64 n = file.read(buf,nextreadsize);
-		fs_w.write(buf,nextreadsize);
-		if(fs_w.fail()){
-			if(filesize==-1){
+		if (nextreadsize != fwrite(buf, 1, nextreadsize, fs_w)) {
+			if (filesize == -1) {
 				return true;
-			}else{
+			} else {
 				return false;
 			}
 		}
@@ -635,20 +634,16 @@ bool CTar32::addbody(const char *file)
 		throw CTar32Exception(msg, ERROR_CANNOT_READ);
 	}
 	if(st.st_size == 0){return true;}
-	//FILE *fp_r;
-	//fp_r = fopen(file, "rb");
-	std::ifstream fs_r;
-	fs_r.open(file,std::ios::in|std::ios::binary);
-	//if(!fp_r){
-	if(fs_r.fail()){
+	CAutoFile fs_r;
+	fs_r.open(file, "rb");
+	if(!fs_r.is_opened()){
 		throw CTar32Exception("can't read file", ERROR_CANNOT_READ);
 	}
 	size64 size = 0;
 
 	size64 n;
 	char buf[4096];
-	//while((n = fread(buf,1,sizeof(buf),fp_r))>0){
-	while(fs_r.read(buf,sizeof(buf)),(n=fs_r.gcount())>0){
+	while((n = fread(buf,1,sizeof(buf),fs_r))>0){
 		size64 m = m_pfile->write(buf, n);
 		if(m>0){size += m;}
 		if(n!=m){

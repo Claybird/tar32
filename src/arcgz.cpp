@@ -80,46 +80,46 @@ bool CTarArcFile_GZip::open(const char *arcfile, const char *mode, int compress_
 
 	if(bReadMode){
 		/* retrieve GZIP header information(filename, time,...) */
-		std::ifstream fs_r;
-		fs_r.open(arcfile, std::ios::in|std::ios::binary);
+		CAutoFile fs_r;
+		fs_r.open(arcfile, "rb");
 		int c;
-		if(fs_r.fail()){return false;}
-		fs_r.seekg(rpmlen, std::ios_base::cur);		/* skip rpm header */
-		if(fs_r.get()!=0x1f || fs_r.get()!=0x8b){return false;}
-		if((c=fs_r.get())==EOF){return false;}
+		if(!fs_r.is_opened()){return false;}
+		_fseeki64(fs_r, rpmlen, SEEK_CUR);		/* skip rpm header */
+		if (fgetc(fs_r) != 0x1f || fgetc(fs_r) != 0x8b) { return false; }
+		if((c= fgetc(fs_r))==EOF){return false;}
 
 		m_gzip_compress_method = c;
-		if((c=fs_r.get())==EOF){return false;}
+		if((c= fgetc(fs_r))==EOF){return false;}
 		int flags = m_gzip_flags = c;
 		if((flags & GZIP_FLAG_ENCRYPTED)||(flags & GZIP_FLAG_CONTINUATION)||(flags & GZIP_FLAG_RESERVED)){return true;}
 		time_t stamp;
-		stamp = fs_r.get();
-		stamp |= (fs_r.get()<<8);
-		stamp |= (fs_r.get()<<16);
-		stamp |= (fs_r.get()<<24);
+		stamp = fgetc(fs_r);
+		stamp |= (fgetc(fs_r)<<8);
+		stamp |= (fgetc(fs_r)<<16);
+		stamp |= (fgetc(fs_r)<<24);
 		if(stamp<0){stamp=0;}
 		m_mtime = m_gzip_time_stamp = stamp;
-		m_gzip_ext_flag = fs_r.get();
-		m_gzip_os_type = fs_r.get();
+		m_gzip_ext_flag = fgetc(fs_r);
+		m_gzip_os_type = fgetc(fs_r);
 		if(flags & GZIP_FLAG_CONTINUATION){
-			m_gzip_part = fs_r.get();
+			m_gzip_part = fgetc(fs_r);
 		}
 		if(flags & GZIP_FLAG_EXTRA_FIELD){
-			int len = fs_r.get();
+			int len = fgetc(fs_r);
 			while(len<10000 && (len--)>0){
-				fs_r.get();
+				fgetc(fs_r);
 			}
 		}
 		if(flags & GZIP_FLAG_ORIG_NAME){
 			std::string fname;
-			while((c=fs_r.get())!=EOF && c!='\0'){
+			while((c= fgetc(fs_r))!=EOF && c!='\0'){
 				fname += c;
 			}
 			m_orig_filename = m_gzip_orig_name = fname;
 		}
 		if(flags & GZIP_FLAG_COMMENT){
 			std::string comment;
-			while((c=fs_r.get())!=EOF && c!='\0'){
+			while((c= fgetc(fs_r))!=EOF && c!='\0'){
 				comment += c;
 			}
 			m_gzip_comment = comment;

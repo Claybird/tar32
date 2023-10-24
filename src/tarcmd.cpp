@@ -700,11 +700,11 @@ bool extract_file(CTar32CmdInfo &cmdinfo, CTar32 *pTarfile, const char *fname,st
 	CTar32InternalFile file; file.open(pTarfile);
 
 
-	std::ofstream fs_w;
+	CAutoFile fs_w;
 	if(!cmdinfo.b_print){
 		mkdir_recursive(get_dirname(fname2.c_str()).c_str());
-		fs_w.open(fname2.c_str(), std::ios::out|std::ios::binary);
-		if(fs_w.fail()){return false;}
+		fs_w.open(fname2, "wb");
+		if(!fs_w.is_opened()){return false;}
 	}
 
 	size64 readsize = 0;
@@ -734,8 +734,7 @@ bool extract_file(CTar32CmdInfo &cmdinfo, CTar32 *pTarfile, const char *fname,st
 		if(cmdinfo.b_print){
 			cmdinfo.output.write(&buffer[0],(size_t)n);	//TODO:size lost
 		}else{
-			fs_w.write(&buffer[0],n);
-			if(fs_w.fail()){return false;}
+			if (n != fwrite(&buffer[0], 1, n, fs_w)) { return false; }
 		}
 		if(n != nextreadsize){
 			if(filesize == -1){ // case .gz/.Z/.bz2"
@@ -890,13 +889,13 @@ static bool add_file(CTar32CmdInfo &cmdinfo, CTar32 *pTarfile, const char *fname
 	CTar32InternalFile file; file.open(pTarfile, /*write*/true);
 
 
-	std::ifstream fs_r;
-	fs_r.open(fname2.c_str(), std::ios::in|std::ios::binary);
-	if(fs_r.fail()){throw CTar32Exception("can't read file", ERROR_CANNOT_READ);return false;}
+	CAutoFile fs_r;
+	fs_r.open(fname2, "rb");
+	if(!fs_r.is_opened()){throw CTar32Exception("can't read file", ERROR_CANNOT_READ);return false;}
 
 	size64 readsize = 0;
 	size64 n;
-	while(fs_r.read(&buffer[0],buffer.size()),(n=fs_r.gcount())>0){
+	while ((n = fread(&buffer[0], 1, sizeof(buffer.size()), fs_r)) > 0) {
 		size64 m = file.write(&buffer[0], n);
 		if(m>0){readsize += m;}
 		if(n!=m){
