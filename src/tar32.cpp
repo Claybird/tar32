@@ -531,8 +531,8 @@ bool CTar32::extract(const char *fname_extract_to)
 		fname = m_currentfile_status.filename;
 	}
 	size64 filesize = m_currentfile_status.original_size;
-	const int buf_size = 4096;
-	char buf[buf_size];
+	const int buf_size = 1024 * 1024;
+	std::vector<char> buf(buf_size);
 
 	CTar32InternalFile file;
 	file.open(this);
@@ -551,8 +551,8 @@ bool CTar32::extract(const char *fname_extract_to)
 	size64 readsize = 0;
 	while(filesize==-1 || readsize<filesize){
 		size64 nextreadsize = (filesize==-1) ? buf_size : min(filesize-readsize,buf_size);
-		size64 n = file.read(buf,nextreadsize);
-		if (nextreadsize != fwrite(buf, 1, nextreadsize, fs_w)) {
+		size64 n = file.read(&buf[0],nextreadsize);
+		if (nextreadsize != fwrite(&buf[0], 1, nextreadsize, fs_w)) {
 			if (filesize == -1) {
 				return true;
 			} else {

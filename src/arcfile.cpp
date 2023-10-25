@@ -50,7 +50,7 @@ size64 ITarArcFile::seek(size64 offset, int origin)
 	if(origin != SEEK_CUR){
 		return -1;
 	}
-	const int bufsize=1024*16;
+	const int bufsize=1024*1024;
 	std::vector<char> buf;
 	buf.resize(bufsize);
 	while(offset > 0){
