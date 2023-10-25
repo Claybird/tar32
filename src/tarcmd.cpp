@@ -752,12 +752,17 @@ bool extract_file(CTar32CmdInfo &cmdinfo, CTar32 *pTarfile, const char *fname,st
 //		}
 	}
 	if(!cmdinfo.b_print){
+		HANDLE hFile = (HANDLE)_get_osfhandle(_fileno(fs_w));
+		FILETIME lastWriteTime;
+		TimetToFileTime(stat.mtime, &lastWriteTime);
+		SetFileTime(hFile, NULL, NULL, &lastWriteTime);
+		
 		fs_w.close();
-		struct _utimbuf ut;
-		ut.actime = (stat.atime ? stat.atime : time(NULL));
-		ut.modtime = (stat.mtime ? stat.mtime : time(NULL));
+		//struct _utimbuf ut;
+		//ut.actime = (stat.atime ? stat.atime : time(NULL));
+		//ut.modtime = (stat.mtime ? stat.mtime : time(NULL));
 		int ret;
-		ret = _utime(fname2.c_str(), &ut);
+		//ret = _utime(fname2.c_str(), &ut);
 		ret = _chmod(fname2.c_str(), stat.mode);
 	}
 //	if(cmdinfo.hTar32StatusDialog){
