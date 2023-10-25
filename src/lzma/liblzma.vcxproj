@@ -150,6 +150,7 @@
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <AdditionalIncludeDirectories>./;xzutils/src/liblzma/common;xzutils/src/common;xzutils/src/liblzma/api;xzutils/src/liblzma/check;xzutils/src/liblzma/delta;xzutils/src/liblzma/lz;xzutils/src/liblzma/lzma;xzutils/src/liblzma/rangecoder;xzutils/src/liblzma/simple</AdditionalIncludeDirectories>
+      <WholeProgramOptimization>true</WholeProgramOptimization>
     </ClCompile>
     <Link>
       <TargetMachine>MachineX86</TargetMachine>
@@ -181,6 +182,7 @@
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <AdditionalIncludeDirectories>./;xzutils/src/liblzma/common;xzutils/src/common;xzutils/src/liblzma/api;xzutils/src/liblzma/check;xzutils/src/liblzma/delta;xzutils/src/liblzma/lz;xzutils/src/liblzma/lzma;xzutils/src/liblzma/rangecoder;xzutils/src/liblzma/simple</AdditionalIncludeDirectories>
+      <WholeProgramOptimization>true</WholeProgramOptimization>
     </ClCompile>
     <Link>
       <TargetMachine>MachineX86</TargetMachine>
@@ -189,6 +191,9 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
     </Link>
+    <Lib>
+      <LinkTimeCodeGeneration>true</LinkTimeCodeGeneration>
+    </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseMT|x64'">
     <ClCompile>
