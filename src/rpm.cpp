@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "rpm.h"
+#include "util.h"
 
 /* Reference: lib/rpmlib.h of rpm package. */
 struct rpmlead{
