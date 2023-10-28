@@ -434,3 +434,10 @@
 	・bzip2のヘッダ判定方法を更新
 
 	by Claybird(claybird.without.wing@gmail.com)
+
+2023/10/28 Ver.2.49(RC)
+	・Zstandardで辞書を使用できるようにした
+	  Special Thanks to ayakawa-mさん
+	・展開速度を約5倍に高速化
+
+	by Claybird(claybird.without.wing@gmail.com)
