@@ -34,3 +34,4 @@ src/zlib/x86/
 src/zlib/x64/
 src/UnitTest
 src/x64/UnitTest
+src/test/Win32
