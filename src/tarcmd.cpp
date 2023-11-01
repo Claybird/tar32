@@ -900,7 +900,7 @@ static bool add_file(CTar32CmdInfo &cmdinfo, CTar32 *pTarfile, const char *fname
 
 	size64 readsize = 0;
 	size64 n;
-	while ((n = fread(&buffer[0], 1, sizeof(buffer.size()), fs_r)) > 0) {
+	while ((n = fread(&buffer[0], 1, buffer.size(), fs_r)) > 0) {
 		size64 m = file.write(&buffer[0], n);
 		if(m>0){readsize += m;}
 		if(n!=m){
