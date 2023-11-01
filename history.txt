@@ -441,3 +441,8 @@
 	・展開速度を約5倍に高速化
 
 	by Claybird(claybird.without.wing@gmail.com)
+
+2023/11/01 Ver.2.49(RC2)
+	・Ver.2.49RCで圧縮速度が低下していた問題を修正
+
+	by Claybird(claybird.without.wing@gmail.com)
