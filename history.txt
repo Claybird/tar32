@@ -435,14 +435,9 @@
 
 	by Claybird(claybird.without.wing@gmail.com)
 
-2023/10/28 Ver.2.49(RC)
-	・Zstandardで辞書を使用できるようにした
+2023/11/09 Ver.2.49
+	・Zstandardで辞書を使用できるようにした(API追加)
 	  Special Thanks to ayakawa-mさん
 	・展開速度を約5倍に高速化
-
-	by Claybird(claybird.without.wing@gmail.com)
-
-2023/11/01 Ver.2.49(RC2)
-	・Ver.2.49RCで圧縮速度が低下していた問題を修正
 
 	by Claybird(claybird.without.wing@gmail.com)
