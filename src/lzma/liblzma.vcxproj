@@ -215,9 +215,7 @@
     <ClCompile Include="xzutils\src\common\tuklib_physmem.c" />
     <ClCompile Include="xzutils\src\liblzma\check\check.c" />
     <ClCompile Include="xzutils\src\liblzma\check\crc32_fast.c" />
-    <ClCompile Include="xzutils\src\liblzma\check\crc32_table.c" />
     <ClCompile Include="xzutils\src\liblzma\check\crc64_fast.c" />
-    <ClCompile Include="xzutils\src\liblzma\check\crc64_table.c" />
     <ClCompile Include="xzutils\src\liblzma\check\sha256.c" />
     <ClCompile Include="xzutils\src\liblzma\common\alone_decoder.c" />
     <ClCompile Include="xzutils\src\liblzma\common\alone_encoder.c" />
